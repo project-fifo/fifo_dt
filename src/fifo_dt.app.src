@@ -1,0 +1,11 @@
+{application, fifo_dt,
+ [
+  {description, ""},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { fifo_uitls_app, []}}
+ ]}.
