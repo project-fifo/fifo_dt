@@ -33,15 +33,15 @@
          alias/3,
          etherstubs/3,
          host/3,
-         set_characteristic/4,
-         set_metadata/4,
-         set_pool/4,
+         resources/1, set_resource/3, set_resource/4,
+         services/1, set_service/3, set_service/4,
+         characteristics/1, set_characteristic/3, set_characteristic/4,
+         metadata/1, set_metadata/3, set_metadata/4,
+         pools/1, set_pool/3, set_pool/4,
          networks/3,
          path/3,
          port/3,
          endpoint/1,
-         set_resource/4,
-         set_service/4,
          sysinfo/3,
          uuid/3,
          version/3,
@@ -68,17 +68,12 @@
              ]).
 
 -export([
-         resources/1,
-         characteristics/1,
          alias/1,
          etherstubs/1,
          host/1,
-         metadata/1,
          networks/1,
          path/1,
-         pools/1,
          port/1,
-         services/1,
          sysinfo/1,
          uuid/1,
          version/1,
@@ -196,6 +191,12 @@ virtualisation({T, _ID}, V, H) ->
 pools(H) ->
     fifo_map:value(H#?HYPERVISOR.pools).
 
+set_pool(ID, [{K, V} | R] , Vm) ->
+    set_pool(ID, R, set_pool(ID, K, V, Vm));
+
+set_pool(_ID, _, Vm) ->
+    Vm.
+
 set_pool({T, ID}, P, Value, H) when is_binary(P) ->
     set_pool({T, ID}, fifo_map:split_path(P), Value, H);
 
@@ -209,6 +210,12 @@ set_pool({T, ID}, Attribute, Value, H) ->
 
 characteristics(H) ->
     fifo_map:value(H#?HYPERVISOR.characteristics).
+
+set_characteristic(ID, [{K, V} | R] , Vm) ->
+    set_characteristic(ID, R, set_characteristic(ID, K, V, Vm));
+
+set_characteristic(_ID, _, Vm) ->
+    Vm.
 
 set_characteristic({T, ID}, P, Value, H) when is_binary(P) ->
     set_characteristic({T, ID}, fifo_map:split_path(P), Value, H);
@@ -224,6 +231,12 @@ set_characteristic({T, ID}, Attribute, Value, H) ->
 metadata(H) ->
     fifo_map:value(H#?HYPERVISOR.metadata).
 
+set_metadata(ID, [{K, V} | R] , Vm) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+
+set_metadata(_ID, _, Vm) ->
+    Vm.
+
 set_metadata({T, ID}, P, Value, H) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, H);
 
@@ -238,6 +251,12 @@ set_metadata({T, ID}, Attribute, Value, H) ->
 resources(H) ->
     fifo_map:value(H#?HYPERVISOR.resources).
 
+set_resource(ID, [{K, V} | R] , Vm) ->
+    set_resource(ID, R, set_resource(ID, K, V, Vm));
+
+set_resource(_ID, _, Vm) ->
+    Vm.
+
 set_resource({_T, ID}, Attribute, delete, H) ->
     {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.resources),
     H#?HYPERVISOR{resources = M1};
@@ -248,6 +267,12 @@ set_resource({T, ID}, Attribute, Value, H) ->
 
 services(H) ->
     fifo_map:value(H#?HYPERVISOR.services).
+
+set_service(ID, [{K, V} | R] , Vm) ->
+    set_service(ID, R, set_service(ID, K, V, Vm));
+
+set_service(_ID, _, Vm) ->
+    Vm.
 
 set_service({_T, ID}, Attribute, delete, H) ->
     {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.services),
