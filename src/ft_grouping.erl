@@ -1,6 +1,5 @@
 -module(ft_grouping).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -export([

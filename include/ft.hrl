@@ -1,3 +1,12 @@
+-define(NEW_LWW(V, T), riak_dt_lwwreg:update(
+                         {assign, V, T}, none,
+                         riak_dt_lwwreg:new())).
+
+-record(sniffle_obj, {val    :: term(),
+                      vclock :: vclock:vclock()}).
+
+-type sniffle_obj() :: #sniffle_obj{} | not_found.
+
 -record(hypervisor_0_1_0,
         {
           characteristics = riak_dt_map:new()    :: riak_dt_map:map(),

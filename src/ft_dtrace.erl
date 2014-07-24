@@ -7,7 +7,6 @@
 
 -module(ft_dtrace).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -export([

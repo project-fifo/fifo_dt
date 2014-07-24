@@ -7,7 +7,6 @@
 
 -module(ft_package).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -define(G(N, F),

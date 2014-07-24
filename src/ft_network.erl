@@ -7,7 +7,6 @@
 
 -module(ft_network).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -export([

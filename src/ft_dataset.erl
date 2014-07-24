@@ -6,8 +6,7 @@
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
 -module(ft_dataset).
 
--include("sniffle.hrl").
--include_lib("ft.hrl").
+-include("ft.hrl").
 
 -define(G(N, F),
         getter(#sniffle_obj{val=S0}, N) ->

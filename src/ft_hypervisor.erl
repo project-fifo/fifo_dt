@@ -7,7 +7,6 @@
 
 -module(ft_hypervisor).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -ifdef(TEST).
@@ -488,64 +487,6 @@ set(ID, <<"virtualisation">>, Value, Hypervisor) ->
 mkid() ->
     {MegaSecs, Secs, MicroSecs} = os:timestamp(),
     {(MegaSecs*1000000 + Secs)*1000000 + MicroSecs, test}.
-
-from_json_test() ->
-    JSON = <<"{
-    \"alias\": \"00-15-17-b8-16-fc\",
-    \"etherstubs\": [],
-    \"host\": \"...\",
-    \"metadata\": {
-        \"jingles\": {
-            \"show_disabled_services\": false
-        }
-    },
-    \"networks\": [
-        \"admin\",
-        \"external\"
-    ],
-    \"pools\": {
-        \"zones\": {
-            \"dedup\": 100,
-            \"free\": 5131344,
-            \"health\": \"ONLINE\",
-            \"size\": 5701632,
-            \"used\": 570288
-        }
-    },
-    \"port\": 4200,
-    \"resources\": {
-        \"free-memory\": 18362,
-        \"total-memory\": 32699
-    },
-    \"services\": {
-        \"lrc:/etc/rc2_d/S20sysetup\": \"legacy_run\"
-    },
-    \"sysinfo\": {
-        \"Live Image\": \"...\",
-        \"Disks\": {
-            \"c1d0\": {
-                \"Size in GB\": 60
-            }
-        }
-    },
-    \"path\":[],
-    \"characteristics\":{\"id\":1},
-    \"uuid\": \"d618b447-7c9b-4bde-8474-3a9fef24ad31\",
-    \"version\": \"dev-eb36823, Fri Apr 11 01:08:06 2014 +0200\",
-    \"virtualisation\": [
-        \"kvm\",
-        \"zone\"
-    ]
-}">>,
-    JSX = jsxd:from_list(jsx:decode(JSON)),
-    JSX1 = jsxd:set(<<"path">>, [[{<<"cost">>,1},{<<"name">>,<<"d618b447-7c9b-4bde-8474-3a9fef24ad31">>}]], JSX),
-    SB = statebox:new(fun () -> JSX1 end),
-    R = load(mkid(), SB),
-    JSX2 = to_json(R),
-    file:write_file("1", io_lib:format("~p", [JSX1])),
-    file:write_file("2", io_lib:format("~p", [JSX2])),
-    ?assertEqual(JSX1, JSX2),
-    ok.
 
 nested_test() ->
     H = new(mkid()),

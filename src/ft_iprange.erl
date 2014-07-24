@@ -7,7 +7,6 @@
 
 -module(ft_iprange).
 
--include("sniffle.hrl").
 -include("ft.hrl").
 
 -ifdef(TEST).
