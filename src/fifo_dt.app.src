@@ -7,5 +7,5 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, { fifo_uitls_app, []}}
+  {mod, { fifo_dt_app, []}}
  ]}.
