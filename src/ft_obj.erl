@@ -75,15 +75,20 @@ equal(ObjA) ->
 %%
 %% @doc Merge the list of `Objs', calling the appropriate reconcile
 %% fun if there are siblings.
--spec merge(atom(),[any_obj()]) -> ft_obj().
-merge(FSM, [not_found|_]=Objs) ->
+
+-spec merge(atom(), [any_obj()]) -> ft_obj().
+merge(FSM, Objs) ->
+    merge1(FSM, [update(O) || O <- Objs]).
+
+-spec merge1(atom(), [ft_obj()]) -> ft_obj().
+merge1(FSM, [not_found|_]=Objs) ->
     P = fun(X) -> X == not_found end,
     case lists:all(P, Objs) of
         true -> not_found;
-        false -> merge(FSM, [update(O) || O <- lists:dropwhile(P, Objs)])
+        false -> merge1(FSM, lists:dropwhile(P, Objs))
     end;
 
-merge(FSM, [#ft_obj{}|_]=Objs) ->
+merge1(FSM, [#ft_obj{}|_]=Objs) ->
     case children(Objs) of
         [] -> not_found;
         [Child] -> Child;
