@@ -2,10 +2,26 @@
                          {assign, V, T}, none,
                          riak_dt_lwwreg:new())).
 
--record(sniffle_obj, {val    :: term(),
+-define(CONVERT_VORSET(S),
+        riak_dt_orswot:update(
+          {add_all, vorsetg:value(S)}, none,
+          riak_dt_orswot:new())).
+
+-type obj_val() :: term().
+-record(sniffle_obj, {val    :: obj_val(),
                       vclock :: vclock:vclock()}).
 
+-record(snarl_obj, {val    :: obj_val(),
+                    vclock :: vclock:vclock()}).
+
+-record(ft_obj, {val    :: obj_val(),
+                 vclock :: vclock:vclock()}).
+
+
 -type sniffle_obj() :: #sniffle_obj{} | not_found.
+-type snarl_obj() :: #ft_obj{} | not_found.
+-type ft_obj() :: #ft_obj{} | not_found.
+-type any_obj() :: ft_obj() | snarl_obj() | sniffle_obj().
 
 -record(hypervisor_0_1_0,
         {
@@ -146,3 +162,129 @@
 -define(GROUPING, grouping_0_1_0).
 -define(DATASET, dataset_0_1_0).
 -define(NETWORK, network_0_1_0).
+
+
+%% SNARL
+
+-record(user_0_1_0, {
+          uuid             :: vlwwregister:vlwwregister(),
+          name             :: vlwwregister:vlwwregister(),
+          password         :: vlwwregister:vlwwregister(),
+          permissions      :: vorsetg:vorsetg(),
+          roles            :: vorsetg:vorsetg(),
+          metadata
+         }).
+
+-record(user_0_1_1, {
+          uuid             :: vlwwregister:vlwwregister(),
+          name             :: vlwwregister:vlwwregister(),
+          password         :: vlwwregister:vlwwregister(),
+          permissions      :: vorsetg:vorsetg(),
+          roles            :: vorsetg:vorsetg(),
+          ssh_keys         :: vorsetg:vorsetg(),
+          metadata
+         }).
+
+-record(user_0_1_2, {
+          uuid             :: vlwwregister:vlwwregister(),
+          name             :: vlwwregister:vlwwregister(),
+          password         :: vlwwregister:vlwwregister(),
+          active_org       :: vlwwregister:vlwwregister(),
+          permissions      :: vorsetg:vorsetg(),
+          roles            :: vorsetg:vorsetg(),
+          ssh_keys         :: vorsetg:vorsetg(),
+          orgs             :: vorsetg:vorsetg(),
+          metadata
+         }).
+
+-record(user_0_1_3, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(user_0_1_4, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(user_0_1_5, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(group_0_1_0, {
+          uuid             :: vlwwregister:vlwwregister(),
+          name             :: vlwwregister:vlwwregister(),
+          permissions      :: vorsetg:vorsetg(),
+          metadata
+         }).
+
+-record(group_0_1_1, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+
+-record(role_0_1_0, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(organisation_0_1_0, {
+          uuid             :: vlwwregister:vlwwregister(),
+          name             :: vlwwregister:vlwwregister(),
+          triggers         :: vorsetg:vorsetg(),
+          metadata
+         }).
+
+-record(organisation_0_1_1, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          triggers    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(organisation_0_1_2, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          triggers    = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-record(organisation_0_1_3, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          triggers    = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-define(USER, user_0_1_5).
+-define(ROLE, role_0_1_0).
+-define(ORG, organisation_0_1_3).

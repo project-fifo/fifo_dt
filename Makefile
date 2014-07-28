@@ -1,6 +1,6 @@
 REBAR = $(shell pwd)/rebar
 
-.PHONY: deps all
+.PHONY: deps all test
 
 
 all: cp-hooks deps compile

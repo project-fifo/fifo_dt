@@ -39,4 +39,15 @@ metadata_kvs() ->
     ?SUCHTHAT(L, list({non_blank_string(), metadata_value()}), L /= []
               andalso lists:sort([K || {K, _} <- L]) == lists:usort([K || {K, _} <- L])).
 
+permission() ->
+    ?SIZED(Size, permission(Size)).
+
+permission(Size) ->
+    ?LAZY(oneof([[oneof([<<"...">>, perm_entry()])] || Size == 0] ++
+                    [[perm_entry() | permission(Size -1)] || Size > 0])).
+
+perm_entry() ->
+    oneof([<<"_">>, non_blank_string()]).
+
+
 -endif.
