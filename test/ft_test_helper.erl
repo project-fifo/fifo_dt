@@ -9,10 +9,12 @@
 id(I) ->
     {I, eqc}.
 
-id() ->
+timestamp() ->
     {Mega, Sec, Micro} = now(),
-    Now = (Mega * 1000000  + Sec) * 1000000 + Micro,
-    id(Now).
+    (Mega * 1000000  + Sec) * 1000000 + Micro.
+
+id() ->
+    id(timestamp()).
 
 atom() ->
     elements([a,b,c,undefined]).
