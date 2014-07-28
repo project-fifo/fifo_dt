@@ -51,7 +51,8 @@
                             #organisation_0_1_2{} |
                             statebox:statebox().
 
-getter(#snarl_obj{val=S0}, <<"uuid">>) ->
+getter(O, <<"uuid">>) ->
+    S0 = ft_obj:val(O),
     ID = snarl_vnode:mkid(getter),
     uuid(ft_org:load(ID, S0)).
 
