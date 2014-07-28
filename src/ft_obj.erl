@@ -37,9 +37,7 @@ ancestors(Objs0) ->
 %%
 %% @doc Predicate to determine if `Va' is ancestor of `Vb'.
 -spec ancestor(vclock:vclock(), vclock:vclock()) -> boolean().
-ancestor(VaIn, VbIn) ->
-    Va = update(VaIn),
-    Vb = update(VbIn),
+ancestor(Va, Vb) ->
     vclock:descends(Vb, Va) andalso (vclock:descends(Va, Vb) == false).
 
 %% @pure
