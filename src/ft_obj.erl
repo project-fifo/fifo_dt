@@ -126,7 +126,7 @@ update1(Val, Updater, #ft_obj{vclock=VClock0}=Obj0) ->
 val(O) -> val1(update(O)).
 
 -spec val1(ft_obj()) -> any().
-val1(#snarl_obj{val=Val}) -> Val;
+val1(#ft_obj{val=Val}) -> Val;
 val1(not_found) -> not_found.
 
 %% @pure
