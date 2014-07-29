@@ -15,7 +15,7 @@
                     vclock :: vclock:vclock()}).
 
 -record(ft_obj, {val    :: obj_val(),
-                 vclock :: vclock:vclock()}).
+                 vclock = vclock:fresh() :: vclock:vclock()}).
 
 
 -type sniffle_obj() :: #sniffle_obj{} | not_found.

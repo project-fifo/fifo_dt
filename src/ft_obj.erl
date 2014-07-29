@@ -8,7 +8,7 @@
 
 -module(ft_obj).
 -export([ancestors/1, children/1, equal/1, equal/2, merge/2, unique/1,
-         update/3, update/1, is_a/1]).
+         update/3, update/1, is_a/1, new/0, new/2]).
 -export([val/1, vclock/1]).
 
 -ignore_xref([
@@ -19,6 +19,15 @@
              ]).
 
 -include("ft.hrl").
+
+
+-spec new() -> ft_obj().
+new() ->
+    #ft_obj{}.
+
+-spec new(Value::obj_val(), Coordinator::atom()) -> ft_obj().
+new(Value, Coordinator) ->
+    update(Value, Coordinator, new()).
 
 %% @pure
 %%
