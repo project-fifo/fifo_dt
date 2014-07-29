@@ -13,23 +13,12 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+-define(OBJ, ?IPRANGE).
+-include("ft_helper.hrl").
 
--define(G(N, F),
-        getter(S0, N) ->
-               F(S0)).
-
--define(G(E),
-        E(H) -> riak_dt_lwwreg:value(H#?IPRANGE.E)).
-
--define(S(E),
-        E({T, _ID}, V, H) ->
-               {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.E),
-               H#?IPRANGE{E = V1}).
-
--define(S(N, F),
-        set(TID, N, Value, D) ->
-               F(TID, Value, D)).
-
+-define(GSub(N, F),
+        sub_getter(O, N) ->
+               F(O)).
 
 -define(IS_IP, is_integer(V), V > 0, V < 16#FFFFFFFF).
 
@@ -104,15 +93,23 @@ free(H) ->
 
 used(H) ->
     riak_dt_orswot:value(H#?IPRANGE.used).
-getter(#sniffle_obj{val=S0}, E) ->
-    getter(S0, E);
-?G(<<"uuid">>, uuid);
-?G(<<"name">>, name);
-?G(<<"network">>, network);
-?G(<<"netmask">>, netmask);
-?G(<<"gateway">>, gateway);
-?G(<<"tag">>, tag);
-?G(<<"vlan">>, vlan).
+
+getter(O, E) ->
+    case ft_obj:is_a(O) of
+        true ->
+            S0 = ft_obj:val(O),
+            sub_getter(S0, E);
+        false ->
+            sub_getter(O, E)
+    end.
+
+?GSub(<<"uuid">>, uuid);
+?GSub(<<"name">>, name);
+?GSub(<<"network">>, network);
+?GSub(<<"netmask">>, netmask);
+?GSub(<<"gateway">>, gateway);
+?GSub(<<"tag">>, tag);
+?GSub(<<"vlan">>, vlan).
 
 load(_, #?IPRANGE{} = I) ->
     I;

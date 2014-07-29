@@ -8,6 +8,8 @@
 -module(ft_network).
 
 -include("ft.hrl").
+-define(OBJ, ?NETWORK).
+-include("ft_helper.hrl").
 
 -export([
          new/1,
@@ -33,7 +35,7 @@
              ]).
 
 set({T, ID}, <<"metadata">>, V, H) ->
-    H#?HYPERVISOR{metadata = fifo_map:from_orddict(V, ID, T)};
+    H#?NETWORK{metadata = fifo_map:from_orddict(V, ID, T)};
 
 set(ID, K = <<"metadata.", _/binary>>, V, H) ->
     set(ID, re:split(K, "\\."), V, H);
@@ -49,23 +51,14 @@ to_json(N) ->
      {<<"uuid">>, uuid(N)}
     ].
 
-uuid(H) ->
-    riak_dt_lwwreg:value(H#?NETWORK.uuid).
+?G(uuid).
+?G(name).
 
-uuid({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?NETWORK.uuid),
-    H#?NETWORK{uuid = V1}.
-
-name(H) ->
-    riak_dt_lwwreg:value(H#?NETWORK.name).
-
-name({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?NETWORK.name),
-    H#?NETWORK{name = V1}.
+?S(uuid).
+?S(name).
 
 ipranges(H) ->
     riak_dt_orswot:value(H#?NETWORK.ipranges).
-
 
 add_iprange({_T, ID}, V, H) ->
     {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?NETWORK.ipranges),
@@ -79,11 +72,8 @@ remove_iprange({_T, ID}, V, H) ->
             H#?NETWORK{ipranges = O1}
     end.
 
-
-getter(#sniffle_obj{val=S0}, <<"name">>) ->
-    name(S0);
-getter(#sniffle_obj{val=S0}, <<"uuid">>) ->
-    uuid(S0).
+?G(<<"name">>, name);
+?G(<<"uuid">>, uuid).
 
 load(_, #?NETWORK{} = N) ->
     N;

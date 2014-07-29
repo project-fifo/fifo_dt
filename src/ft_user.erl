@@ -8,6 +8,9 @@
 -module(ft_user).
 
 -include("ft.hrl").
+-define(OBJ, ?USER).
+-include("ft_helper.hrl").
+
 
 -export([update_permissions/2]).
 -ignore_xref([update_permissions/2]).
@@ -56,10 +59,7 @@
                     #user_0_1_0{} |
                     statebox:statebox().
 
-getter(O, <<"uuid">>) ->
-    S0 = ft_obj:val(O),
-    ID = snarl_vnode:mkid(getter),
-    uuid(ft_user:load(ID, S0)).
+?G(<<"uuid">>, uuid).
 
 is_a(#?USER{}) ->
     true;

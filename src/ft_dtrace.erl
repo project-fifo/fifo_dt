@@ -8,6 +8,8 @@
 -module(ft_dtrace).
 
 -include("ft.hrl").
+-define(OBJ,?DTRACE).
+-include("ft_helper.hrl").
 
 -export([
          set/4,
@@ -87,10 +89,8 @@ set_config({T, ID}, Attribute, Value, G) ->
     {ok, M1} = fifo_map:set(Attribute, Value, ID, T, G#?DTRACE.config),
     G#?DTRACE{config = M1}.
 
-getter(#sniffle_obj{val=S0}, <<"name">>) ->
-    name(S0);
-getter(#sniffle_obj{val=S0}, <<"uuid">>) ->
-    uuid(S0).
+?G(<<"name">>, name);
+?G(<<"uuid">>, uuid).
 
 load(_, #?DTRACE{} = D) ->
     D;

@@ -8,6 +8,8 @@
 -module(ft_role).
 
 -include("ft.hrl").
+-define(OBJ, ?ROLE).
+-include("ft_helper.hrl").
 
 -ifdef(TEST).
 -export([update_permissions/2]).
@@ -47,10 +49,7 @@
         #group_0_1_0{} |
         statebox:statebox().
 
-getter(O, <<"uuid">>) ->
-    S0 = ft_obj:val(O),
-    ID = snarl_vnode:mkid(getter),
-    uuid(load(ID, S0)).
+?G(<<"uuid">>, uuid).
 
 is_a(#?ROLE{}) ->
     true;

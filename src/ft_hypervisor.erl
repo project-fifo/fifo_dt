@@ -13,12 +13,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--define(G(N, F),
-        getter(#sniffle_obj{val=S0}, N) ->
-               F(S0)).
-
--define(G(E),
-        E(H) -> riak_dt_lwwreg:value(H#?PACKAGE.E)).
+-define(OBJ, ?HYPERVISOR).
+-include("ft_helper.hrl").
 
 -export([
          load/2,
@@ -288,7 +284,8 @@ set_service({T, ID}, Attribute, Value, H) ->
 ?G(<<"alias">>, alias);
 ?G(<<"resources">>, resources);
 
-getter(#sniffle_obj{val=S0}, Resource) ->
+getter(O, Resource) ->
+    S0 = ft_obj:val(O),
     JSON = to_json(S0),
     jsxd:get(Resource, 0, JSON).
 

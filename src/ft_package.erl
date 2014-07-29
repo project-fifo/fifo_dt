@@ -8,22 +8,8 @@
 -module(ft_package).
 
 -include("ft.hrl").
-
--define(G(N, F),
-        getter(#sniffle_obj{val=S0}, N) ->
-               F(S0)).
-
--define(G(E),
-        E(H) -> riak_dt_lwwreg:value(H#?PACKAGE.E)).
-
--define(S(E),
-        E({T, _ID}, V, H) ->
-               {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?PACKAGE.E),
-               H#?PACKAGE{E = V1}).
-
--define(S(N, F),
-        set(TID, N, Value, D) ->
-               F(TID, Value, D)).
+-define(OBJ, ?PACKAGE).
+-include("ft_helper.hrl").
 
 -export([
          to_json/1,

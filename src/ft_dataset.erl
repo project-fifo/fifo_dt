@@ -7,22 +7,8 @@
 -module(ft_dataset).
 
 -include("ft.hrl").
-
--define(G(N, F),
-        getter(#sniffle_obj{val=S0}, N) ->
-               F(S0)).
-
--define(G(E),
-        E(H) -> riak_dt_lwwreg:value(H#?DATASET.E)).
-
--define(S(E),
-        E({T, _ID}, V, H) ->
-               {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.E),
-               H#?DATASET{E = V1}).
-
--define(S(N, F),
-        set(TID, N, Value, D) ->
-               F(TID, Value, D)).
+-define(OBJ,?DATASET).
+-include("ft_helper.hrl").
 
 -export([
          new/1,

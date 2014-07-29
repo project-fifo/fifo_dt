@@ -8,6 +8,8 @@
 -module(ft_org).
 
 -include("ft.hrl").
+-define(OBJ, ?ORG).
+-include("ft_helper.hrl").
 
 -ifdef(TEST).
 -export([update_triggers/2, jsonify_trigger/1]).
@@ -51,10 +53,7 @@
                             #organisation_0_1_2{} |
                             statebox:statebox().
 
-getter(O, <<"uuid">>) ->
-    S0 = ft_obj:val(O),
-    ID = snarl_vnode:mkid(getter),
-    uuid(ft_org:load(ID, S0)).
+?G(<<"uuid">>, uuid).
 
 is_a(#?ORG{}) ->
     true;

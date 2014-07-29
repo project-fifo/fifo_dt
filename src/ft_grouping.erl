@@ -1,6 +1,8 @@
 -module(ft_grouping).
 
 -include("ft.hrl").
+-define(OBJ, ?GROUPING).
+-include("ft_helper.hrl").
 
 -export([
          uuid/3,
@@ -84,17 +86,11 @@ remove_grouping({_T, ID}, V, H) ->
             H#?GROUPING{groupings = O1}
     end.
 
-
-getter(#sniffle_obj{val=S0}, <<"name">>) ->
-    name(S0);
-getter(#sniffle_obj{val=S0}, <<"uuid">>) ->
-    uuid(S0);
-getter(#sniffle_obj{val=S0}, <<"elements">>) ->
-    elements(S0);
-getter(#sniffle_obj{val=S0}, <<"groupings">>) ->
-    groupings(S0);
-getter(#sniffle_obj{val=S0}, <<"type">>) ->
-    type(S0).
+?G(<<"name">>, name);
+?G(<<"uuid">>, uuid);
+?G(<<"elements">>, elements);
+?G(<<"groupings">>, groupings);
+?G(<<"type">>, type).
 
 load(_, #?GROUPING{} = G) ->
     G.
