@@ -22,7 +22,7 @@
          remove_grouping/3,
          elements/1,
          groupings/1,
-         set_metadata/4
+         metadata/1, set_metadata/3, set_metadata/4
         ]).
 
 -ignore_xref([
@@ -32,7 +32,7 @@
               type/1, type/3,
               elements/1, add_element/3, remove_element/3,
               groupings/1, add_grouping/3, remove_grouping/3,
-              metadata/1, set_metadata/4
+              metadata/1, set_metadata/3, set_metadata/4
              ]).
 
 uuid(H) ->
@@ -105,6 +105,12 @@ new({T, _ID}) ->
 
 metadata(G) ->
     fifo_map:value(G#?GROUPING.metadata).
+
+set_metadata(ID, [{K, V} | R] , Vm) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+
+set_metadata(_ID, _, Vm) ->
+    Vm.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);

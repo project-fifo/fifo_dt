@@ -24,7 +24,7 @@
          roles/1, join/3, leave/3,
          join_org/3, leave_org/3, select_org/3, orgs/1, active_org/1,
          add_key/4, revoke_key/3, keys/1,
-         metadata/1, set_metadata/4,
+         metadata/1, set_metadata/3, set_metadata/4,
          add_yubikey/3, yubikeys/1, remove_yubikey/3,
          merge/2,
          to_json/1,
@@ -41,7 +41,7 @@
               permissions/1, grant/3, revoke/3, revoke_prefix/3,
               roles/1, join/3, leave/3,
               add_key/4, revoke_key/3, keys/1,
-              metadata/1, set_metadata/4,
+              metadata/1, set_metadata/3, set_metadata/4,
               join_org/3, leave_org/3, select_org/3, orgs/1, active_org/1,
               add_yubikey/3, yubikeys/1, remove_yubikey/3,
               merge/2, getter/2,
@@ -441,6 +441,12 @@ leave({_T, ID}, Role, User) ->
 
 metadata(User) ->
     fifo_map:value(User#?USER.metadata).
+
+set_metadata(ID, [{K, V} | R] , Obj) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
+
+set_metadata(_ID, _, Obj) ->
+    Obj.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);

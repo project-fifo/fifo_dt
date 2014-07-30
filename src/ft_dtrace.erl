@@ -24,7 +24,7 @@
          name/1, name/3,
          uuid/1, uuid/3,
          script/1, script/3,
-         metadata/1, set_metadata/4,
+         metadata/1, set_metadata/3, set_metadata/4,
          config/1, set_config/4
         ]).
 
@@ -35,7 +35,7 @@
          name/1, name/3,
          uuid/1, uuid/3,
          script/1, script/3,
-         metadata/1, set_metadata/4,
+         metadata/1, set_metadata/3, set_metadata/4,
          config/1, set_config/4
         ]).
 
@@ -63,6 +63,12 @@ script({T, _ID}, V, H) ->
 
 metadata(H) ->
     fifo_map:value(H#?DTRACE.metadata).
+
+set_metadata(ID, [{K, V} | R] , Vm) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+
+set_metadata(_ID, _, Vm) ->
+    Vm.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);

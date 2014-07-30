@@ -15,12 +15,10 @@
          load/2,
          uuid/1, uuid/3,
          type/1, type/3,
-         status/1, status/3,
-         imported/1, imported/3,
          set/4,
          getter/2,
          to_json/1,
-         metadata/1, set_metadata/4,
+         metadata/1, set_metadata/3, set_metadata/4,
          requirements/1, add_requirement/3, remove_requirement/3,
          merge/2
         ]).
@@ -31,57 +29,39 @@
               imported/1, imported/3,
               status/1, status/3,
               requirements/1, add_requirement/3, remove_requirement/3,
-              metadata/1, set_metadata/4
+              metadata/1, set_metadata/3, set_metadata/4
              ]).
 
 -export([
-         dataset/1,
-         dataset/3,
-         description/1,
-         description/3,
-         disk_driver/1,
-         disk_driver/3,
-         homepage/1,
-         homepage/3,
-         image_size/1,
-         image_size/3,
-         name/1,
-         name/3,
-         networks/1,
-         networks/3,
-         nic_driver/1,
-         nic_driver/3,
-         os/1,
-         os/3,
-         users/1,
-         users/3,
-         version/1,
-         version/3
+         dataset/1, dataset/3,
+         description/1, description/3,
+         disk_driver/1, disk_driver/3,
+         homepage/1, homepage/3,
+         image_size/1, image_size/3,
+         name/1, name/3,
+         networks/1, networks/3,
+         nic_driver/1, nic_driver/3,
+         os/1, os/3,
+         users/1, users/3,
+         version/1, version/3,
+         status/1, status/3,
+         imported/1, imported/3
         ]).
 
 -ignore_xref([
-              dataset/1,
-              dataset/3,
-              description/1,
-              description/3,
-              disk_driver/1,
-              disk_driver/3,
-              homepage/1,
-              homepage/3,
-              image_size/1,
-              image_size/3,
-              name/1,
-              name/3,
-              networks/1,
-              networks/3,
-              nic_driver/1,
-              nic_driver/3,
-              os/1,
-              os/3,
-              users/1,
-              users/3,
-              version/1,
-              version/3
+              dataset/1, dataset/3,
+              description/1, description/3,
+              disk_driver/1, disk_driver/3,
+              homepage/1, homepage/3,
+              image_size/1, image_size/3,
+              name/1, name/3,
+              networks/1, networks/3,
+              nic_driver/1, nic_driver/3,
+              os/1, os/3,
+              users/1, users/3,
+              version/1, version/3,
+              status/1, status/3,
+              imported/1, imported/3
              ]).
 
 
@@ -167,6 +147,12 @@ remove_requirement({_T, ID}, V, H) ->
 
 metadata(H) ->
     fifo_map:value(H#?DATASET.metadata).
+
+set_metadata(ID, [{K, V} | R] , Vm) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+
+set_metadata(_ID, _, Vm) ->
+    Vm.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);

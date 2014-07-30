@@ -18,7 +18,6 @@
          merge/2,
          getter/2,
          set/4,
-         set_metadata/4,
          blocksize/1, blocksize/3,
          compression/1, compression/3,
          cpu_cap/1, cpu_cap/3,
@@ -29,11 +28,12 @@
          ram/1, ram/3,
          uuid/1, uuid/3,
          requirements/1, add_requirement/3, remove_requirement/3,
+         metadata/1, set_metadata/3, set_metadata/4,
          zfs_io_priority/1, zfs_io_priority/3
         ]).
 
 -ignore_xref([
-              set_metadata/4,
+              metadata/1, set_metadata/3, set_metadata/4,
               blocksize/1, blocksize/3,
               compression/1, compression/3,
               cpu_cap/1, cpu_cap/3,
@@ -216,6 +216,12 @@ set(ID, K = <<"metadata.", _/binary>>, V, H) ->
     set(ID, re:split(K, "\\."), V, H);
 set(ID, [<<"metadata">> | R], V, H) ->
     set_metadata(ID, R, V, H).
+
+set_metadata(ID, [{K, V} | R] , Obj) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
+
+set_metadata(_ID, _, Obj) ->
+    Obj.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);

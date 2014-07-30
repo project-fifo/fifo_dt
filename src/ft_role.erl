@@ -21,7 +21,7 @@
          uuid/1, uuid/3,
          name/1, name/3,
          permissions/1, grant/3, revoke/3, revoke_prefix/3,
-         metadata/1, set_metadata/4,
+         metadata/1, set_metadata/3, set_metadata/4,
          merge/2,
          to_json/1,
          getter/2,
@@ -36,7 +36,7 @@
               uuid/1, uuid/2,
               name/1, name/2,
               permissions/1, grant/3, revoke/3, revoke_prefix/3,
-              metadata/1, set_metadata/4,
+              metadata/1, set_metadata/3, set_metadata/4,
               getter/2,
               to_json/1
              ]).
@@ -214,6 +214,12 @@ revoke_prefix({_T, ID}, Prefix, Role) ->
 
 metadata(Role) ->
     fifo_map:value(Role#?ROLE.metadata).
+
+set_metadata(ID, [{K, V} | R] , Obj) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
+
+set_metadata(_ID, _, Obj) ->
+    Obj.
 
 set_metadata({T, ID}, P, Value, Role) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, Role);

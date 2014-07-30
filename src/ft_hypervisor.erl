@@ -227,11 +227,11 @@ set_characteristic({T, ID}, Attribute, Value, H) ->
 metadata(H) ->
     fifo_map:value(H#?HYPERVISOR.metadata).
 
-set_metadata(ID, [{K, V} | R] , Vm) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+set_metadata(ID, [{K, V} | R] , Obj) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 
-set_metadata(_ID, _, Vm) ->
-    Vm.
+set_metadata(_ID, _, Obj) ->
+    Obj.
 
 set_metadata({T, ID}, P, Value, H) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, H);
