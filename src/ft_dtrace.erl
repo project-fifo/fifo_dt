@@ -25,7 +25,7 @@
          uuid/1, uuid/3,
          script/1, script/3,
          metadata/1, set_metadata/3, set_metadata/4,
-         config/1, set_config/4
+         config/1, set_config/3, set_config/4
         ]).
 
 -ignore_xref([merge/2, load/2, getter/2, uuid/1]).
@@ -36,7 +36,7 @@
          uuid/1, uuid/3,
          script/1, script/3,
          metadata/1, set_metadata/3, set_metadata/4,
-         config/1, set_config/4
+         config/1, set_config/3, set_config/4
         ]).
 
 
@@ -64,11 +64,11 @@ script({T, _ID}, V, H) ->
 metadata(H) ->
     fifo_map:value(H#?DTRACE.metadata).
 
-set_metadata(ID, [{K, V} | R] , Vm) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
+set_metadata(ID, [{K, V} | R] , Obj) ->
+    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 
-set_metadata(_ID, _, Vm) ->
-    Vm.
+set_metadata(_ID, _, Obj) ->
+    Obj.
 
 set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
     set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
@@ -83,6 +83,12 @@ set_metadata({T, ID}, Attribute, Value, G) ->
 
 config(H) ->
     fifo_map:value(H#?DTRACE.config).
+
+set_config(ID, [{K, V} | R] , Obj) ->
+    set_config(ID, R, set_config(ID, K, V, Obj));
+
+set_config(_ID, _, Obj) ->
+    Obj.
 
 set_config({T, ID}, P, Value, User) when is_binary(P) ->
     set_config({T, ID}, fifo_map:split_path(P), Value, User);
