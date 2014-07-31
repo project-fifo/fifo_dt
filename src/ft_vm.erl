@@ -325,7 +325,7 @@ load({T, ID}, Sb) ->
     V = statebox:value(Sb),
     {ok, UUID} = jsxd:get([<<"uuid">>], V),
     Alias = jsxd:get([<<"config">>, <<"alias">>], UUID, V),
-    {ok, Owner} = jsxd:get([<<"owner">>], V),
+    Owner = jsxd:get([<<"owner">>], <<>>, V),
     {ok, Dataset} = jsxd:get([<<"dataset">>], V),
     {ok, Package} = jsxd:get([<<"package">>], V),
     {ok, Hypervisor} = jsxd:get([<<"hypervisor">>], V),
