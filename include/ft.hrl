@@ -61,7 +61,6 @@
           requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           metadata       = riak_dt_map:new()    :: riak_dt_map:map(),
 
-          dataset        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           disk_driver    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           homepage       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),

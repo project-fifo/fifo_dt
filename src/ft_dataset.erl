@@ -13,27 +13,19 @@
 -export([
          new/1,
          load/2,
-         uuid/1, uuid/3,
-         type/1, type/3,
          set/4,
          getter/2,
          to_json/1,
-         metadata/1, set_metadata/3, set_metadata/4,
-         requirements/1, add_requirement/3, remove_requirement/3,
          merge/2
         ]).
 
--ignore_xref([load/2, load/1, set/4, set/3, getter/2, merge/2,
-              type/1, type/3,
-              uuid/1, uuid/3,
-              imported/1, imported/3,
-              status/1, status/3,
-              requirements/1, add_requirement/3, remove_requirement/3,
-              metadata/1, set_metadata/3, set_metadata/4
+-ignore_xref([
+              load/2, load/1, set/4, set/3, getter/2, merge/2
              ]).
 
 -export([
-         dataset/1, dataset/3,
+         uuid/1, uuid/3,
+         type/1, type/3,
          description/1, description/3,
          disk_driver/1, disk_driver/3,
          homepage/1, homepage/3,
@@ -45,11 +37,17 @@
          users/1, users/3,
          version/1, version/3,
          status/1, status/3,
-         imported/1, imported/3
+         imported/1, imported/3,
+         metadata/1, set_metadata/3, set_metadata/4,
+         requirements/1, add_requirement/3, remove_requirement/3
+
         ]).
 
 -ignore_xref([
-              dataset/1, dataset/3,
+              type/1, type/3,
+              uuid/1, uuid/3,
+              imported/1, imported/3,
+              status/1, status/3,
               description/1, description/3,
               disk_driver/1, disk_driver/3,
               homepage/1, homepage/3,
@@ -61,7 +59,10 @@
               users/1, users/3,
               version/1, version/3,
               status/1, status/3,
-              imported/1, imported/3
+              imported/1, imported/3,
+              requirements/1, add_requirement/3, remove_requirement/3,
+              metadata/1, set_metadata/3, set_metadata/4
+
              ]).
 
 
@@ -77,7 +78,6 @@ new({T, _ID}) ->
 ?G(<<"status">>, status);
 ?G(<<"imported">>, imported);
 
-?G(<<"dataset">>, dataset);
 ?G(<<"description">>, description);
 ?G(<<"disk_driver">>, disk_driver);
 ?G(<<"homepage">>, homepage);
@@ -107,8 +107,6 @@ type({T, _ID}, V, H) when V =:= kvm;
 ?G(imported).
 ?S(imported).
 
-?G(dataset).
-?S(dataset).
 ?G(description).
 ?S(description).
 ?G(disk_driver).
@@ -174,7 +172,6 @@ to_json(D) ->
                zone -> <<"zone">>
            end,
     Vs = [
-          {<<"dataset">>, fun dataset/1},
           {<<"description">>, fun description/1},
           {<<"disk_driver">>, fun disk_driver/1},
           {<<"homepage">>, fun homepage/1},
@@ -221,7 +218,7 @@ load(_, #?DATASET{} = H) ->
 
 load({T, ID}, Sb) ->
     H = statebox:value(Sb),
-    {ok, UUID} = jsxd:get([<<"uuid">>], H),
+    {ok, UUID} = jsxd:get([<<"dataset">>], H),
     {ok, Imported} = jsxd:get([<<"imported">>], H),
     {ok, Status} = jsxd:get([<<"status">>], H),
     {ok, Metadata} = jsxd:get([<<"metadata">>], [], H),
@@ -234,21 +231,13 @@ load({T, ID}, Sb) ->
     Requirements1 = riak_dt_orswot:update(
                       {add_all, Requirements}, ID,
                       riak_dt_orswot:new()),
-
-    D = #dataset_0_1_0{
-           uuid = UUID1,
-           imported = Imported1,
-           status = Status1,
-           requirements    = Requirements1,
-           metadata = Metadata1
-          },
-    D1 = case jsxd:get([<<"dataset">>], H) of
-             {ok, Dataset} ->
-                 {ok, Dataset1} = ?NEW_LWW(Dataset, T),
-                 D#dataset_0_1_0{dataset = Dataset1};
-             _->
-                 D
-         end,
+    D1 = #dataset_0_1_0{
+            uuid            = UUID1,
+            imported        = Imported1,
+            status          = Status1,
+            requirements    = Requirements1,
+            metadata        = Metadata1
+           },
     D2 = case jsxd:get([<<"description">>], H) of
              {ok, Description} ->
                  {ok, Description1} = ?NEW_LWW(Description, T),
@@ -326,7 +315,6 @@ load({T, ID}, Sb) ->
 ?S(<<"type">>, type);
 ?S(<<"imported">>, imported);
 
-?S(<<"dataset">>, dataset);
 ?S(<<"description">>, description);
 ?S(<<"disk_driver">>, disk_driver);
 ?S(<<"homepage">>, homepage);
@@ -344,7 +332,6 @@ set(ID, [<<"metadata">> | R], V, H) ->
     set_metadata(ID, R, V, H).
 
 merge(#?DATASET{
-          dataset        = Dataset1,
           description    = Desc1,
           disk_driver    = DiskD1,
           homepage       = Homepage1,
@@ -363,7 +350,6 @@ merge(#?DATASET{
           version        = Version1
          },
       #?DATASET{
-          dataset        = Dataset2,
           description    = Desc2,
           disk_driver    = DiskD2,
           homepage       = Homepage2,
@@ -382,7 +368,6 @@ merge(#?DATASET{
           version        = Version2
          }) ->
     #?DATASET{
-        dataset        = riak_dt_lwwreg:merge(Dataset1, Dataset2),
         description    = riak_dt_lwwreg:merge(Desc1, Desc2),
         disk_driver    = riak_dt_lwwreg:merge(DiskD1, DiskD2),
         homepage       = riak_dt_lwwreg:merge(Homepage1, Homepage2),

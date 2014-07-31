@@ -35,7 +35,6 @@ dataset(Size) ->
                                {call, ?D, imported, [id(Size), int(), O]},
                                {call, ?D, type, [id(Size), dataset_type(), O]},
 
-                               {call, ?D, dataset, [id(Size), non_blank_string(), O]},
                                {call, ?D, description, [id(Size), non_blank_string(), O]},
                                {call, ?D, disk_driver, [id(Size), non_blank_string(), O]},
                                {call, ?D, homepage, [id(Size), non_blank_string(), O]},
@@ -91,9 +90,6 @@ model_type(kvm, R) ->
 
 model_imported(N, R) ->
     r(<<"imported">>, N, R).
-
-model_dataset(N, R) ->
-    r(<<"dataset">>, N, R).
 
 model_description(N, R) ->
     r(<<"description">>, N, R).
@@ -210,16 +206,6 @@ prop_imported() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
                           model(?D:imported(id(?BIG_TIME), N, Hv)) ==
                               model_imported(N, model(Hv)))
-            end).
-
-prop_dataset() ->
-    ?FORALL({N, R},
-            {non_blank_string(), dataset()},
-            begin
-                Hv = eval(R),
-                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
-                          model(?D:dataset(id(?BIG_TIME), N, Hv)) ==
-                              model_dataset(N, model(Hv)))
             end).
 
 prop_description() ->
