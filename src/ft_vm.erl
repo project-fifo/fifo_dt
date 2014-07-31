@@ -326,8 +326,8 @@ load({T, ID}, Sb) ->
     {ok, UUID} = jsxd:get([<<"uuid">>], V),
     Alias = jsxd:get([<<"config">>, <<"alias">>], UUID, V),
     Owner = jsxd:get([<<"owner">>], <<>>, V),
-    {ok, Dataset} = jsxd:get([<<"dataset">>], V),
-    {ok, Package} = jsxd:get([<<"package">>], V),
+    Dataset = jsxd:get([<<"dataset">>], <<>>, V),
+    Package = jsxd:get([<<"package">>], <<>>, V),
     {ok, Hypervisor} = jsxd:get([<<"hypervisor">>], V),
     {ok, State} = jsxd:get([<<"state">>], V),
 
