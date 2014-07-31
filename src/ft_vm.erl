@@ -348,7 +348,13 @@ load({T, ID}, Sb) ->
     Package1 = ?NEW_LWW(Package, T),
     Hypervisor1 = ?NEW_LWW(Hypervisor, T),
 
-    NetworkMap1 = fifo_map:from_orddict(NetworkMap, ID, T),
+    NetworkMap1 =
+        [
+         {IP, Network} ||
+            [{<<"ip">>, IP},
+             {<<"network">>, Network}] <- NetworkMap
+        ],
+    NetworkMap2 = fifo_map:from_orddict(NetworkMap1, ID, T),
     Config1 = fifo_map:from_orddict(Config, ID, T),
     Info1 = fifo_map:from_orddict(Info, ID, T),
     Backups1 = fifo_map:from_orddict(Backups, ID, T),
@@ -371,7 +377,7 @@ load({T, ID}, Sb) ->
 
         logs = Logs1,
 
-        network_map = NetworkMap1,
+        network_map = NetworkMap2,
         config = Config1,
         info = Info1,
         backups = Backups1,
