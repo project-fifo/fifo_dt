@@ -221,7 +221,7 @@ load({T, ID}, Sb) ->
     {ok, UUID} = jsxd:get([<<"dataset">>], H),
     {ok, Imported} = jsxd:get([<<"imported">>], H),
     {ok, Status} = jsxd:get([<<"status">>], H),
-    {ok, Metadata} = jsxd:get([<<"metadata">>], [], H),
+    Metadata = jsxd:get([<<"metadata">>], [], H),
     {ok, UUID1} = ?NEW_LWW(UUID, T),
     {ok, Imported1} = ?NEW_LWW(Imported, T),
     {ok, Status1} = ?NEW_LWW(Status, T),
