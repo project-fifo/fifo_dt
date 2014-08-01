@@ -280,35 +280,35 @@ load({T, ID}, Sb) ->
              _->
                  D6
          end,
-    D7 = case jsxd:get([<<"nic_driver">>], H) of
+    D8 = case jsxd:get([<<"nic_driver">>], H) of
              {ok, NicDriver} ->
                  {ok, NicDriver1} = ?NEW_LWW(NicDriver, T),
-                 D6#dataset_0_1_0{nic_driver = NicDriver1};
-             _->
-                 D6
-         end,
-    D8 = case jsxd:get([<<"os">>], H) of
-             {ok, OS} ->
-                 {ok, OS1} = ?NEW_LWW(OS, T),
-                 D7#dataset_0_1_0{os = OS1};
+                 D7#dataset_0_1_0{nic_driver = NicDriver1};
              _->
                  D7
          end,
-    D9 = case jsxd:get([<<"users">>], H) of
-             {ok, Users} ->
-                 {ok, Users1} = ?NEW_LWW(Users, T),
-                 D8#dataset_0_1_0{users = Users1};
+    D9 = case jsxd:get([<<"os">>], H) of
+             {ok, OS} ->
+                 {ok, OS1} = ?NEW_LWW(OS, T),
+                 D8#dataset_0_1_0{os = OS1};
              _->
                  D8
          end,
-    D10 = case jsxd:get([<<"version">>], H) of
+    D10 = case jsxd:get([<<"users">>], H) of
+             {ok, Users} ->
+                 {ok, Users1} = ?NEW_LWW(Users, T),
+                 D9#dataset_0_1_0{users = Users1};
+             _->
+                 D9
+         end,
+    D11 = case jsxd:get([<<"version">>], H) of
               {ok, Version} ->
                   {ok, Version1} = ?NEW_LWW(Version, T),
-                  D9#dataset_0_1_0{version = Version1};
+                  D10#dataset_0_1_0{version = Version1};
               _->
-                  D9
+                  D10
           end,
-    load({T, ID}, D10).
+    load({T, ID}, D11).
 
 ?S(<<"uuid">>, uuid);
 ?S(<<"status">>, status);
