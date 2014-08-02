@@ -7,7 +7,7 @@
 -module(ft_dataset).
 
 -include("ft.hrl").
--define(OBJ,?DATASET).
+-define(OBJ, ?DATASET).
 -include("ft_helper.hrl").
 
 -export([
@@ -219,8 +219,8 @@ load(_, #?DATASET{} = H) ->
 load({T, ID}, Sb) ->
     H = statebox:value(Sb),
     {ok, UUID} = jsxd:get([<<"dataset">>], H),
-    {ok, Imported} = jsxd:get([<<"imported">>], H),
-    {ok, Status} = jsxd:get([<<"status">>], H),
+    Imported = jsxd:get([<<"imported">>], 1, H),
+    Status = jsxd:get([<<"status">>], <<"imported">>, H),
     Metadata = jsxd:get([<<"metadata">>], [], H),
     {ok, UUID1} = ?NEW_LWW(UUID, T),
     {ok, Imported1} = ?NEW_LWW(Imported, T),
