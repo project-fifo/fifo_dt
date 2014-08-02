@@ -87,7 +87,8 @@ add([{N, F} | R], In, D) ->
 ?G(<<"max_swap">>, max_swap);
 ?G(<<"quota">>, quota);
 ?G(<<"ram">>, ram);
-?G(<<"zfs_io_priority">>, zfs_io_priority).
+?G(<<"zfs_io_priority">>, zfs_io_priority);
+?G_JSX.
 
 ?G(uuid).
 ?G(name).

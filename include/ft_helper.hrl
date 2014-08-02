@@ -3,8 +3,17 @@
                S0 = ft_obj:val(O),
                F(S0)).
 
+-define(G_JSX,
+        getter(K, O) ->
+               lager:warning("[] Accessing unsupported getter ~p,"
+                             " reverting to jsxd.", [?MODULE, K]),
+               V = ft_obj:value(O),
+               jsxd:get(K, to_json(V))).
+
 -define(G(E),
         E(H) -> riak_dt_lwwreg:value(H#?OBJ.E)).
+
+
 
 -define(S(E),
         E({T, _ID}, V, H) ->

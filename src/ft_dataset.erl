@@ -87,7 +87,8 @@ new({T, _ID}) ->
 ?G(<<"nic_driver">>, nic_driver);
 ?G(<<"os">>, os);
 ?G(<<"users">>, users);
-?G(<<"version">>, version).
+?G(<<"version">>, version);
+?G_JSX.
 
 ?G(uuid).
 ?S(uuid).

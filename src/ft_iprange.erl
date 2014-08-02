@@ -112,7 +112,12 @@ getter(O, E) ->
 ?GSub(<<"netmask">>, netmask);
 ?GSub(<<"gateway">>, gateway);
 ?GSub(<<"tag">>, tag);
-?GSub(<<"vlan">>, vlan).
+?GSub(<<"vlan">>, vlan);
+sub_getter(K, O) ->
+    lager:warning("[] Accessing unsupported getter ~p,"
+                  " reverting to jsxd.", [?MODULE, K]),
+    V = ft_obj:value(O),
+    jsxd:get(K, to_json(V)).
 
 load(_, #?IPRANGE{} = I) ->
     I;

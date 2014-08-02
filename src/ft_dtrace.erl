@@ -102,7 +102,8 @@ set_config({T, ID}, Attribute, Value, G) ->
     G#?DTRACE{config = M1}.
 
 ?G(<<"name">>, name);
-?G(<<"uuid">>, uuid).
+?G(<<"uuid">>, uuid);
+?G_JSX.
 
 load(_, #?DTRACE{} = D) ->
     D;

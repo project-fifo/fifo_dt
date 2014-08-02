@@ -72,7 +72,8 @@ new(_) ->
 ?G(<<"hypervisor">>, hypervisor);
 ?G(<<"config">>, config);
 ?G(<<"services">>, services);
-?G(<<"metadata">>, hypervisor).
+?G(<<"metadata">>, hypervisor);
+?G_JSX.
 
 ?S(<<"uuid">>, uuid);
 ?S(<<"alias">>, alias);

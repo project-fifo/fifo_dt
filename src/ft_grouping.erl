@@ -90,7 +90,9 @@ remove_grouping({_T, ID}, V, H) ->
 ?G(<<"uuid">>, uuid);
 ?G(<<"elements">>, elements);
 ?G(<<"groupings">>, groupings);
-?G(<<"type">>, type).
+?G(<<"type">>, type);
+?G_JSX.
+
 
 load(_, #?GROUPING{} = G) ->
     G.

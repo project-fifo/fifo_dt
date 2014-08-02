@@ -59,7 +59,8 @@
                     #user_0_1_0{} |
                     statebox:statebox().
 
-?G(<<"uuid">>, uuid).
+?G(<<"uuid">>, uuid);
+?G_JSX.
 
 is_a(#?USER{}) ->
     true;

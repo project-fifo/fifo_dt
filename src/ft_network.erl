@@ -73,7 +73,8 @@ remove_iprange({_T, ID}, V, H) ->
     end.
 
 ?G(<<"name">>, name);
-?G(<<"uuid">>, uuid).
+?G(<<"uuid">>, uuid);
+?G_JSX.
 
 load(_, #?NETWORK{} = N) ->
     N;

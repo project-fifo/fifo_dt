@@ -283,11 +283,7 @@ set_service({T, ID}, Attribute, Value, H) ->
 ?G(<<"etherstubs">>, etherstubs);
 ?G(<<"alias">>, alias);
 ?G(<<"resources">>, resources);
-
-getter(O, Resource) ->
-    S0 = ft_obj:val(O),
-    JSON = to_json(S0),
-    jsxd:get(Resource, 0, JSON).
+?G_JSX.
 
 load(_, #?HYPERVISOR{} = H) ->
     H;
