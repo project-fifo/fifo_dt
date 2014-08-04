@@ -134,7 +134,8 @@ metadata(H) ->
 load(_, #?PACKAGE{} = P) ->
     P;
 
-load({T, ID}, D) ->
+load({T, ID}, Sb) ->
+    D = statebox:value(Sb),
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
     BlockSize = jsxd:get(<<"blocksize">>, undefined, D),
