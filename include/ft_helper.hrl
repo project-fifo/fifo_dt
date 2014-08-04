@@ -5,9 +5,9 @@
 
 -define(G_JSX,
         getter(O, K) ->
-               lager:warning("[] Accessing unsupported getter ~p,"
+               lager:warning("[~s] Accessing unsupported getter ~p,"
                              " reverting to jsxd.", [?MODULE, K]),
-               V = ft_obj:value(O),
+               V = ft_obj:val(O),
                jsxd:get(K, to_json(V))).
 
 -define(G(E),
