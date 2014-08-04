@@ -229,9 +229,9 @@ load({T, ID}, Sb) ->
     Requirements = jsxd:get(<<"requirements">>, [], H),
 
     Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-    Requirements1 = riak_dt_orswot:update(
-                      {add_all, Requirements}, ID,
-                      riak_dt_orswot:new()),
+    {ok, Requirements1} = riak_dt_orswot:update(
+                            {add_all, Requirements}, ID,
+                            riak_dt_orswot:new()),
     D1 = #dataset_0_1_0{
             uuid            = UUID1,
             imported        = Imported1,

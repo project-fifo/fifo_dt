@@ -341,13 +341,13 @@ load({T, ID}, Sb) ->
     Metadata = jsxd:get([<<"metadata">>], [], V),
     Logs = jsxd:get([<<"log">>], [], V),
 
-    UUID1 = ?NEW_LWW(UUID, T),
-    State1 = ?NEW_LWW(State, T),
-    Alias1 = ?NEW_LWW(Alias, T),
-    Owner1 = ?NEW_LWW(Owner, T),
-    Dataset1 = ?NEW_LWW(Dataset, T),
-    Package1 = ?NEW_LWW(Package, T),
-    Hypervisor1 = ?NEW_LWW(Hypervisor, T),
+    {ok, UUID1} = ?NEW_LWW(UUID, T),
+    {ok, State1} = ?NEW_LWW(State, T),
+    {ok, Alias1} = ?NEW_LWW(Alias, T),
+    {ok, Owner1} = ?NEW_LWW(Owner, T),
+    {ok, Dataset1} = ?NEW_LWW(Dataset, T),
+    {ok, Package1} = ?NEW_LWW(Package, T),
+    {ok, Hypervisor1} = ?NEW_LWW(Hypervisor, T),
 
     NetworkMap1 =
         [
@@ -363,9 +363,9 @@ load({T, ID}, Sb) ->
     Services1 = fifo_map:from_orddict(Services, ID, T),
     Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
 
-    Logs1 = riak_dt_orswot:update(
-              {add_all, Logs}, ID,
-              riak_dt_orswot:new()),
+    {ok, Logs1} = riak_dt_orswot:update(
+                    {add_all, Logs}, ID,
+                    riak_dt_orswot:new()),
 
     #?VM{
         uuid = UUID1,

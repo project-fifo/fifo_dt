@@ -87,9 +87,9 @@ load({T, ID},  Sb) ->
     Metadata = jsxd:get([<<"metadata">>], [], N),
     UUID1 = ?NEW_LWW(UUID, T),
     Name1 = ?NEW_LWW(Name, T),
-    IPRanges1 = riak_dt_orswot:update(
-                  {add_all, IPRanges}, ID,
-                  riak_dt_orswot:new()),
+    {ok, IPRanges1} = riak_dt_orswot:update(
+                        {add_all, IPRanges}, ID,
+                        riak_dt_orswot:new()),
     Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
     N1 = #network_0_1_0{
        uuid = UUID1,

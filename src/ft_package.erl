@@ -160,9 +160,9 @@ load({T, ID}, Sb) ->
     {ok, MaxSwap1} = ?NEW_LWW(T, MaxSwap),
     {ok, RAM1} = ?NEW_LWW(T, RAM),
     {ok, ZFSIOPriority1} = ?NEW_LWW(T, ZFSIOPriority),
-    Requirements1 = riak_dt_orswot:update(
-                      {add_all, Requirements}, ID,
-                      riak_dt_orswot:new()),
+    {ok, Requirements1} = riak_dt_orswot:update(
+                            {add_all, Requirements}, ID,
+                            riak_dt_orswot:new()),
     Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
 
     D1 =
