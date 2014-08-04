@@ -92,7 +92,7 @@ vlan({T, _ID}, V, H) when is_integer(V),
     H#?IPRANGE{vlan = V1}.
 
 free(H) ->
-    riak_dt_orswot:val(H#?IPRANGE.free).
+    riak_dt_orswot:value(H#?IPRANGE.free).
 
 used(H) ->
     riak_dt_orswot:value(H#?IPRANGE.used).
