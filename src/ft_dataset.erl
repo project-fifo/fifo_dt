@@ -13,14 +13,13 @@
 -export([
          new/1,
          load/2,
-         set/4,
          getter/2,
          to_json/1,
          merge/2
         ]).
 
 -ignore_xref([
-              load/2, load/1, set/4, set/3, getter/2, merge/2
+              load/2, load/1, getter/2, merge/2
              ]).
 
 -export([
@@ -310,27 +309,6 @@ load({T, ID}, Sb) ->
                   D10
           end,
     load({T, ID}, D11).
-
-?S(<<"uuid">>, uuid);
-?S(<<"status">>, status);
-?S(<<"type">>, type);
-?S(<<"imported">>, imported);
-
-?S(<<"description">>, description);
-?S(<<"disk_driver">>, disk_driver);
-?S(<<"homepage">>, homepage);
-?S(<<"image_size">>, image_size);
-?S(<<"name">>, name);
-?S(<<"networks">>, networks);
-?S(<<"nic_driver">>, nic_driver);
-?S(<<"os">>, os);
-?S(<<"users">>, users);
-?S(<<"version">>, version);
-
-set(ID, K = <<"metadata.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
-set(ID, [<<"metadata">> | R], V, H) ->
-    set_metadata(ID, R, V, H).
 
 merge(#?DATASET{
           description    = Desc1,
