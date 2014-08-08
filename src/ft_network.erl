@@ -85,8 +85,8 @@ load({T, ID},  Sb) ->
     {ok, Name} = jsxd:get([<<"name">>], N),
     IPRanges = jsxd:get([<<"ipranges">>], [], N),
     Metadata = jsxd:get([<<"metadata">>], [], N),
-    UUID1 = ?NEW_LWW(UUID, T),
-    Name1 = ?NEW_LWW(Name, T),
+    {ok, UUID1} = ?NEW_LWW(UUID, T),
+    {ok, Name1} = ?NEW_LWW(Name, T),
     {ok, IPRanges1} = riak_dt_orswot:update(
                         {add_all, IPRanges}, ID,
                         riak_dt_orswot:new()),
