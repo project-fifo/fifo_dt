@@ -1,7 +1,7 @@
 REBAR = $(shell pwd)/rebar
+VSN = $(shell cat src/*.app.src | grep vsn | sed 's/^[^"]*"//' | sed 's/".*$//')
 
 .PHONY: deps all test
-
 
 all: cp-hooks deps compile
 

@@ -134,7 +134,7 @@ load(_, #?PACKAGE{} = P) ->
     P;
 
 load({T, ID}, Sb) ->
-    D = statebox:value(Sb),
+    D = jsxd:from_lit(statebox:value(Sb)),
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
     BlockSize = jsxd:get(<<"blocksize">>, undefined, D),
@@ -148,17 +148,17 @@ load({T, ID}, Sb) ->
     Requirements = jsxd:get(<<"requirements">>, [], D),
     Metadata = jsxd:get(<<"metadata">>, [], D),
 
-    {ok, UUID1} = ?NEW_LWW(T, UUID),
-    {ok, Name1} = ?NEW_LWW(T, Name),
-    {ok, BlockSize1} = ?NEW_LWW(T, BlockSize),
-    {ok, Compression1} = ?NEW_LWW(T, Compression),
-    {ok, CpuCap1} = ?NEW_LWW(T, CpuCap),
-    {ok, CpuShares1} = ?NEW_LWW(T, CpuShares),
-    {ok, MaxSwap1} = ?NEW_LWW(T, MaxSwap),
-    {ok, Quota1} = ?NEW_LWW(T, Quota),
-    {ok, MaxSwap1} = ?NEW_LWW(T, MaxSwap),
-    {ok, RAM1} = ?NEW_LWW(T, RAM),
-    {ok, ZFSIOPriority1} = ?NEW_LWW(T, ZFSIOPriority),
+    {ok, UUID1} = ?NEW_LWW(UUID, T),
+    {ok, Name1} = ?NEW_LWW(Name, T),
+    {ok, BlockSize1} = ?NEW_LWW(BlockSize, T),
+    {ok, Compression1} = ?NEW_LWW(Compression, T),
+    {ok, CpuCap1} = ?NEW_LWW(CpuCap, T),
+    {ok, CpuShares1} = ?NEW_LWW(CpuShares, T),
+    {ok, MaxSwap1} = ?NEW_LWW(MaxSwap, T),
+    {ok, Quota1} = ?NEW_LWW(Quota, T),
+    {ok, MaxSwap1} = ?NEW_LWW(MaxSwap, T),
+    {ok, RAM1} = ?NEW_LWW(RAM, T),
+    {ok, ZFSIOPriority1} = ?NEW_LWW(ZFSIOPriority, T),
     {ok, Requirements1} = riak_dt_orswot:update(
                             {add_all, Requirements}, ID,
                             riak_dt_orswot:new()),
