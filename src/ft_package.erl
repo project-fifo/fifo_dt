@@ -127,7 +127,6 @@ remove_requirement({_T, ID}, V, H) ->
             H#?PACKAGE{requirements = O1}
     end.
 
-
 metadata(H) ->
     fifo_map:value(H#?PACKAGE.metadata).
 

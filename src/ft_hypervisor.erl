@@ -279,6 +279,7 @@ set_service({T, ID}, Attribute, Value, H) ->
     H#?HYPERVISOR{services = M1}.
 
 ?G(<<"path">>, path);
+?G(<<"uuid">>, uuid);
 ?G(<<"virtualisation">>, virtualisation);
 ?G(<<"etherstubs">>, etherstubs);
 ?G(<<"alias">>, alias);
