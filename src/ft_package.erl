@@ -134,7 +134,7 @@ load(_, #?PACKAGE{} = P) ->
     P;
 
 load({T, ID}, Sb) ->
-    D = jsxd:from_lit(statebox:value(Sb)),
+    D = statebox:value(Sb),
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
     BlockSize = jsxd:get(<<"blocksize">>, undefined, D),
