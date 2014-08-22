@@ -11,13 +11,14 @@
 -define(OBJ, ?PACKAGE).
 -include("ft_helper.hrl").
 
+-include("ft_package.hrl").
+
 -export([
          to_json/1,
          load/2,
          new/1,
          merge/2,
          getter/2,
-         set/4,
          blocksize/1, blocksize/3,
          compression/1, compression/3,
          cpu_cap/1, cpu_cap/3,
@@ -47,7 +48,12 @@
               zfs_io_priority/1, zfs_io_priority/3
              ]).
 
--ignore_xref([merge/2, load/2, name/1, set/4, set/3, getter/2, uuid/1]).
+-ignore_xref([merge/2, load/2, name/1, getter/2, uuid/1]).
+
+-opaque ft_package() :: #?PACKAGE{}.
+-export_type([ft_package/0]).
+
+-spec to_json(Package :: ft_package()) -> jsxd:object().
 
 to_json(P) ->
     Vs = [
@@ -68,6 +74,7 @@ to_json(P) ->
 
 add([], _, D) ->
     D;
+
 add([{N, F} | R], In, D) ->
     case F(In) of
         <<>> ->
@@ -77,6 +84,8 @@ add([{N, F} | R], In, D) ->
         V ->
             add(R, In, jsxd:set(N, V, D))
     end.
+
+-spec getter(binary() | [binary()], ft_package()) -> jsxd:value().
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"name">>, name);
@@ -90,27 +99,71 @@ add([{N, F} | R], In, D) ->
 ?G(<<"zfs_io_priority">>, zfs_io_priority);
 ?G_JSX.
 
+-spec uuid(ft_package()) -> binary().
 ?G(uuid).
+
+-spec name(ft_package()) -> binary().
 ?G(name).
+
+-spec blocksize(ft_package()) -> pos_integer() | undefined.
 ?G(blocksize).
+
+-spec compression(ft_package()) -> binary() | undefined.
 ?G(compression).
+
+-spec cpu_cap(ft_package()) -> pos_integer() | undefined.
 ?G(cpu_cap).
+
+-spec cpu_shares(ft_package()) -> pos_integer().
 ?G(cpu_shares).
+
+-spec max_swap(ft_package()) -> pos_integer() | undefined.
 ?G(max_swap).
+
+-spec quota(ft_package()) -> pos_integer().
 ?G(quota).
+
+-spec ram(ft_package()) -> pos_integer().
 ?G(ram).
+
+-spec zfs_io_priority(ft_package()) -> pos_integer() | undefined.
 ?G(zfs_io_priority).
 
-?S(uuid).
-?S(name).
-?S(blocksize).
-?S(compression).
-?S(cpu_cap).
-?S(cpu_shares).
-?S(max_swap).
-?S(quota).
-?S(ram).
-?S(zfs_io_priority).
+-spec uuid({integer(), atom()}, binary(), ft_package()) -> ft_package().
+?S_BIN(uuid).
+
+-spec name({integer(), atom()}, binary(), ft_package()) -> ft_package().
+?S_BIN(name).
+
+-spec blocksize({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(blocksize).
+
+-spec compression({integer(), atom()}, binary(), ft_package()) -> ft_package().
+compression({T, _ID}, V, O) when
+      V == <<"on">>; V == <<"off">>;
+      V == <<"lz4">>; V == <<"lzjb">>; V == <<"zle">>;
+      V == <<"gzip">>; V == <<"gzip-1">>; V == <<"gzip-2">>; V == <<"gzip-3">>;
+      V == <<"gzip-4">>; V == <<"gzip-5">>; V == <<"gzip-6">>;
+      V == <<"gzip-7">>; V == <<"gzip-8">>; V == <<"gzip-9">> ->
+    ?S_BODY(compression).
+
+-spec cpu_cap({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(cpu_cap).
+
+-spec cpu_shares({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(cpu_shares).
+
+-spec max_swap({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(max_swap).
+
+-spec quota({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(quota).
+
+-spec ram({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(ram).
+
+-spec zfs_io_priority({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+?S_PI(zfs_io_priority).
 
 requirements(H) ->
     riak_dt_orswot:value(H#?PACKAGE.requirements).
@@ -127,8 +180,12 @@ remove_requirement({_T, ID}, V, H) ->
             H#?PACKAGE{requirements = O1}
     end.
 
+-spec metadata(ft_package()) -> jsxd:object().
+
 metadata(H) ->
     fifo_map:value(H#?PACKAGE.metadata).
+
+-spec load({integer(), atom()}, term()) -> ft_package().
 
 load(_, #?PACKAGE{} = P) ->
     P;
@@ -138,7 +195,7 @@ load({T, ID}, Sb) ->
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
     BlockSize = jsxd:get(<<"blocksize">>, undefined, D),
-    Compression = jsxd:get(<<"compression">>, undefined, D),
+    Compression = jsxd:get(<<"compression">>, <<"off">>, D),
     CpuCap = jsxd:get(<<"cpu_cap">>, undefined, D),
     CpuShares = jsxd:get(<<"cpu_shares">>, undefined, D),
     MaxSwap = jsxd:get(<<"max_swap">>, undefined, D),
@@ -183,41 +240,20 @@ load({T, ID}, Sb) ->
           },
     load({T, ID}, D1).
 
+-spec new({integer(), atom()}) -> ft_package().
 new({_T, _ID}) ->
-    {ok, Undefined} = ?NEW_LWW(undefined, 0),
+    {ok, Undefined} = ?NEW_LWW(undefined, 1),
+    {ok, Off} = ?NEW_LWW(<<"off">>, 1),
     #?PACKAGE{
         blocksize = Undefined,
         cpu_shares = Undefined,
         cpu_cap = Undefined,
-        compression = Undefined,
+        compression = Off,
         max_swap = Undefined,
         zfs_io_priority = Undefined
        }.
 
-?S(<<"uuid">>, uuid);
-?S(<<"name">>, name);
-?S(<<"blocksize">>, blocksize);
-?S(<<"compression">>, compression);
-?S(<<"cpu_cap">>, cpu_cap);
-?S(<<"cpu_shares">>, cpu_shares);
-?S(<<"max_swap">>, max_swap);
-?S(<<"quota">>, quota);
-?S(<<"ram">>, ram);
-?S(<<"zfs_io_priority">>, zfs_io_priority);
-
-set({_T, ID}, <<"requirements">>, V, H = #?PACKAGE{requirements = R}) ->
-    Actual = ordsets:from_list(requirements(H)),
-    VSet = ordsets:from_list(V),
-    ToDelete = ordsets:subtract(Actual, VSet),
-    ToAdd = ordsets:subtract(VSet, Actual),
-    {ok, R1}  = riak_dt_orswot:update({remove_all, ToDelete}, ID, R),
-    {ok, R2} = riak_dt_orswot:update({add_all, ToAdd}, ID, R1),
-    H#?PACKAGE{requirements = R2};
-set(ID, K = <<"metadata.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
-set(ID, [<<"metadata">> | R], V, H) ->
-    set_metadata(ID, R, V, H).
-
+-spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], ft_package()) -> ft_package().
 set_metadata(ID, [{K, V} | R] , Obj) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 

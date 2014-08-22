@@ -22,7 +22,11 @@ non_neg_int() ->
     ?SUCHTHAT(I, int(), I > 0).
 
 compression() ->
-    oneof([<<"on">>, <<"off">>, <<"lzjb">>, <<"gzip">>, <<"zle">>, <<"lz4">>]).
+    oneof([<<"on">>, <<"off">>, <<"lzjb">>, <<"zle">>, <<"lz4">>,
+           oneof([<<"gzip">>, <<"gzip-1">>, <<"gzip-2">>, <<"gzip-3">>,
+                  <<"gzip-4">>, <<"gzip-5">>, <<"gzip-6">>, <<"gzip-7">>,
+                  <<"gzip-8">>, <<"gzip-9">>])
+          ]).
 
 package(Size) ->
     ?LAZY(oneof([{call, ?P, new, [id(Size)]} || Size == 1] ++
@@ -184,7 +188,7 @@ prop_blocksize() ->
 
 prop_compression() ->
     ?FORALL({N, R},
-            {non_neg_int(), package()},
+            {compression(), package()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),

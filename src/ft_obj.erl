@@ -168,4 +168,4 @@ is_a(#snarl_obj{}) ->
 is_a(#sniffle_obj{}) ->
     true;
 is_a(_) ->
-    fapse.
+    false.
