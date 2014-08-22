@@ -8,12 +8,10 @@
                lager:warning("[~s] Accessing unsupported getter ~p,"
                              " reverting to jsxd.", [?MODULE, K]),
                V = ft_obj:val(O),
-               jsxd:get(K, to_json(V))).
+               jsxd:get(K, <<>>, to_json(V))).
 
 -define(G(E),
         E(H) -> riak_dt_lwwreg:value(H#?OBJ.E)).
-
-
 
 -define(S(E),
         E({T, _ID}, V, H) ->
