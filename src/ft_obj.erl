@@ -30,13 +30,11 @@
                  vclock = vclock:fresh() :: vclock:vclock()}).
 
 
--type obj(Type) :: #ft_obj{val :: Type} | not_found.
--type any_obj(Type) :: #snarl_obj{val :: Type} |
-                       #sniffle_obj{val :: Type} | obj().
--opaque obj() :: obj(term()).
--opaque any_obj() :: any_obj(term()).
+-type obj() :: #ft_obj{} | not_found.
+-type any_obj() :: #snarl_obj{} |
+                   #sniffle_obj{} | obj().
 
--export_type([any_obj/0, any_obj/1, obj/0, obj/1]).
+-export_type([any_obj/0, obj/0]).
 
 -spec new() -> obj().
 new() ->
@@ -192,7 +190,7 @@ is_a(_) ->
     false.
 
 -spec needs_update(obj()) -> true;
-          (any_obj()) -> false.
+                  (any_obj()) -> false.
 
 needs_update(#ft_obj{}) ->
     false;
