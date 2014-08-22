@@ -60,7 +60,7 @@
 
 -ignore_xref([load/2, set/4, getter/2, uuid/1, merge/2]).
 
--opaque vm() :: #?OBJ{}.
+-type vm() :: #?OBJ{}.
 -export_type([vm/0]).
 
 ?IS_A.

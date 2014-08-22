@@ -43,7 +43,7 @@
               metadata/1, set_metadata/3, set_metadata/4
              ]).
 
--opaque grouping() :: #?OBJ{}.
+-type grouping() :: #?OBJ{}.
 -export_type([grouping/0]).
 
 ?IS_A.

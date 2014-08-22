@@ -40,7 +40,7 @@
          config/1, set_config/3, set_config/4
         ]).
 
--opaque dtrace() :: #?OBJ{}.
+-type dtrace() :: #?OBJ{}.
 -export_type([dtrace/0]).
 
 ?IS_A.

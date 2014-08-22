@@ -43,13 +43,13 @@
               is_a/1
              ]).
 
--opaque organisation() :: #?OBJ{}.
+-type organisation() :: #?OBJ{}.
 -export_type([organisation/0]).
 
 ?IS_A.
 
 ?G(<<"uuid">>, uuid);
-?G_JSX.
+?G_JSX.<
 
 new(_) ->
     #?ORG{}.

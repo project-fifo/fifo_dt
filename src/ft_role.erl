@@ -39,7 +39,7 @@
               to_json/1
              ]).
 
--opaque role() :: #?OBJ{}.
+-type role() :: #?OBJ{}.
 -export_type([role/0]).
 
 ?IS_A.

@@ -65,6 +65,9 @@
 
              ]).
 
+-type dataset() :: #dataset{}.
+-export_type([dataset/0]).
+
 ?IS_A.
 
 new({T, _ID}) ->

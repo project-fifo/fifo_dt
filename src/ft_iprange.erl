@@ -55,7 +55,7 @@
 
 -ignore_xref([load/2, name/1, set/4, getter/2, uuid/1]).
 
--opaque iprange() :: #?OBJ{}.
+-type iprange() :: #?OBJ{}.
 -export_type([iprange/0]).
 
 ?IS_A.

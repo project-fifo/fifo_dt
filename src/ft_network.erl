@@ -35,7 +35,7 @@
               metadata/1, set_metadata/3, set_metadata/4
              ]).
 
--opaque network() :: #?OBJ{}.
+-type network() :: #?OBJ{}.
 -export_type([network/0]).
 
 ?IS_A.

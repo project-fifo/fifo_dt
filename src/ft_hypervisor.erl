@@ -96,7 +96,7 @@
 
 -ignore_xref([to_json/1, load/2, set/4, getter/2, uuid/1]).
 
--opaque hypervisor() :: #?OBJ{}.
+-type hypervisor() :: #?OBJ{}.
 -export_type([hypervisor/0]).
 
 

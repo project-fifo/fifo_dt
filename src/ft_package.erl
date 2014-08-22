@@ -49,7 +49,7 @@
 
 -ignore_xref([merge/2, load/2, name/1, getter/2, uuid/1]).
 
--opaque package() :: #?PACKAGE{}.
+-type package() :: #?PACKAGE{}.
 -export_type([package/0]).
 
 -spec is_a(any()) -> boolean().

@@ -46,7 +46,7 @@
               to_json/1
              ]).
 
--opaque user() :: #?OBJ{}.
+-type user() :: #?OBJ{}.
 -export_type([user/0]).
 
 ?IS_A.
