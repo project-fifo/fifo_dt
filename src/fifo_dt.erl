@@ -2,6 +2,11 @@
 
 -export([type/1]).
 
+-spec type(any()) ->
+                  ft_dataset | ft_dtrace | ft_grouping | ft_hypervisor |
+                  ft_iprange | ft_network | ft_org | ft_package | ft_role |
+                  ft_user | ft_vm.
+
 type(O) ->
     Types = [
              ft_dataset,

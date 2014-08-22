@@ -90,7 +90,7 @@ add([{N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, V, D))
     end.
 
--spec getter(binary() | [binary()], package()) -> jsxd:value().
+-spec getter(package(), jsxd:key()) -> jsxd:value().
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"name">>, name);
@@ -199,7 +199,12 @@ load({T, ID}, Sb) ->
     D = statebox:value(Sb),
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
-    BlockSize = jsxd:get(<<"blocksize">>, undefined, D),
+    BlockSize = case jsxd:get(<<"blocksize">>, undefined, D)
+                    {ok, V} when is_integer(V), V > 0 ->
+                        V;
+                    _ ->
+                        undefined
+                end,
     Compression = jsxd:get(<<"compression">>, <<"off">>, D),
     CpuCap = jsxd:get(<<"cpu_cap">>, undefined, D),
     CpuShares = jsxd:get(<<"cpu_shares">>, undefined, D),
