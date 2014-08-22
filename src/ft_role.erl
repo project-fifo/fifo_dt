@@ -11,6 +11,10 @@
 -define(OBJ, ?ROLE).
 -include("ft_helper.hrl").
 
+-ifdef(TEST).
+-export([update_permissions/2]).
+-endif.
+
 -export([
          new/1,
          load/2,

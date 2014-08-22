@@ -11,6 +11,10 @@
 -define(OBJ, ?ORG).
 -include("ft_helper.hrl").
 
+-ifdef(TEST).
+-export([update_triggers/2, jsonify_trigger/1]).
+-endif.
+
 -export([
          new/1,
          load/2,

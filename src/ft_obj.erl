@@ -8,7 +8,7 @@
 
 -module(ft_obj).
 -export([ancestors/1, children/1, equal/1, equal/2, merge/2, unique/1,
-         update/3, update/1, is_a/1, new/0, new/2]).
+         update/3, update/1, is_a/1, new/0, new/2, needs_update/1]).
 -export([val/1, vclock/1]).
 
 -ignore_xref([
@@ -179,6 +179,9 @@ update(#sniffle_obj{val = V, vclock = C}) ->
 update(not_found) ->
     not_found.
 
+-spec is_a(any_obj() | obj()) -> true;
+          (any()) -> false.
+
 is_a(#ft_obj{}) ->
     true;
 is_a(#snarl_obj{}) ->
@@ -187,3 +190,13 @@ is_a(#sniffle_obj{}) ->
     true;
 is_a(_) ->
     false.
+
+-spec needs_update(obj()) -> true;
+          (any_obj()) -> false.
+
+needs_update(#ft_obj{}) ->
+    false;
+needs_update(#snarl_obj{}) ->
+    true;
+needs_update(#sniffle_obj{}) ->
+    true.

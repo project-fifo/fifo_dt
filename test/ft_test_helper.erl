@@ -2,7 +2,6 @@
 
 -ifdef(EQC).
 -include_lib("eqc/include/eqc.hrl").
--include("ft.hrl").
 
 -compile(export_all).
 
