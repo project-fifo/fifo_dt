@@ -4,26 +4,25 @@
 
 type(O) ->
     Types = [
-             {ft_dataset, dataset},
-             {ft_dtrace, dtrace},
-             {ft_grouping, grouping},
-             {ft_hypervisor, hypervisor},
-             {ft_iprange, iprange},
-             {ft_network, network},
-             {ft_org, org},
-             {ft_package, package},
-             {ft_role, role},
-             {ft_user, user},
-             {ft_vm, vm}
-
+             ft_dataset,
+             ft_dtrace,
+             ft_grouping,
+             ft_hypervisor,
+             ft_iprange,
+             ft_network,
+             ft_org,
+             ft_package,
+             ft_role,
+             ft_user,
+             ft_vm
             ],
     type(Types, O).
 
 
-type([{M, T} | R], O) ->
+type([M | R], O) ->
     case M:is_a(O) of
         true ->
-            T;
+            M;
         _ ->
             type(R, O)
     end;
