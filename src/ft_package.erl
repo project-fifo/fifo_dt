@@ -30,7 +30,8 @@
          uuid/1, uuid/3,
          requirements/1, add_requirement/3, remove_requirement/3,
          metadata/1, set_metadata/3, set_metadata/4,
-         zfs_io_priority/1, zfs_io_priority/3
+         zfs_io_priority/1, zfs_io_priority/3,
+         is_a/1
         ]).
 
 -ignore_xref([
@@ -52,6 +53,14 @@
 
 -opaque ft_package() :: #?PACKAGE{}.
 -export_type([ft_package/0]).
+
+-spec is_a(any()) -> boolean().
+
+is_a(#?PACKAGE{}) ->
+    true;
+is_a(_) ->
+    false.
+
 
 -spec to_json(Package :: ft_package()) -> jsxd:object().
 
