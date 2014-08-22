@@ -177,8 +177,7 @@ update(#sniffle_obj{val = V, vclock = C}) ->
 update(not_found) ->
     not_found.
 
--spec is_a(any_obj() | obj()) -> true;
-          (any()) -> false.
+-spec is_a(any_obj() | obj()) -> boolean().
 
 is_a(#ft_obj{}) ->
     true;
@@ -189,8 +188,7 @@ is_a(#sniffle_obj{}) ->
 is_a(_) ->
     false.
 
--spec needs_update(obj()) -> true;
-                  (any_obj()) -> false.
+-spec needs_update(any_obj() | obj()) -> boolean().
 
 needs_update(#ft_obj{}) ->
     false;
