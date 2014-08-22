@@ -1,3 +1,12 @@
+-define(NEW_LWW(V, T), riak_dt_lwwreg:update(
+                         {assign, V, T}, none,
+                         riak_dt_lwwreg:new())).
+
+-define(CONVERT_VORSET(S),
+        riak_dt_orswot:update(
+          {add_all, vorsetg:value(S)}, none,
+          riak_dt_orswot:new())).
+
 -define(G(N, F),
         getter(O, N) ->
                S0 = ft_obj:val(O),

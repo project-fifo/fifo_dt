@@ -7,11 +7,9 @@
 
 -module(ft_package).
 
--include("ft.hrl").
+-include("ft_package.hrl").
 -define(OBJ, ?PACKAGE).
 -include("ft_helper.hrl").
-
--include("ft_package.hrl").
 
 -export([
          to_json/1,
@@ -90,7 +88,7 @@ add([{N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, V, D))
     end.
 
--spec getter(package(), jsxd:key()) -> jsxd:value().
+-spec getter(ft_obj:obj(), jsxd:key()) -> term().
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"name">>, name);
@@ -199,21 +197,16 @@ load({T, ID}, Sb) ->
     D = statebox:value(Sb),
     {ok, UUID} = jsxd:get(<<"uuid">>, D),
     {ok, Name} = jsxd:get(<<"name">>, D),
-    BlockSize = case jsxd:get(<<"blocksize">>, undefined, D)
-                    {ok, V} when is_integer(V), V > 0 ->
-                        V;
-                    _ ->
-                        undefined
-                end,
+    BlockSize = or_dflt(<<"blocksize">>, undefined, D),
     Compression = jsxd:get(<<"compression">>, <<"off">>, D),
-    CpuCap = jsxd:get(<<"cpu_cap">>, undefined, D),
-    CpuShares = jsxd:get(<<"cpu_shares">>, undefined, D),
-    MaxSwap = jsxd:get(<<"max_swap">>, undefined, D),
+    CpuCap = or_dflt(<<"cpu_cap">>, undefined, D),
+    CpuShares = or_dflt(<<"cpu_shares">>, undefined, D),
+    MaxSwap = or_dflt(<<"max_swap">>, undefined, D),
     {ok, Quota} = jsxd:get(<<"quota">>, D),
     {ok, RAM} = jsxd:get(<<"ram">>, D),
-    ZFSIOPriority = jsxd:get(<<"zfs_io_priority">>, undefined, D),
-    Requirements = jsxd:get(<<"requirements">>, [], D),
-    Metadata = jsxd:get(<<"metadata">>, [], D),
+    ZFSIOPriority = or_dflt(<<"zfs_io_priority">>, undefined, D),
+    Requirements = or_dflt(<<"requirements">>, [], D),
+    Metadata = or_dflt(<<"metadata">>, [], D),
 
     {ok, UUID1} = ?NEW_LWW(UUID, T),
     {ok, Name1} = ?NEW_LWW(Name, T),
@@ -323,3 +316,11 @@ merge(#?PACKAGE{
         uuid            = riak_dt_lwwreg:merge(UUID1, UUID2),
         zfs_io_priority = riak_dt_lwwreg:merge(ZFSIOPriority1, ZFSIOPriority2)
        }.
+
+or_dflt(K, Dflt, O) ->
+    case jsxd:get(K, O) of
+        {ok, V} when is_integer(V), V > 0 ->
+            V;
+        _ ->
+            Dflt
+    end.

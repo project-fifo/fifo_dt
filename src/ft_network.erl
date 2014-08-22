@@ -7,7 +7,7 @@
 
 -module(ft_network).
 
--include("ft.hrl").
+-include("ft_network.hrl").
 -define(OBJ, ?NETWORK).
 -include("ft_helper.hrl").
 
@@ -34,6 +34,9 @@
               uuid/1, uuid/3,
               metadata/1, set_metadata/3, set_metadata/4
              ]).
+
+-opaque network() :: #?OBJ{}.
+-export_type([network/0]).
 
 ?IS_A.
 

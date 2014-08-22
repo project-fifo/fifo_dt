@@ -7,7 +7,7 @@
 
 -module(ft_vm).
 
--include("ft.hrl").
+-include("ft_vm.hrl").
 -define(OBJ, ?VM).
 -include("ft_helper.hrl").
 
@@ -59,6 +59,9 @@
              ]).
 
 -ignore_xref([load/2, set/4, getter/2, uuid/1, merge/2]).
+
+-opaque vm() :: #?OBJ{}.
+-export_type([vm/0]).
 
 ?IS_A.
 

@@ -7,13 +7,9 @@
 
 -module(ft_role).
 
--include("ft.hrl").
+-include("ft_role.hrl").
 -define(OBJ, ?ROLE).
 -include("ft_helper.hrl").
-
--ifdef(TEST).
--export([update_permissions/2]).
--endif.
 
 -export([
          new/1,
@@ -28,8 +24,6 @@
          is_a/1
         ]).
 
--export_type([role/0, any_role/0]).
-
 -ignore_xref([
               new/1,
               load/2,
@@ -41,13 +35,8 @@
               to_json/1
              ]).
 
--type role() :: #?ROLE{}.
-
--type any_role() ::
-        #?ROLE{} |
-        #group_0_1_1{} |
-        #group_0_1_0{} |
-        statebox:statebox().
+-opaque role() :: #?OBJ{}.
+-export_type([role/0]).
 
 ?IS_A.
 

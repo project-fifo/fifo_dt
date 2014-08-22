@@ -7,14 +7,13 @@
 
 -module(ft_hypervisor).
 
--include("ft.hrl").
+-include("ft_hypervisor.hrl").
+-define(OBJ, ?HYPERVISOR).
+-include("ft_helper.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
-
--define(OBJ, ?HYPERVISOR).
--include("ft_helper.hrl").
 
 -export([
          is_a/1,
@@ -96,6 +95,10 @@
              ]).
 
 -ignore_xref([to_json/1, load/2, set/4, getter/2, uuid/1]).
+
+-opaque hypervisor() :: #?OBJ{}.
+-export_type([hypervisor/0]).
+
 
 ?IS_A.
 

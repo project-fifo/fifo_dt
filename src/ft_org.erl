@@ -7,13 +7,9 @@
 
 -module(ft_org).
 
--include("ft.hrl").
+-include("ft_org.hrl").
 -define(OBJ, ?ORG).
 -include("ft_helper.hrl").
-
--ifdef(TEST).
--export([update_triggers/2, jsonify_trigger/1]).
--endif.
 
 -export([
          new/1,
@@ -29,8 +25,6 @@
          is_a/1
         ]).
 
--export_type([organisation/0, any_organisation/0]).
-
 -ignore_xref([
               new/1,
               load/2,
@@ -45,13 +39,8 @@
               is_a/1
              ]).
 
--type organisation() :: #?ORG{}.
-
--type any_organisation() :: organisation() |
-                            #organisation_0_1_0{} |
-                            #organisation_0_1_1{} |
-                            #organisation_0_1_2{} |
-                            statebox:statebox().
+-opaque organisation() :: #?OBJ{}.
+-export_type([organisation/0]).
 
 ?IS_A.
 

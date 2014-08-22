@@ -1,6 +1,13 @@
+%%% @author Heinz Nikolaus Gies <heinz@licenser.net>
+%%% @copyright (C) 2012, Heinz Nikolaus Gies
+%%% @doc
+%%%
+%%% @end
+%%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
+
 -module(ft_grouping).
 
--include("ft.hrl").
+-include("ft_grouping.hrl").
 -define(OBJ, ?GROUPING).
 -include("ft_helper.hrl").
 
@@ -35,6 +42,9 @@
               groupings/1, add_grouping/3, remove_grouping/3,
               metadata/1, set_metadata/3, set_metadata/4
              ]).
+
+-opaque grouping() :: #?OBJ{}.
+-export_type([grouping/0]).
 
 ?IS_A.
 

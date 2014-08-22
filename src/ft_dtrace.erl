@@ -7,7 +7,7 @@
 
 -module(ft_dtrace).
 
--include("ft.hrl").
+-include("ft_dtrace.hrl").
 -define(OBJ,?DTRACE).
 -include("ft_helper.hrl").
 
@@ -40,6 +40,8 @@
          config/1, set_config/3, set_config/4
         ]).
 
+-opaque dtrace() :: #?OBJ{}.
+-export_type([dtrace/0]).
 
 ?IS_A.
 

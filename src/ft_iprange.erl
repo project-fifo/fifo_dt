@@ -7,12 +7,7 @@
 
 -module(ft_iprange).
 
--include("ft.hrl").
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
+-include("ft_iprange.hrl").
 -define(OBJ, ?IPRANGE).
 -include("ft_helper.hrl").
 
@@ -59,6 +54,9 @@
              ]).
 
 -ignore_xref([load/2, name/1, set/4, getter/2, uuid/1]).
+
+-opaque iprange() :: #?OBJ{}.
+-export_type([iprange/0]).
 
 ?IS_A.
 

@@ -7,10 +7,9 @@
 
 -module(ft_user).
 
--include("ft.hrl").
+-include("ft_user.hrl").
 -define(OBJ, ?USER).
 -include("ft_helper.hrl").
-
 
 -export([update_permissions/2]).
 -ignore_xref([update_permissions/2]).
@@ -32,8 +31,6 @@
          is_a/1, getter/2
         ]).
 
--export_type([user/0, any_user/0]).
-
 -ignore_xref([
               load/1,
               uuid/1, uuid/3,
@@ -49,16 +46,8 @@
               to_json/1
              ]).
 
--type user() :: #?USER{}.
-
--type any_user() :: user() |
-                    #user_0_1_5{} |
-                    #user_0_1_4{} |
-                    #user_0_1_3{} |
-                    #user_0_1_2{} |
-                    #user_0_1_1{} |
-                    #user_0_1_0{} |
-                    statebox:statebox().
+-opaque user() :: #?OBJ{}.
+-export_type([user/0]).
 
 ?IS_A.
 

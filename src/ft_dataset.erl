@@ -6,7 +6,7 @@
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
 -module(ft_dataset).
 
--include("ft.hrl").
+-include("ft_dataset.hrl").
 -define(OBJ, ?DATASET).
 -include("ft_helper.hrl").
 
