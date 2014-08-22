@@ -65,7 +65,7 @@
 
              ]).
 
--type dataset() :: #dataset{}.
+-type dataset() :: #?DATASET{}.
 -export_type([dataset/0]).
 
 ?IS_A.

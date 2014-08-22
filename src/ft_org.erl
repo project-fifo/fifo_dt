@@ -49,7 +49,7 @@
 ?IS_A.
 
 ?G(<<"uuid">>, uuid);
-?G_JSX.<
+?G_JSX.
 
 new(_) ->
     #?ORG{}.
