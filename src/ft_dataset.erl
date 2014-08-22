@@ -15,7 +15,8 @@
          load/2,
          getter/2,
          to_json/1,
-         merge/2
+         merge/2,
+         is_a/1
         ]).
 
 -ignore_xref([
@@ -64,6 +65,7 @@
 
              ]).
 
+?IS_A.
 
 new({T, _ID}) ->
     {ok, Imported} = ?NEW_LWW(0, T),

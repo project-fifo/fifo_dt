@@ -14,7 +14,7 @@
 -define(LOGLEN, 100).
 
 -export([
-         load/2, new/1, getter/2, merge/2, to_json/1, set/4
+         is_a/1, load/2, new/1, getter/2, merge/2, to_json/1, set/4
         ]).
 
 -export([
@@ -59,6 +59,8 @@
              ]).
 
 -ignore_xref([load/2, set/4, getter/2, uuid/1, merge/2]).
+
+?IS_A.
 
 new(_) ->
     #?VM{}.

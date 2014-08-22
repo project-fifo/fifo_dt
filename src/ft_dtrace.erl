@@ -17,7 +17,8 @@
          load/2,
          to_json/1,
          getter/2,
-         merge/2
+         merge/2,
+         is_a/1
         ]).
 
 -export([
@@ -39,6 +40,8 @@
          config/1, set_config/3, set_config/4
         ]).
 
+
+?IS_A.
 
 uuid(H) ->
     riak_dt_lwwreg:value(H#?DTRACE.uuid).

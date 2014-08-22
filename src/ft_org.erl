@@ -53,13 +53,10 @@
                             #organisation_0_1_2{} |
                             statebox:statebox().
 
+?IS_A.
+
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
-
-is_a(#?ORG{}) ->
-    true;
-is_a(_) ->
-    false.
 
 new(_) ->
     #?ORG{}.

@@ -33,3 +33,7 @@
 -define(S(N, F),
         set(TID, N, Value, D) ->
                F(TID, Value, D)).
+
+-define(IS_A,
+        is_a(#?OBJ{}) -> true;
+        is_a(_) -> false).

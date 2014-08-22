@@ -49,15 +49,10 @@
         #group_0_1_0{} |
         statebox:statebox().
 
+?IS_A.
+
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
-
-is_a(#?ROLE{}) ->
-    true;
-
-is_a(_) ->
-    false.
-
 
 new({T, _ID}) ->
     {ok, UUID} = ?NEW_LWW(<<>>, T),

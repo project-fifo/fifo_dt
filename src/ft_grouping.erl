@@ -5,6 +5,7 @@
 -include("ft_helper.hrl").
 
 -export([
+         is_a/1,
          uuid/3,
          uuid/1,
          getter/2,
@@ -34,6 +35,8 @@
               groupings/1, add_grouping/3, remove_grouping/3,
               metadata/1, set_metadata/3, set_metadata/4
              ]).
+
+?IS_A.
 
 uuid(H) ->
     riak_dt_lwwreg:value(H#?GROUPING.uuid).

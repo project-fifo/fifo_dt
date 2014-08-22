@@ -51,18 +51,14 @@
 
 -ignore_xref([merge/2, load/2, name/1, getter/2, uuid/1]).
 
--opaque ft_package() :: #?PACKAGE{}.
--export_type([ft_package/0]).
+-opaque package() :: #?PACKAGE{}.
+-export_type([package/0]).
 
 -spec is_a(any()) -> boolean().
 
-is_a(#?PACKAGE{}) ->
-    true;
-is_a(_) ->
-    false.
+?IS_A.
 
-
--spec to_json(Package :: ft_package()) -> jsxd:object().
+-spec to_json(Package :: package()) -> jsxd:object().
 
 to_json(P) ->
     Vs = [
@@ -94,7 +90,7 @@ add([{N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, V, D))
     end.
 
--spec getter(binary() | [binary()], ft_package()) -> jsxd:value().
+-spec getter(binary() | [binary()], package()) -> jsxd:value().
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"name">>, name);
@@ -108,46 +104,46 @@ add([{N, F} | R], In, D) ->
 ?G(<<"zfs_io_priority">>, zfs_io_priority);
 ?G_JSX.
 
--spec uuid(ft_package()) -> binary().
+-spec uuid(package()) -> binary().
 ?G(uuid).
 
--spec name(ft_package()) -> binary().
+-spec name(package()) -> binary().
 ?G(name).
 
--spec blocksize(ft_package()) -> pos_integer() | undefined.
+-spec blocksize(package()) -> pos_integer() | undefined.
 ?G(blocksize).
 
--spec compression(ft_package()) -> binary() | undefined.
+-spec compression(package()) -> binary() | undefined.
 ?G(compression).
 
--spec cpu_cap(ft_package()) -> pos_integer() | undefined.
+-spec cpu_cap(package()) -> pos_integer() | undefined.
 ?G(cpu_cap).
 
--spec cpu_shares(ft_package()) -> pos_integer().
+-spec cpu_shares(package()) -> pos_integer().
 ?G(cpu_shares).
 
--spec max_swap(ft_package()) -> pos_integer() | undefined.
+-spec max_swap(package()) -> pos_integer() | undefined.
 ?G(max_swap).
 
--spec quota(ft_package()) -> pos_integer().
+-spec quota(package()) -> pos_integer().
 ?G(quota).
 
--spec ram(ft_package()) -> pos_integer().
+-spec ram(package()) -> pos_integer().
 ?G(ram).
 
--spec zfs_io_priority(ft_package()) -> pos_integer() | undefined.
+-spec zfs_io_priority(package()) -> pos_integer() | undefined.
 ?G(zfs_io_priority).
 
--spec uuid({integer(), atom()}, binary(), ft_package()) -> ft_package().
+-spec uuid({integer(), atom()}, binary(), package()) -> package().
 ?S_BIN(uuid).
 
--spec name({integer(), atom()}, binary(), ft_package()) -> ft_package().
+-spec name({integer(), atom()}, binary(), package()) -> package().
 ?S_BIN(name).
 
--spec blocksize({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec blocksize({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(blocksize).
 
--spec compression({integer(), atom()}, binary(), ft_package()) -> ft_package().
+-spec compression({integer(), atom()}, binary(), package()) -> package().
 compression({T, _ID}, V, O) when
       V == <<"on">>; V == <<"off">>;
       V == <<"lz4">>; V == <<"lzjb">>; V == <<"zle">>;
@@ -156,22 +152,22 @@ compression({T, _ID}, V, O) when
       V == <<"gzip-7">>; V == <<"gzip-8">>; V == <<"gzip-9">> ->
     ?S_BODY(compression).
 
--spec cpu_cap({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec cpu_cap({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(cpu_cap).
 
--spec cpu_shares({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec cpu_shares({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(cpu_shares).
 
--spec max_swap({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec max_swap({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(max_swap).
 
--spec quota({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec quota({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(quota).
 
--spec ram({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec ram({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(ram).
 
--spec zfs_io_priority({integer(), atom()}, pos_integer(), ft_package()) -> ft_package().
+-spec zfs_io_priority({integer(), atom()}, pos_integer(), package()) -> package().
 ?S_PI(zfs_io_priority).
 
 requirements(H) ->
@@ -189,12 +185,12 @@ remove_requirement({_T, ID}, V, H) ->
             H#?PACKAGE{requirements = O1}
     end.
 
--spec metadata(ft_package()) -> jsxd:object().
+-spec metadata(package()) -> jsxd:object().
 
 metadata(H) ->
     fifo_map:value(H#?PACKAGE.metadata).
 
--spec load({integer(), atom()}, term()) -> ft_package().
+-spec load({integer(), atom()}, term()) -> package().
 
 load(_, #?PACKAGE{} = P) ->
     P;
@@ -249,7 +245,7 @@ load({T, ID}, Sb) ->
           },
     load({T, ID}, D1).
 
--spec new({integer(), atom()}) -> ft_package().
+-spec new({integer(), atom()}) -> package().
 new({_T, _ID}) ->
     {ok, Undefined} = ?NEW_LWW(undefined, 1),
     {ok, Off} = ?NEW_LWW(<<"off">>, 1),
@@ -262,7 +258,7 @@ new({_T, _ID}) ->
         zfs_io_priority = Undefined
        }.
 
--spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], ft_package()) -> ft_package().
+-spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], package()) -> package().
 set_metadata(ID, [{K, V} | R] , Obj) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 

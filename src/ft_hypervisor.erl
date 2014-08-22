@@ -17,6 +17,7 @@
 -include("ft_helper.hrl").
 
 -export([
+         is_a/1,
          load/2,
          new/1,
          set/4,
@@ -95,6 +96,8 @@
              ]).
 
 -ignore_xref([to_json/1, load/2, set/4, getter/2, uuid/1]).
+
+?IS_A.
 
 new(_) ->
     {ok, Es} = ?NEW_LWW([], 0),

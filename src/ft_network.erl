@@ -12,6 +12,7 @@
 -include("ft_helper.hrl").
 
 -export([
+         is_a/1,
          new/1,
          load/2,
          to_json/1,
@@ -33,6 +34,8 @@
               uuid/1, uuid/3,
               metadata/1, set_metadata/3, set_metadata/4
              ]).
+
+?IS_A.
 
 set({T, ID}, <<"metadata">>, V, H) ->
     H#?NETWORK{metadata = fifo_map:from_orddict(V, ID, T)};

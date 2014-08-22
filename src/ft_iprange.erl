@@ -23,6 +23,7 @@
 -define(IS_IP, is_integer(V), V > 0, V < 16#FFFFFFFF).
 
 -export([
+         is_a/1,
          new/3, load/2, merge/2, to_json/1,
          release_ip/3, claim_ip/3,
          set/4,
@@ -58,6 +59,8 @@
              ]).
 
 -ignore_xref([load/2, name/1, set/4, getter/2, uuid/1]).
+
+?IS_A.
 
 ?G(uuid).
 ?S(uuid).

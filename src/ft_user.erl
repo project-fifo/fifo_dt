@@ -15,7 +15,8 @@
 -export([update_permissions/2]).
 -ignore_xref([update_permissions/2]).
 
--export([new/1,
+-export([
+         new/1,
          load/2,
          uuid/1, uuid/3,
          name/1, name/3,
@@ -59,13 +60,10 @@
                     #user_0_1_0{} |
                     statebox:statebox().
 
+?IS_A.
+
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
-
-is_a(#?USER{}) ->
-    true;
-is_a(_) ->
-    false.
 
 %% -spec load({non_neg_integer(), atom()}, any_user()) -> user().
 
