@@ -98,15 +98,16 @@ free(H) ->
 used(H) ->
     riak_dt_orswot:value(H#?IPRANGE.used).
 
-getter(O, E) ->
-    case ft_obj:is_a(O) of
-        true ->
-            S0 = ft_obj:val(O),
-            sub_getter(S0, E);
-        false ->
-            sub_getter(O, E)
-    end.
+-spec getter(ft_obj:obj() | iprange(), jsxd:key()) -> jsxd:value().
 
+getter(#?OBJ{} = O, E) ->
+    sub_getter(O, E);
+
+getter(O, E) ->
+    S0 = ft_obj:val(O),
+    sub_getter(S0, E).
+
+-spec sub_getter(iprange(), jsxd:key()) -> jsxd:value().
 ?GSub(<<"uuid">>, uuid);
 ?GSub(<<"name">>, name);
 ?GSub(<<"network">>, network);
@@ -114,11 +115,10 @@ getter(O, E) ->
 ?GSub(<<"gateway">>, gateway);
 ?GSub(<<"tag">>, tag);
 ?GSub(<<"vlan">>, vlan);
-sub_getter(K, O) ->
+sub_getter(O, K) ->
     lager:warning("[~s] Accessing unsupported getter ~p,"
                   " reverting to jsxd.", [?MODULE, K]),
-    V = ft_obj:val(O),
-    jsxd:get(K, to_json(V)).
+    jsxd:get(K, to_json(O)).
 
 load(_, #?IPRANGE{} = I) ->
     I;

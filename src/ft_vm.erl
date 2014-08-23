@@ -392,6 +392,8 @@ load({T, ID}, Sb) ->
         metadata = Metadata1
        }.
 
+-spec to_json(vm()) -> jsxd:object().
+
 to_json(V) ->
     M = lists:sort(
           [{ft_iprange:to_bin(IP), Range} ||
