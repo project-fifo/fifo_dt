@@ -306,9 +306,7 @@ load(_, #?HYPERVISOR{} = H) ->
 load({T, ID}, Sb) ->
     H = statebox:value(Sb),
     Characteristics = case jsxd:get([<<"characteristics">>],  H) of
-                          {ok, [{}]} ->
-                              [];
-                          {ok, V} ->
+                          {ok, V} when V /= [{}] ->
                               V;
                           _ ->
                               []
