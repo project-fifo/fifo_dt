@@ -43,8 +43,8 @@
               is_a/1
              ]).
 
--type organisation() :: #?OBJ{}.
--export_type([organisation/0]).
+-type org() :: #?OBJ{}.
+-export_type([org/0]).
 
 ?IS_A.
 
