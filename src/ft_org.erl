@@ -161,7 +161,7 @@ jsonify_permission(Permission) ->
                       E
               end, Permission).
 
--spec to_json(Org::organisation()) -> fifo:org().
+-spec to_json(Org::org()) -> fifo:attr_list().
 to_json(#?ORG{
             uuid = UUID,
             name = Name,
@@ -209,7 +209,7 @@ uuid({T, _ID}, UUID, Org) ->
     {ok, V} = riak_dt_lwwreg:update({assign, UUID, T}, none, Org#?ORG.uuid),
     Org#?ORG{uuid = V}.
 
--spec triggers(Org::organisation()) -> [{ID::fifo:uuid(), Trigger::term()}].
+-spec triggers(Org::org()) -> [{ID::fifo:uuid(), Trigger::term()}].
 
 triggers(Org) ->
     fifo_map:value(Org#?ORG.triggers).
