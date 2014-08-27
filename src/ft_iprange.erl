@@ -132,7 +132,7 @@ load({T, ID}, Sb) ->
     {ok, Netmask} = jsxd:get(<<"netmask">>, I),
     {ok, First} = jsxd:get(<<"first">>, I),
     {ok, Last} = jsxd:get(<<"last">>, I),
-    {ok, Current} = jsxd:get(<<"last">>, I),
+    {ok, Current} = jsxd:get(<<"current">>, I),
     {ok, Tag} = jsxd:get(<<"tag">>, I),
     {ok, VLAN} = jsxd:get(<<"vlan">>, I),
     Returned = jsxd:get(<<"returned">>, [], I),
