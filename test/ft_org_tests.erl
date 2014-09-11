@@ -49,6 +49,7 @@ to_json_test() ->
     Org = ?M:new(mkid()),
     OrgJ = [{<<"metadata">>,[]},
             {<<"name">>,<<>>},
+            {<<"resources">>,[]},
             {<<"triggers">>,[]},
             {<<"uuid">>,<<>>}],
     ?assertEqual(OrgJ, ?M:to_json(Org)).
