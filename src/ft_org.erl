@@ -21,7 +21,11 @@
          load/2,
          uuid/1, uuid/3,
          name/1, name/3,
+         s3_id/1, s3_id/3,
+         s3_key/1, s3_key/3,
+         default_bucket/1, default_bucket/3,
          triggers/1, add_trigger/4, remove_trigger/3,
+         buckets/1, add_bucket/4, remove_bucket/3,
          metadata/1, set_metadata/3, set_metadata/4,
          resource_action/6, resources/1,
          remove_target/3,
@@ -36,7 +40,11 @@
               load/2,
               uuid/1, uuid/3,
               name/1, name/3,
+              s3_id/1, s3_id/3,
+              s3_key/1, s3_key/3,
+              default_bucket/1, default_bucket/3,
               triggers/1, add_trigger/4, remove_trigger/3,
+              buckets/1, add_bucket/4, remove_bucket/3,
               metadata/1, set_metadata/3, set_metadata/4,
               resource_action/6, resources/1,
               remove_target/3,
@@ -52,6 +60,7 @@
 ?IS_A.
 
 ?G(<<"uuid">>, uuid);
+?G(<<"name">>, name);
 ?G_JSX.
 
 new(_) ->
@@ -191,6 +200,10 @@ to_json(Org) ->
        {<<"uuid">>, uuid(Org)},
        {<<"name">>, name(Org)},
        {<<"resources">>, Res},
+       {<<"s3_id">>, s3_id(Org)},
+       {<<"s3_key">>, s3_key(Org)},
+       {<<"default_bucket">>, default_bucket(Org)},
+       {<<"buckets">>, buckets(Org)},
        {<<"triggers">>, [{U, jsonify_trigger(T)} || {U, T} <- triggers(Org)]},
        {<<"metadata">>, metadata(Org)}
       ]).
@@ -205,6 +218,10 @@ res_json(T, A, O) ->
 merge(#?ORG{
           uuid = UUID1,
           name = Name1,
+          s3_id = S3_Id1,
+          s3_key = S3_Key1,
+          default_bucket = Default_Bucket1,
+          buckets = Buckets1,
           triggers = Triggers1,
           resources = Res1,
           metadata = Metadata1
@@ -212,6 +229,10 @@ merge(#?ORG{
       #?ORG{
           uuid = UUID2,
           name = Name2,
+          s3_id = S3_Id2,
+          s3_key = S3_Key2,
+          default_bucket = Default_Bucket2,
+          buckets = Buckets2,
           triggers = Triggers2,
           resources = Res2,
           metadata = Metadata2
@@ -219,14 +240,18 @@ merge(#?ORG{
     #?ORG{
         uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
         name = riak_dt_lwwreg:merge(Name1, Name2),
+        s3_id = riak_dt_lwwreg:merge(S3_Id1, S3_Id2),
+        s3_key = riak_dt_lwwreg:merge(S3_Key1, S3_Key2),
+        default_bucket = riak_dt_lwwreg:merge(Default_Bucket1, Default_Bucket2),
         triggers = fifo_map:merge(Triggers1, Triggers2),
+        buckets = fifo_map:merge(Buckets1, Buckets2),
         resources = riak_dt_orswot:merge(Res1, Res2),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
 
 resource_action({_T, ID}, Resource, TimeStamp, Action, Opts, Org) ->
     {ok, Res} = riak_dt_orswot:update({add, {Resource, TimeStamp, Action, Opts}}, ID,
-                                         Org#?ORG.resources),
+                                      Org#?ORG.resources),
     Org#?ORG{
            resources = Res
           }.
@@ -234,19 +259,39 @@ resource_action({_T, ID}, Resource, TimeStamp, Action, Opts, Org) ->
 resources(Org) ->
     riak_dt_orswot:value(Org#?ORG.resources).
 
-name(Org) ->
-    riak_dt_lwwreg:value(Org#?ORG.name).
+?G(name).
+?S(name).
+?G(uuid).
+?S(uuid).
 
-name({T, _ID}, Name, Org) ->
-    {ok, V} = riak_dt_lwwreg:update({assign, Name, T}, none, Org#?ORG.name),
-    Org#?ORG{name = V}.
+?G(s3_id).
+?S(s3_id).
+?G(s3_key).
+?S(s3_key).
+?G(default_bucket).
+?S(default_bucket).
 
-uuid(Org) ->
-    riak_dt_lwwreg:value(Org#?ORG.uuid).
+buckets(Org) ->
+    fifo_map:value(Org#?ORG.buckets).
 
-uuid({T, _ID}, UUID, Org) ->
-    {ok, V} = riak_dt_lwwreg:update({assign, UUID, T}, none, Org#?ORG.uuid),
-    Org#?ORG{uuid = V}.
+add_bucket({T, ID}, Name, Bucket, Org) ->
+    {ok, T1} = fifo_map:set(Name, {reg, Bucket}, ID, T, Org#?ORG.buckets),
+    Org#?ORG{buckets = T1}.
+
+remove_bucket({_T, ID}=TID, Bucket, Org) ->
+    {ok, V} = fifo_map:remove(Bucket, ID, Org#?ORG.buckets),
+    O1 = Org#?ORG{buckets = V},
+    case lists:keyfind(Bucket, 1, fifo_map:value(Org#?ORG.buckets)) of
+        {ok, UUID} ->
+            case default_bucket(O1) of
+                Dflt when Dflt == UUID ->
+                    default_bucket(TID, <<>>, O1);
+                _ ->
+                    O1
+            end;
+        _ ->
+            O1
+    end.
 
 -spec triggers(Org::org()) -> [{ID::fifo:uuid(), Trigger::term()}].
 
@@ -326,4 +371,3 @@ replace_group([], Acc) ->
 
 a2b(A) ->
     list_to_binary(atom_to_list(A)).
-

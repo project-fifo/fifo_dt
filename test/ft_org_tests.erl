@@ -47,9 +47,13 @@ trigger_update_test() ->
 
 to_json_test() ->
     Org = ?M:new(mkid()),
-    OrgJ = [{<<"metadata">>,[]},
+    OrgJ = [{<<"buckets">>,[]},
+            {<<"default_bucket">>,<<>>},
+            {<<"metadata">>,[]},
             {<<"name">>,<<>>},
             {<<"resources">>,[]},
+            {<<"s3_id">>,<<>>},
+            {<<"s3_key">>,<<>>},
             {<<"triggers">>,[]},
             {<<"uuid">>,<<>>}],
     ?assertEqual(OrgJ, ?M:to_json(Org)).

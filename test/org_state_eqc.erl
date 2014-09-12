@@ -47,6 +47,9 @@ org(Size) ->
                                {call, ?O, load, [id(Size), O]},
                                {call, ?O, uuid, [id(Size), non_blank_string(), O]},
                                {call, ?O, name, [id(Size), non_blank_string(), O]},
+                               {call, ?O, s3_id, [id(Size), non_blank_string(), O]},
+                               {call, ?O, s3_key, [id(Size), non_blank_string(), O]},
+                               {call, ?O, default_bucket, [id(Size), non_blank_string(), O]},
                                {call, ?O, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?O, set_metadata, [id(Size), maybe_oneof(calc_metadata(O)), delete, O]},
                                {call, ?O, add_trigger, [id(Size), non_blank_string(), trigger(), O]},
@@ -82,6 +85,15 @@ calc_triggers({call, _, _, P}) ->
 calc_triggers(_) ->
     [].
 
+calc_buckets({call, _, remove_buckets, [_, I, _, U]}) ->
+    lists:delete(I, lists:usort(calc_buckets(U)));
+calc_buckets({call, _, add_bucket, [_, I, _K, U]}) ->
+    [I | calc_buckets(U)];
+calc_buckets({call, _, _, P}) ->
+    calc_buckets(lists:last(P));
+calc_buckets(_) ->
+    [].
+
 r(K, V, U) ->
     lists:keystore(K, 1, U, {K, V}).
 
@@ -90,6 +102,33 @@ model_uuid(N, R) ->
 
 model_name(N, R) ->
     r(<<"name">>, N, R).
+
+model_s3_id(N, R) ->
+    r(<<"s3_id">>, N, R).
+
+model_s3_key(N, R) ->
+    r(<<"s3_key">>, N, R).
+
+model_default_bucket(N, R) ->
+    r(<<"default_bucket">>, N, R).
+
+
+model_add_bucket(UUID, Bucket, U) ->
+    r(<<"buckets">>, lists:usort(r(UUID, Bucket, buckets(U))), U).
+
+model_remove_bucket(Bucket, U) ->
+    case lists:keyfind(Bucket, 1, buckets(U)) of
+        false ->
+            U;
+        {ok, UUID} ->
+            U1 = r(<<"buckets">>, lists:keydelete(Bucket, 1, buckets(U)), U),
+            case lists:keyfind(<<"default_bucket">>, 1, buckets(U)) of
+                {ok, Dflt} when Dflt == UUID ->
+                    model_default_bucket(<<>>, U1);
+                _ ->
+                    U1
+            end
+    end.
 
 model_set_metadata(K, V, U) ->
     r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
@@ -140,6 +179,10 @@ triggers(U) ->
     {<<"triggers">>, M} = lists:keyfind(<<"triggers">>, 1, U),
     M.
 
+buckets(U) ->
+    {<<"buckets">>, M} = lists:keyfind(<<"buckets">>, 1, U),
+    M.
+
 resources(U) ->
     {<<"resources">>, M} = lists:keyfind(<<"resources">>, 1, U),
     M.
@@ -162,6 +205,36 @@ prop_uuid() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~n", [R, Org]),
                           model(?O:uuid(id(?BIG_TIME), N, Org)) ==
                               model_uuid(N, model(Org)))
+            end).
+
+prop_s3_id() ->
+    ?FORALL({N, R},
+            {non_blank_string(), org()},
+            begin
+                Org = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~n", [R, Org]),
+                          model(?O:s3_id(id(?BIG_TIME), N, Org)) ==
+                              model_s3_id(N, model(Org)))
+            end).
+
+prop_s3_key() ->
+    ?FORALL({N, R},
+            {non_blank_string(), org()},
+            begin
+                Org = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~n", [R, Org]),
+                          model(?O:s3_key(id(?BIG_TIME), N, Org)) ==
+                              model_s3_key(N, model(Org)))
+            end).
+
+prop_default_bucket() ->
+    ?FORALL({N, R},
+            {non_blank_string(), org()},
+            begin
+                Org = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~n", [R, Org]),
+                          model(?O:default_bucket(id(?BIG_TIME), N, Org)) ==
+                              model_default_bucket(N, model(Org)))
             end).
 
 prop_set_metadata() ->
@@ -202,6 +275,27 @@ prop_remove_trigger() ->
                 Org = eval(O),
                 O1 = ?O:remove_trigger(id(?BIG_TIME), T, Org),
                 M1 = model_remove_trigger(T, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_add_bucket() ->
+    ?FORALL({UUID, T, O}, {non_blank_string(), non_blank_string(), org()},
+            begin
+                Org = eval(O),
+                O1 = ?O:add_bucket(id(?BIG_TIME), UUID, T, Org),
+                M1 = model_add_bucket(UUID, T, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+prop_remove_bucket() ->
+    ?FORALL({O, T}, ?LET(O, org(), {O, maybe_oneof(calc_buckets(O))}),
+            begin
+                Org = eval(O),
+                O1 = ?O:remove_bucket(id(?BIG_TIME), T, Org),
+                M1 = model_remove_bucket(T, model(Org)),
                 ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
                                     "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
                           model(O1) == M1)
