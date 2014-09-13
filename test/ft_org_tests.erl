@@ -5,44 +5,6 @@
 mkid() ->
     {ft_test_helper:timestamp(), test}.
 
-trigger_update_test() ->
-    O = ?M:new(mkid()),
-    %% Initialize a (old) trigger and the expected ?M:new one.
-    U1 = uuid:uuid4s(),
-    T1 = {vm_create, {grant, group, <<"bla">>,
-                      [<<"groups">>, '$', <<"grant">>]}},
-    T1u = {vm_create, {grant, role, <<"bla">>,
-                       [<<"roles">>, '$', <<"grant">>]}},
-
-
-    %% Create a org and add the trigger, test that the trigger is there
-    O1 = ?M:add_trigger(mkid(), U1, T1, O),
-    Ts = lists:sort([{U1, T1}]),
-    RTs = lists:sort(?M:triggers(O1)),
-    ?assertEqual(Ts, RTs),
-
-    %% Now update the trigger and compare the results
-    O2 = ?M:update_triggers(mkid(), O1),
-    Tsu = lists:sort([{U1, T1u}]),
-    RTsu = lists:sort(?M:triggers(O2)),
-    ?assertEqual(Tsu, RTsu),
-
-    %% Prepare a secdont trigger and add it to the unchanged org
-    U2 = uuid:uuid4s(),
-    T2 = {vm_create, {join, group, <<"bla">>}},
-    T2u = {vm_create, {join, role, <<"bla">>}},
-    O3 = ?M:add_trigger(mkid(), U2, T2, O1),
-
-    %% Make sure both triggers are there.
-    Ts1 = lists:sort([{U1, T1}, {U2, T2}]),
-    RTs1 = lists:sort(?M:triggers(O3)),
-    ?assertEqual(Ts1, RTs1),
-
-    %% Then update and check both triggers were updated correctly
-    O4 = ?M:update_triggers(mkid(), O3),
-    Tsu1 = lists:sort([{U1, T1u}, {U2, T2u}]),
-    RTsu1 = lists:sort(?M:triggers(O4)),
-    ?assertEqual(Tsu1, RTsu1).
 
 
 to_json_test() ->

@@ -343,19 +343,29 @@ remove_target(TID, Target, Org) ->
                 end, Org, GrantTriggers ++ JoinTriggers).
 
 
-update_triggers(TID, Org) ->
-    lists:foldl(fun ({UUID, {A, {grant, group, R, T}}}, Acc) ->
-                        Acc1 = remove_trigger(TID, UUID, Acc),
-                        add_trigger(TID, UUID, {A, {grant, role, R, replace_group(T)}}, Acc1);
-                    ({UUID, {A, {grant, E, R, T}}}, Acc) ->
-                        Acc1 = remove_trigger(TID, UUID, Acc),
-                        add_trigger(TID, UUID, {A, {grant, E, R, replace_group(T)}}, Acc1);
-                    ({UUID, {A, {join, group, R}}}, Acc) ->
-                        Acc1 = remove_trigger(TID, UUID, Acc),
-                        add_trigger(TID, UUID, {A, {join, role, R}}, Acc1);
-                    (_, Acc) ->
-                        Acc
-                end, Org, triggers(Org)).
+update_triggers({T, ID}, O = #organisation_0_1_3{triggers = Triggers}) ->
+    T1 = lists:foldl(fun ({UUID, {A, {grant, group, R, Tr}}}, Acc) ->
+                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
+                             Trig = {A, {grant, role, R, replace_group(Tr)}},
+                             {ok, Acc2} = fifo_map:set(UUID, {reg, Trig}, ID, T,
+                                                       Acc1),
+                             Acc2;
+                         ({UUID, {A, {grant, E, R, Tr}}}, Acc) ->
+                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
+                             Trig = {A, {grant, E, R, replace_group(Tr)}},
+                             {ok, Acc2} = fifo_map:set(UUID, {reg, Trig}, ID, T,
+                                                       Acc1),
+                             Acc2;
+                         ({UUID, {A, {join, group, R}}}, Acc) ->
+                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
+                             Tr = {A, {join, role, R}},
+                             {ok, Acc2} = fifo_map:set(UUID, {reg, Tr}, ID, T,
+                                                       Acc1),
+                             Acc2;
+                         (_, Acc) ->
+                             Acc
+                     end, Triggers, fifo_map:value(Triggers)),
+    O#organisation_0_1_3{triggers = T1}.
 
 replace_group(R) ->
     replace_group(R, []).
