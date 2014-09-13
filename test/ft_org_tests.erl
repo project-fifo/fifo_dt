@@ -9,13 +9,9 @@ mkid() ->
 
 to_json_test() ->
     Org = ?M:new(mkid()),
-    OrgJ = [{<<"buckets">>,[]},
-            {<<"default_bucket">>,<<>>},
-            {<<"metadata">>,[]},
+    OrgJ = [{<<"metadata">>,[]},
             {<<"name">>,<<>>},
             {<<"resources">>,[]},
-            {<<"s3_id">>,<<>>},
-            {<<"s3_key">>,<<>>},
             {<<"triggers">>,[]},
             {<<"uuid">>,<<>>}],
     ?assertEqual(OrgJ, ?M:to_json(Org)).
