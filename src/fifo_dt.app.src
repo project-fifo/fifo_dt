@@ -1,7 +1,7 @@
 {application, fifo_dt,
  [
   {description, ""},
-  {vsn, "0.1.27"},
+  {vsn, "0.1.28"},
   {registered, []},
   {applications, [
                   kernel,

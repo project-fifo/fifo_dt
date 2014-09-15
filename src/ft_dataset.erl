@@ -34,6 +34,7 @@
          networks/1, networks/3,
          nic_driver/1, nic_driver/3,
          os/1, os/3,
+         sha1/1, sha1/3,
          users/1, users/3,
          version/1, version/3,
          status/1, status/3,
@@ -128,6 +129,8 @@ type({T, _ID}, V, H) when V =:= kvm;
 ?S(nic_driver).
 ?G(os).
 ?S(os).
+?G(sha1).
+?S(sha1).
 ?G(users).
 ?S(users).
 ?G(version).
@@ -188,6 +191,7 @@ to_json(D) ->
           {<<"nic_driver">>, fun nic_driver/1},
           {<<"os">>, fun os/1},
           {<<"requirements">>, fun requirements/1},
+          {<<"sha1">>, fun sha1/1},
           {<<"status">>, fun status/1},
           {<<"users">>, fun users/1},
           {<<"uuid">>, fun uuid/1},
@@ -220,6 +224,44 @@ add([{N, F} | R], In, D) ->
 
 load(_, #?DATASET{} = H) ->
     H;
+
+load(TID, #dataset_0_1_0{
+             description    = Desc,
+             disk_driver    = DiskD,
+             homepage       = Homepage,
+             image_size     = ImageSize,
+             imported       = Imported,
+             metadata       = Metadata,
+             name           = Name,
+             networks       = Networks,
+             nic_driver     = NicD,
+             os             = OS,
+             requirements   = Reqs,
+             status         = Status,
+             type           = Type,
+             users          = Users,
+             uuid           = UUID,
+             version        = Version
+            }) ->
+    D1 = #dataset_0_1_1{
+            description    = Desc,
+            disk_driver    = DiskD,
+            homepage       = Homepage,
+            image_size     = ImageSize,
+            imported       = Imported,
+            metadata       = Metadata,
+            name           = Name,
+            networks       = Networks,
+            nic_driver     = NicD,
+            os             = OS,
+            requirements   = Reqs,
+            status         = Status,
+            type           = Type,
+            users          = Users,
+            uuid           = UUID,
+            version        = Version
+           },
+    load(TID, D1);
 
 load({T, ID}, Sb) ->
     H = statebox:value(Sb),
@@ -300,12 +342,12 @@ load({T, ID}, Sb) ->
                  D8
          end,
     D10 = case jsxd:get([<<"users">>], H) of
-             {ok, Users} ->
-                 {ok, Users1} = ?NEW_LWW(Users, T),
-                 D9#dataset_0_1_0{users = Users1};
-             _->
-                 D9
-         end,
+              {ok, Users} ->
+                  {ok, Users1} = ?NEW_LWW(Users, T),
+                  D9#dataset_0_1_0{users = Users1};
+              _->
+                  D9
+          end,
     D11 = case jsxd:get([<<"version">>], H) of
               {ok, Version} ->
                   {ok, Version1} = ?NEW_LWW(Version, T),
@@ -327,6 +369,7 @@ merge(#?DATASET{
           nic_driver     = NicD1,
           os             = OS1,
           requirements   = Reqs1,
+          sha1           = SHA11,
           status         = Status1,
           type           = Type1,
           users          = Users1,
@@ -345,6 +388,7 @@ merge(#?DATASET{
           nic_driver     = NicD2,
           os             = OS2,
           requirements   = Reqs2,
+          sha1           = SHA12,
           status         = Status2,
           type           = Type2,
           users          = Users2,
@@ -363,6 +407,7 @@ merge(#?DATASET{
         nic_driver     = riak_dt_lwwreg:merge(NicD1, NicD2),
         os             = riak_dt_lwwreg:merge(OS1, OS2),
         requirements   = riak_dt_orswot:merge(Reqs1, Reqs2),
+        sha1           = riak_dt_lwwreg:merge(SHA11, SHA12),
         status         = riak_dt_lwwreg:merge(Status1, Status2),
         type           = riak_dt_lwwreg:merge(Type1, Type2),
         users          = riak_dt_lwwreg:merge(Users1, Users2),

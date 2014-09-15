@@ -43,6 +43,7 @@ dataset(Size) ->
                                {call, ?D, networks, [id(Size), list(non_blank_string()), O]},
                                {call, ?D, nic_driver, [id(Size), non_blank_string(), O]},
                                {call, ?D, os, [id(Size), non_blank_string(), O]},
+                               {call, ?D, sha1, [id(Size), non_blank_string(), O]},
                                {call, ?D, users, [id(Size), list(non_blank_string()), O]},
                                {call, ?D, version, [id(Size), non_blank_string(), O]},
 
@@ -81,6 +82,9 @@ model_uuid(N, R) ->
 
 model_status(N, R) ->
     r(<<"status">>, N, R).
+
+model_sha1(N, R) ->
+    r(<<"sha1">>, N, R).
 
 model_type(zone, R) ->
     r(<<"type">>, <<"zone">>, R);
@@ -196,6 +200,16 @@ prop_status() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
                           model(?D:status(id(?BIG_TIME), N, Hv)) ==
                               model_status(N, model(Hv)))
+            end).
+
+prop_sha1() ->
+    ?FORALL({N, R},
+            {non_blank_string(), dataset()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
+                          model(?D:sha1(id(?BIG_TIME), N, Hv)) ==
+                              model_sha1(N, model(Hv)))
             end).
 
 prop_imported() ->
