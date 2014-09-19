@@ -37,7 +37,10 @@ grouping(Size) ->
                                {call, ?G, remove_grouping, [id(Size), maybe_oneof(calc_groupings(O)), O]},
 
                                {call, ?G, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
-                               {call, ?G, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
+                               {call, ?G, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]},
+
+                               {call, ?G, set_config, [id(Size), non_blank_string(), non_blank_string(), O]},
+                               {call, ?G, set_config, [id(Size), maybe_oneof(calc_map(set_config, O)), delete, O]}
 
                               ]))
                      || Size > 1])).
@@ -92,6 +95,12 @@ model_set_metadata(K, V, U) ->
 model_delete_metadata(K, U) ->
     r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
+model_set_config(K, V, U) ->
+    r(<<"config">>, lists:usort(r(K, V, config(U))), U).
+
+model_delete_config(K, U) ->
+    r(<<"config">>, lists:keydelete(K, 1, config(U)), U).
+
 model_add_element(E, U) ->
     r(<<"elements">>, lists:usort([E | get_elements(U)]), U).
 
@@ -109,6 +118,10 @@ model(R) ->
 
 metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
+    M.
+
+config(U) ->
+    {<<"config">>, M} = lists:keyfind(<<"config">>, 1, U),
     M.
 
 get_elements(U) ->
@@ -184,6 +197,28 @@ prop_remove_metadata() ->
                 Hv = eval(O),
                 O1 = ?G:set_metadata(id(?BIG_TIME), K, delete, Hv),
                 M1 = model_delete_metadata(K, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_set_config() ->
+    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), grouping()},
+            begin
+                Hv = eval(O),
+                O1 = ?G:set_config(id(?BIG_TIME), K, V, Hv),
+                M1 = model_set_config(K, V, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_config() ->
+    ?FORALL({O, K}, ?LET(O, grouping(), {O, maybe_oneof(calc_map(set_config, O))}),
+            begin
+                Hv = eval(O),
+                O1 = ?G:set_config(id(?BIG_TIME), K, delete, Hv),
+                M1 = model_delete_config(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)
