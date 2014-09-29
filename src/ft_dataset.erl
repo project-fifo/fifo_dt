@@ -355,7 +355,17 @@ load({T, ID}, Sb) ->
               _->
                   D10
           end,
-    load({T, ID}, D11).
+    D12 = case jsxd:get([<<"type">>], H) of
+              {ok, <<"kvm">>} ->
+                  {ok, Type1} = ?NEW_LWW(kvm, T),
+                  D11#dataset_0_1_0{version = Type1};
+              {ok, <<"type">>} ->
+                  {ok, Type1} = ?NEW_LWW(zone, T),
+                  D11#dataset_0_1_0{version = Type1};
+              _->
+                  D11
+          end,
+    load({T, ID}, D12).
 
 merge(#?DATASET{
           description    = Desc1,
