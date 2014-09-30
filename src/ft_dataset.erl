@@ -26,6 +26,7 @@
 -export([
          uuid/1, uuid/3,
          type/1, type/3,
+         zone_type/1, zone_type/3,
          description/1, description/3,
          disk_driver/1, disk_driver/3,
          homepage/1, homepage/3,
@@ -39,6 +40,7 @@
          version/1, version/3,
          status/1, status/3,
          imported/1, imported/3,
+         kernel_version/1, kernel_version/3,
          metadata/1, set_metadata/3, set_metadata/4,
          requirements/1, add_requirement/3, remove_requirement/3
 
@@ -46,6 +48,7 @@
 
 -ignore_xref([
               type/1, type/3,
+              zone_type/1, zone_type/3,
               uuid/1, uuid/3,
               imported/1, imported/3,
               status/1, status/3,
@@ -79,7 +82,9 @@ new({T, _ID}) ->
         status = Status
        }.
 ?G(<<"uuid">>, uuid);
+?G(<<"kernel_version">>, uuid);
 ?G(<<"type">>, type);
+?G(<<"zone_type">>, type);
 ?G(<<"status">>, status);
 ?G(<<"imported">>, imported);
 
@@ -108,6 +113,13 @@ type({T, _ID}, V, H) when V =:= kvm;
     {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.type),
     H#?DATASET{type = V1}.
 
+?G(zone_type).
+zone_type(ID, <<"lx">>, H) ->
+    zone_type(ID, lx, H);
+zone_type({T, _ID}, V, H) when V =:= lx ->
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.zone_type),
+    H#?DATASET{zone_type = V1}.
+
 ?G(status).
 ?S(status).
 ?G(imported).
@@ -135,6 +147,9 @@ type({T, _ID}, V, H) when V =:= kvm;
 ?S(users).
 ?G(version).
 ?S(version).
+?G(kernel_version).
+?S(kernel_version).
+
 
 requirements(H) ->
     riak_dt_orswot:value(H#?DATASET.requirements).
@@ -195,20 +210,20 @@ to_json(D) ->
           {<<"status">>, fun status/1},
           {<<"users">>, fun users/1},
           {<<"uuid">>, fun uuid/1},
+          {<<"kernel_version">>, fun kernel_version/1},
+          {<<"zone_type">>, fun zone_type/1},
           {<<"version">>, fun version/1}
          ],
     add(Vs, D, [{<<"type">>, Type}]).
 
 add([], _, D) ->
     D;
-add([{<<"type">> = N, F} | R], In, D) ->
+add([{<<"zone_type">> = N, F} | R], In, D) ->
     case F(In) of
         <<>> ->
             add(R, In, D);
-        kvm ->
-            add(R, In, jsxd:set(N, <<"kvm">>, D));
-        zone ->
-            add(R, In, jsxd:set(N, <<"zone">>, D))
+        lx ->
+            add(R, In, jsxd:set(N, <<"lx">>, D))
     end;
 add([{N, F} | R], In, D) ->
     case F(In) of
@@ -224,6 +239,44 @@ add([{N, F} | R], In, D) ->
 
 load(_, #?DATASET{} = H) ->
     H;
+
+load(TID, #dataset_0_1_1{
+            description    = Desc,
+            disk_driver    = DiskD,
+            homepage       = Homepage,
+            image_size     = ImageSize,
+            imported       = Imported,
+            metadata       = Metadata,
+            name           = Name,
+            networks       = Networks,
+            nic_driver     = NicD,
+            os             = OS,
+            requirements   = Reqs,
+            status         = Status,
+            type           = Type,
+            users          = Users,
+            uuid           = UUID,
+            version        = Version
+           }) ->
+    D1 = #dataset_0{
+            description    = Desc,
+            disk_driver    = DiskD,
+            homepage       = Homepage,
+            image_size     = ImageSize,
+            imported       = Imported,
+            metadata       = Metadata,
+            name           = Name,
+            networks       = Networks,
+            nic_driver     = NicD,
+            os             = OS,
+            requirements   = Reqs,
+            status         = Status,
+            type           = Type,
+            users          = Users,
+            uuid           = UUID,
+            version        = Version
+           },
+    load(TID, D1);
 
 load(TID, #dataset_0_1_0{
              description    = Desc,
@@ -373,6 +426,7 @@ merge(#?DATASET{
           homepage       = Homepage1,
           image_size     = ImageSize1,
           imported       = Imported1,
+          kernel_version = KernelVersion1,
           metadata       = Metadata1,
           name           = Name1,
           networks       = Networks1,
@@ -384,7 +438,8 @@ merge(#?DATASET{
           type           = Type1,
           users          = Users1,
           uuid           = UUID1,
-          version        = Version1
+          version        = Version1,
+          zone_type      = ZoneType1
          },
       #?DATASET{
           description    = Desc2,
@@ -392,6 +447,7 @@ merge(#?DATASET{
           homepage       = Homepage2,
           image_size     = ImageSize2,
           imported       = Imported2,
+          kernel_version = KernelVersion2,
           metadata       = Metadata2,
           name           = Name2,
           networks       = Networks2,
@@ -403,7 +459,8 @@ merge(#?DATASET{
           type           = Type2,
           users          = Users2,
           uuid           = UUID2,
-          version        = Version2
+          version        = Version2,
+          zone_type      = ZoneType2
          }) ->
     #?DATASET{
         description    = riak_dt_lwwreg:merge(Desc1, Desc2),
@@ -411,6 +468,7 @@ merge(#?DATASET{
         homepage       = riak_dt_lwwreg:merge(Homepage1, Homepage2),
         image_size     = riak_dt_lwwreg:merge(ImageSize1, ImageSize2),
         imported       = riak_dt_lwwreg:merge(Imported1, Imported2),
+        kernel_version = riak_dt_lwwreg:merge(KernelVersion1, KernelVersion2),
         metadata       = fifo_map:merge(Metadata1, Metadata2),
         name           = riak_dt_lwwreg:merge(Name1, Name2),
         networks       = riak_dt_lwwreg:merge(Networks1, Networks2),
@@ -422,5 +480,6 @@ merge(#?DATASET{
         type           = riak_dt_lwwreg:merge(Type1, Type2),
         users          = riak_dt_lwwreg:merge(Users1, Users2),
         uuid           = riak_dt_lwwreg:merge(UUID1, UUID2),
-        version        = riak_dt_lwwreg:merge(Version1, Version2)
+        version        = riak_dt_lwwreg:merge(Version1, Version2),
+        zone_type      = riak_dt_lwwreg:merge(ZoneType1, ZoneType2)
        }.

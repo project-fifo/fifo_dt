@@ -17,9 +17,12 @@
 
 dataset_type() ->
     oneof([kvm, zone]).
+
+zone_type() ->
+    oneof([lx]).
+
 dataset() ->
     ?SIZED(Size, dataset(Size+1)).
-
 
 
 dataset(Size) ->
@@ -34,6 +37,7 @@ dataset(Size) ->
                                {call, ?D, status, [id(Size), non_blank_string(), O]},
                                {call, ?D, imported, [id(Size), int(), O]},
                                {call, ?D, type, [id(Size), dataset_type(), O]},
+                               {call, ?D, zone_type, [id(Size), zone_type(), O]},
 
                                {call, ?D, description, [id(Size), non_blank_string(), O]},
                                {call, ?D, disk_driver, [id(Size), non_blank_string(), O]},
@@ -46,6 +50,7 @@ dataset(Size) ->
                                {call, ?D, sha1, [id(Size), non_blank_string(), O]},
                                {call, ?D, users, [id(Size), list(non_blank_string()), O]},
                                {call, ?D, version, [id(Size), non_blank_string(), O]},
+                               {call, ?D, kernel_version, [id(Size), non_blank_string(), O]},
 
                                {call, ?D, add_requirement, [id(Size), non_blank_string(), O]},
                                {call, ?D, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O)), O]},
