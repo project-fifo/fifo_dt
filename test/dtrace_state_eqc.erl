@@ -15,13 +15,13 @@
 %% in LWW registers.
 -define(BIG_TIME, 1000000000).
 
-network() ->
-    ?SIZED(Size, network(Size+1)).
+dtrace() ->
+    ?SIZED(Size, dtrace(Size+1)).
 
-network(Size) ->
+dtrace(Size) ->
     ?LAZY(oneof([{call, ?D, new, [id(Size)]} || Size == 1] ++
                     [?LETSHRINK(
-                        [O], [network(Size - 1)],
+                        [O], [dtrace(Size - 1)],
                         oneof([
                                {call, ?D, load, [id(Size), O]},
                                %%{call, ?D, merge, [O, O]},
@@ -89,7 +89,7 @@ config(U) ->
 
 prop_merge() ->
     ?FORALL(R,
-            network(),
+            dtrace(),
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
@@ -99,7 +99,7 @@ prop_merge() ->
 
 prop_load() ->
     ?FORALL(R,
-            network(),
+            dtrace(),
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
@@ -108,7 +108,7 @@ prop_load() ->
             end).
 prop_uuid() ->
     ?FORALL({N, R},
-            {non_blank_string(), network()},
+            {non_blank_string(), dtrace()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
@@ -118,7 +118,7 @@ prop_uuid() ->
 
 prop_name() ->
     ?FORALL({N, R},
-            {non_blank_string(), network()},
+            {non_blank_string(), dtrace()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
@@ -128,7 +128,7 @@ prop_name() ->
 
 prop_script() ->
     ?FORALL({N, R},
-            {non_blank_string(), network()},
+            {non_blank_string(), dtrace()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
@@ -137,7 +137,7 @@ prop_script() ->
             end).
 
 prop_set_metadata() ->
-    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), network()},
+    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), dtrace()},
             begin
                 Hv = eval(O),
                 O1 = ?D:set_metadata(id(?BIG_TIME), K, V, Hv),
@@ -148,7 +148,7 @@ prop_set_metadata() ->
             end).
 
 prop_remove_metadata() ->
-    ?FORALL({O, K}, ?LET(O, network(), {O, maybe_oneof(calc_map(set_metadata, O))}),
+    ?FORALL({O, K}, ?LET(O, dtrace(), {O, maybe_oneof(calc_map(set_metadata, O))}),
             begin
                 Hv = eval(O),
                 O1 = ?D:set_metadata(id(?BIG_TIME), K, delete, Hv),
@@ -159,7 +159,7 @@ prop_remove_metadata() ->
             end).
 
 prop_set_config() ->
-    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), network()},
+    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), dtrace()},
             begin
                 Hv = eval(O),
                 O1 = ?D:set_config(id(?BIG_TIME), K, V, Hv),
@@ -170,7 +170,7 @@ prop_set_config() ->
             end).
 
 prop_remove_config() ->
-    ?FORALL({O, K}, ?LET(O, network(), {O, maybe_oneof(calc_map(set_config, O))}),
+    ?FORALL({O, K}, ?LET(O, dtrace(), {O, maybe_oneof(calc_map(set_config, O))}),
             begin
                 Hv = eval(O),
                 O1 = ?D:set_config(id(?BIG_TIME), K, delete, Hv),
@@ -179,6 +179,10 @@ prop_remove_config() ->
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)
             end).
+
+prop_to_json() ->
+    ?FORALL(E, dtrace(),
+            jsx:encode(?D:to_json(eval(E))) /= []).
 
 -endif.
 -endif.

@@ -27,8 +27,8 @@ trigger() ->
     {name(), action()}.
 
 action() ->
-    oneof([{grant, role, a, permission()},
-           {grant, user, a, permission()},
+    oneof([{grant, role, <<"a">>, permission()},
+           {grant, user, <<"a">>, permission()},
            {join, role, non_blank_string()},
            {join, org, non_blank_string()}]).
 
@@ -218,5 +218,11 @@ prop_resource_action() ->
                                     [O, Org, model(Org), O1, M1, model(O1)]),
                           model(O1) == M1)
             end).
+
+prop_to_json() ->
+    ?FORALL(E, org(),
+            jsx:encode(?O:to_json(eval(E))) /= []).
+
+
 -endif.
 -endif.

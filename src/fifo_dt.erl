@@ -70,14 +70,14 @@ make_rule(Weight, C) ->
 
 req2js({random, Low, High}) ->
     [
-     {<<"heigh">>, High},
+     {<<"high">>, High},
      {<<"low">>, Low},
      {<<"weight">>, <<"random">>}
     ];
 req2js({scale, Attribute, Low, High}) ->
     [
      {<<"attribute">>, Attribute},
-     {<<"heigh">>, High},
+     {<<"high">>, High},
      {<<"low">>, Low},
      {<<"weight">>, <<"scale">>}
     ];

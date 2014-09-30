@@ -175,5 +175,10 @@ prop_remove_iprange() ->
                           model(O1) == M1)
             end).
 
+prop_to_json() ->
+    ?FORALL(E, network(),
+            jsx:encode(?N:to_json(eval(E))) /= []).
+
+
 -endif.
 -endif.

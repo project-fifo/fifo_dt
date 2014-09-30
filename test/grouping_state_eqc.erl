@@ -267,5 +267,10 @@ prop_remove_grouping() ->
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)
             end).
+
+prop_to_json() ->
+    ?FORALL(E, grouping(),
+            jsx:encode(?G:to_json(eval(E))) /= []).
+
 -endif.
 -endif.

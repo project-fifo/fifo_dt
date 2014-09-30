@@ -301,5 +301,17 @@ prop_remove_metadata() ->
                           model(O1) == M1)
             end).
 
+prop_js_req_conversion() ->
+    ?FORALL(R, requirement(),
+            R == fifo_dt:js2req(fifo_dt:req2js(R))).
+
+prop_js_req_syntax() ->
+    ?FORALL(R, requirement(),
+            jsx:encode(fifo_dt:req2js(R)) /= []).
+
+prop_to_json() ->
+    ?FORALL(E, package(),
+            jsx:encode(?P:to_json(eval(E))) /= []).
+
 -endif.
 -endif.

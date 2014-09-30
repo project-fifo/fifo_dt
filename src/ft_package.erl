@@ -191,10 +191,54 @@ remove_requirement({_T, ID}, V, H) ->
 metadata(H) ->
     fifo_map:value(H#?PACKAGE.metadata).
 
+
+fix_reqs(ID, Requirements) ->
+    Rs = riak_dt_orswot:value(Requirements),
+    Rs1 = [fifo_dt:js2req(R) || R <- Rs],
+    {ok, Rs2} = riak_dt_orswot:update(
+                            {add_all, Rs1}, ID,
+                            riak_dt_orswot:new()),
+    Rs2.
+
 -spec load({integer(), atom()}, term()) -> package().
 
 load(_, #?PACKAGE{} = P) ->
     P;
+
+load({T, ID}, #package_0_1_0{
+                 uuid            = UUID1,
+                 name            = Name1,
+                 metadata        = Metadata1,
+
+                 blocksize       = BlockSize1,
+                 compression     = Compression1,
+                 cpu_cap         = CpuCap1,
+                 cpu_shares      = CpuShares1,
+                 max_swap        = MaxSwap1,
+                 quota           = Quota1,
+                 ram             = RAM1,
+                 requirements    = Requirements1,
+
+                 zfs_io_priority = ZFSIOPriority1
+                }) ->
+    D1 =
+        #package_0{
+           uuid            = UUID1,
+           name            = Name1,
+           metadata        = Metadata1,
+
+           blocksize       = BlockSize1,
+           compression     = Compression1,
+           cpu_cap         = CpuCap1,
+           cpu_shares      = CpuShares1,
+           max_swap        = MaxSwap1,
+           quota           = Quota1,
+           ram             = RAM1,
+           requirements    = fix_reqs(ID, Requirements1),
+
+           zfs_io_priority = ZFSIOPriority1
+          },
+    load({T, ID}, D1);
 
 load({T, ID}, Sb) ->
     D = statebox:value(Sb),

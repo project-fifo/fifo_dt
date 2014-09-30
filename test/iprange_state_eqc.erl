@@ -211,5 +211,9 @@ prop_remove_metadata() ->
                           model(O1) == M1)
             end).
 
+prop_to_json() ->
+    ?FORALL(E, iprange(),
+            jsx:encode(?I:to_json(eval(E))) /= []).
+
 -endif.
 -endif.

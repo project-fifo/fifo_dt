@@ -336,5 +336,9 @@ prop_remove_metadata() ->
                           model(U1) == M1)
             end).
 
+prop_to_json() ->
+    ?FORALL(E, user(),
+            jsx:encode(?U:to_json(eval(E))) /= []).
+
 -endif.
 -endif.

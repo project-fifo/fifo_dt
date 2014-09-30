@@ -377,5 +377,9 @@ prop_remove_service() ->
                           model(O1) == M1)
             end).
 
+prop_to_json() ->
+    ?FORALL(E, hypervisor(),
+            jsx:encode(?H:to_json(eval(E))) /= []).
+
 -endif.
 -endif.
