@@ -3,7 +3,7 @@
 -ifdef(TEST).
 -ifdef(EQC).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [id/1, maybe_oneof/1, requirement/0]).
 
 -include_lib("eqc/include/eqc_fsm.hrl").
 -include_lib("fqc/include/fqc.hrl").
@@ -52,8 +52,8 @@ dataset(Size) ->
                                {call, ?D, version, [id(Size), non_blank_string(), O]},
                                {call, ?D, kernel_version, [id(Size), non_blank_string(), O]},
 
-                               {call, ?D, add_requirement, [id(Size), non_blank_string(), O]},
-                               {call, ?D, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O)), O]},
+                               {call, ?D, add_requirement, [id(Size), requirement(), O]},
+                               {call, ?D, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O), requirement()), O]},
 
                                {call, ?D, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?D, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
@@ -131,10 +131,10 @@ model_version(N, R) ->
     r(<<"version">>, N, R).
 
 model_add_requirement(E, U) ->
-    r(<<"requirements">>, lists:usort([E | requirements(U)]), U).
+    r(<<"requirements">>, lists:usort([fifo_dt:req2js(E) | requirements(U)]), U).
 
 model_remove_requirement(E, U) ->
-    r(<<"requirements">>, lists:delete(E, requirements(U)), U).
+    r(<<"requirements">>, lists:delete(fifo_dt:req2js(E), requirements(U)), U).
 
 model_set_metadata(K, V, U) ->
     r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
@@ -143,7 +143,8 @@ model_delete_metadata(K, U) ->
     r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model(R) ->
-    ?D:to_json(R).
+    U = ?D:to_json(R),
+    r(<<"requirements">>, lists:sort(requirements(U)), U).
 
 metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
@@ -330,7 +331,7 @@ prop_version() ->
             end).
 
 prop_add_requirement() ->
-    ?FORALL({E, O}, {non_blank_string(), dataset()},
+    ?FORALL({E, O}, {requirement(), dataset()},
             begin
                 Hv = eval(O),
                 O1 = ?D:add_requirement(id(?BIG_TIME), E, Hv),
@@ -341,7 +342,7 @@ prop_add_requirement() ->
             end).
 
 prop_remove_requirement() ->
-    ?FORALL({O, K}, ?LET(O, dataset(), {O, maybe_oneof(calc_requirements(O))}),
+    ?FORALL({O, K}, ?LET(O, dataset(), {O, maybe_oneof(calc_requirements(O), requirement())}),
             begin
                 Hv = eval(O),
                 O1 = ?D:remove_requirement(id(?BIG_TIME), K, Hv),

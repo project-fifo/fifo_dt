@@ -64,7 +64,10 @@ to_json(P) ->
           {<<"name">>, fun name/1},
           {<<"quota">>, fun quota/1},
           {<<"ram">>, fun ram/1},
-          {<<"requirements">>, fun requirements/1},
+          {<<"requirements">>,
+           fun (D1) ->
+                   [fifo_dt:req2js(R) || R <- requirements(D1)]
+           end},
           {<<"uuid">>, fun uuid/1},
           {<<"blocksize">>, fun blocksize/1},
           {<<"compression">>, fun compression/1},

@@ -50,5 +50,38 @@ permission(Size) ->
 perm_entry() ->
     oneof([<<"_">>, non_blank_string()]).
 
+requirement() ->
+    oneof([normal_req(), scale_req(), random_req()]).
+
+normal_req() ->
+    oneof([flat_req(), set_req()]).
+
+flat_req() ->
+    {req_wight(), flat_cond(), non_blank_string(), int()}.
+
+set_req() ->
+    {req_wight(), set_cond(), non_blank_string(), list(int())}.
+
+normal_set_req() ->
+    ok.
+
+set_cond() ->
+    oneof(['superset', 'disjoint', 'subset']).
+
+flat_cond() ->
+    oneof(['>=', '>', '=<', '<', '=:=', '=/=', 'element']).
+
+req_wight() ->
+    oneof(['must', 'cant', int()]).
+
+scale_req() ->
+    ?SUCHTHAT({_, _, Low, High},
+              {scale, non_blank_string(), choose(-100, 100), choose(-100, 100)},
+              Low =< High).
+random_req() ->
+    ?SUCHTHAT({_, Low, High},
+              {random, choose(-100, 100), choose(-100, 100)},
+              Low =< High).
+
 
 -endif.

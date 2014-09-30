@@ -205,7 +205,10 @@ to_json(D) ->
           {<<"networks">>, fun networks/1},
           {<<"nic_driver">>, fun nic_driver/1},
           {<<"os">>, fun os/1},
-          {<<"requirements">>, fun requirements/1},
+          {<<"requirements">>,
+           fun (D1) ->
+                   [fifo_dt:req2js(R) || R <- requirements(D1)]
+           end},
           {<<"sha1">>, fun sha1/1},
           {<<"status">>, fun status/1},
           {<<"users">>, fun users/1},

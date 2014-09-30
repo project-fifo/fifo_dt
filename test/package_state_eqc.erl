@@ -3,7 +3,7 @@
 -ifdef(TEST).
 -ifdef(EQC).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [id/1, maybe_oneof/1, requirement/0]).
 
 -include_lib("eqc/include/eqc_fsm.hrl").
 -include_lib("fqc/include/fqc.hrl").
@@ -47,8 +47,8 @@ package(Size) ->
                                {call, ?P, ram, [id(Size), non_neg_int(), O]},
                                {call, ?P, zfs_io_priority, [id(Size), non_neg_int(), O]},
 
-                               {call, ?P, add_requirement, [id(Size), non_blank_string(), O]},
-                               {call, ?P, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O)), O]},
+                               {call, ?P, add_requirement, [id(Size), requirement(), O]},
+                               {call, ?P, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O), requirement()), O]},
 
                                {call, ?P, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?P, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
@@ -111,10 +111,10 @@ model_zfs_io_priority(N, R) ->
     r(<<"zfs_io_priority">>, N, R).
 
 model_add_requirement(E, U) ->
-    r(<<"requirements">>, lists:usort([E | requirements(U)]), U).
+    r(<<"requirements">>, lists:usort([fifo_dt:req2js(E) | requirements(U)]), U).
 
 model_remove_requirement(E, U) ->
-    r(<<"requirements">>, lists:delete(E, requirements(U)), U).
+    r(<<"requirements">>, lists:delete(fifo_dt:req2js(E), requirements(U)), U).
 
 model_set_metadata(K, V, U) ->
     r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
@@ -123,7 +123,8 @@ model_delete_metadata(K, U) ->
     r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model(R) ->
-    ?P:to_json(R).
+    U = ?P:to_json(R),
+    r(<<"requirements">>, lists:sort(requirements(U)), U).
 
 metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
@@ -257,7 +258,7 @@ prop_zfs_io_priority() ->
             end).
 
 prop_add_requirement() ->
-    ?FORALL({E, O}, {non_blank_string(), package()},
+    ?FORALL({E, O}, {requirement(), package()},
             begin
                 Hv = eval(O),
                 O1 = ?P:add_requirement(id(?BIG_TIME), E, Hv),
@@ -268,7 +269,7 @@ prop_add_requirement() ->
             end).
 
 prop_remove_requirement() ->
-    ?FORALL({O, K}, ?LET(O, package(), {O, maybe_oneof(calc_requirements(O))}),
+    ?FORALL({O, K}, ?LET(O, package(), {O, maybe_oneof(calc_requirements(O), requirement())}),
             begin
                 Hv = eval(O),
                 O1 = ?P:remove_requirement(id(?BIG_TIME), K, Hv),
