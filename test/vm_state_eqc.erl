@@ -58,6 +58,9 @@ vm(Size) ->
                                {call, ?V, add_grouping, [id(Size), non_blank_string(), O]},
                                {call, ?V, remove_grouping, [id(Size), maybe_oneof(calc_groupings(O)), O]},
 
+                               {call, ?V, add_fw_rule, [id(Size), non_blank_string(), O]},
+                               {call, ?V, remove_fw_rule, [id(Size), maybe_oneof(calc_fw_rules(O)), O]},
+
                                {call, ?V, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?V, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
 
@@ -83,6 +86,15 @@ calc_groupings({call, _, add_grouping, [_, E, U]}) ->
 calc_groupings({call, _, _, P}) ->
     calc_groupings(lists:last(P));
 calc_groupings(_) ->
+    [].
+
+calc_fw_rules({call, _, remove_fw_rule, [_, K, U]}) ->
+    lists:delete(K, lists:usort(calc_fw_rules(U)));
+calc_fw_rules({call, _, add_fw_rule, [_, E, U]}) ->
+    [E | calc_fw_rules(U)];
+calc_fw_rules({call, _, _, P}) ->
+    calc_fw_rules(lists:last(P));
+calc_fw_rules(_) ->
     [].
 
 r(K, V, U) ->
@@ -157,6 +169,12 @@ model_add_grouping(E, U) ->
 model_remove_grouping(E, U) ->
     r(<<"groupings">>, lists:delete(E, get_groupings(U)), U).
 
+model_add_fw_rule(E, U) ->
+    r(<<"fw_rules">>, lists:usort([E | get_fw_rules(U)]), U).
+
+model_remove_fw_rule(E, U) ->
+    r(<<"fw_rules">>, lists:delete(E, get_fw_rules(U)), U).
+
 model(R) ->
     ?V:to_json(R).
 
@@ -190,6 +208,10 @@ network_map(U) ->
 
 get_groupings(U) ->
     {<<"groupings">>, M} = lists:keyfind(<<"groupings">>, 1, U),
+    M.
+
+get_fw_rules(U) ->
+    {<<"fw_rules">>, M} = lists:keyfind(<<"fw_rules">>, 1, U),
     M.
 
 prop_merge() ->
@@ -452,6 +474,28 @@ prop_remove_grouping() ->
                 Hv = eval(O),
                 O1 = ?V:remove_grouping(id(?BIG_TIME), K, Hv),
                 M1 = model_remove_grouping(K, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_add_fw_rule() ->
+    ?FORALL({E, O}, {non_blank_string(), vm()},
+            begin
+                Hv = eval(O),
+                O1 = ?V:add_fw_rule(id(?BIG_TIME), E, Hv),
+                M1 = model_add_fw_rule(E, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_fw_rule() ->
+    ?FORALL({O, K}, ?LET(O, vm(), {O, maybe_oneof(calc_fw_rules(O))}),
+            begin
+                Hv = eval(O),
+                O1 = ?V:remove_fw_rule(id(?BIG_TIME), K, Hv),
+                M1 = model_remove_fw_rule(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)

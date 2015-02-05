@@ -11,6 +11,12 @@
 -define(OBJ, ?VM).
 -include("ft_helper.hrl").
 
+-ifdef(TEST).
+-ifdef(EQC).
+-export([fw_rules_to_json/1]).
+-endif.
+-endif.
+
 -define(LOGLEN, 100).
 
 -export([
@@ -33,7 +39,8 @@
          services/1, set_service/3, set_service/4,
          metadata/1, set_metadata/3, set_metadata/4,
          network_map/1, set_network_map/4,
-         groupings/1, add_grouping/3, remove_grouping/3
+         groupings/1, add_grouping/3, remove_grouping/3,
+         fw_rules/1, add_fw_rule/3, remove_fw_rule/3
         ]).
 
 -ignore_xref([
@@ -250,6 +257,21 @@ remove_grouping({_T, ID}, V, H) ->
             H#?VM{groupings = O1}
     end.
 
+fw_rules(H) ->
+    riak_dt_orswot:value(H#?VM.fw_rules).
+
+add_fw_rule({_T, ID}, V, H) ->
+    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?VM.fw_rules),
+    H#?VM{fw_rules = O1}.
+
+remove_fw_rule({_T, ID}, V, H) ->
+    case riak_dt_orswot:update({remove, V}, ID, H#?VM.fw_rules) of
+        {error,{precondition,{not_present,_}}} ->
+            H;
+        {ok, O1} ->
+            H#?VM{fw_rules = O1}
+    end.
+
 metadata(H) ->
     fifo_map:value(H#?VM.metadata).
 
@@ -326,6 +348,51 @@ set_snapshot({T, ID}, Attribute, Value, G) ->
 
 load(_, #?VM{} = V) ->
     V;
+
+load(_, #vm_0_1_0{
+           uuid           = UUID,
+           alias          = Alias,
+           owner          = Owner,
+
+           dataset        = Dataset,
+           package        = Package,
+           hypervisor     = HV,
+           network_map    = NetMap,
+
+           config         = Config,
+           info           = Info,
+           services       = Services,
+           backups        = Backups,
+           snapshots      = Snaps,
+
+           logs           = Logs,
+           groupings      = Groupings,
+           state          = State,
+
+           metadata       = Metadata
+          }) ->
+    #vm_0_1_1{
+       uuid           = UUID,
+       alias          = Alias,
+       owner          = Owner,
+
+       dataset        = Dataset,
+       package        = Package,
+       hypervisor     = HV,
+       network_map    = NetMap,
+
+       config         = Config,
+       info           = Info,
+       services       = Services,
+       backups        = Backups,
+       snapshots      = Snaps,
+
+       logs           = Logs,
+       groupings      = Groupings,
+       state          = State,
+
+       metadata       = Metadata
+      };
 
 load({T, ID}, Sb) ->
     V = statebox:value(Sb),
@@ -418,6 +485,7 @@ to_json(V) ->
      {<<"services">>, services(V)},
      {<<"snapshots">>, snapshots(V)},
      {<<"state">>, state(V)},
+     {<<"fw_rules">>, fw_rules_to_json(fw_rules(V))},
      {<<"uuid">>, uuid(V)}
     ].
 
@@ -439,6 +507,8 @@ merge(#?VM{
           backups = Backups1,
           snapshots = Snapshots1,
           services = Services1,
+          fw_rules = FWRules1,
+
           metadata = Metadata1
          },
       #?VM{
@@ -459,6 +529,7 @@ merge(#?VM{
           backups = Backups2,
           snapshots = Snapshots2,
           services = Services2,
+          fw_rules = FWRules2,
           metadata = Metadata2
          }) ->
     #?VM{
@@ -472,6 +543,7 @@ merge(#?VM{
 
         logs = riak_dt_orswot:merge(Logs1, Logs2),
         groupings = riak_dt_orswot:merge(Groupings1, Groupings2),
+        fw_rules = riak_dt_orswot:merge(FWRules1, FWRules2),
 
         network_map = fifo_map:merge(NetworkMap1, NetworkMap2),
         config = fifo_map:merge(Config1, Config2),
@@ -498,3 +570,9 @@ log(ID, Time, Log, Vm) ->
                  L1
          end,
     Vm#?VM{ logs = L2 }.
+
+fw_rules_to_json(Rs) ->
+    lists:sort([fw_rule_to_json(R) || R <- Rs]).
+
+fw_rule_to_json(R) ->
+    R.
