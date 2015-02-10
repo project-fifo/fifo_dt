@@ -21,6 +21,13 @@ vm() ->
 ip() ->
     choose(16#00000000, 16#FFFFFFFF).
 
+fw_rule() ->
+    {oneof([allow, block]), oneof([inbound, outbound]), all,
+     {oneof([tcp, udp]), not_empty(pos_int())}}.
+
+pos_int() ->
+    ?SUCHTHAT(I, int(), I > 0).
+
 vm(Size) ->
     ?LAZY(oneof([{call, ?V, new, [id(Size)]} || Size == 1] ++
                     [?LETSHRINK(
@@ -58,8 +65,8 @@ vm(Size) ->
                                {call, ?V, add_grouping, [id(Size), non_blank_string(), O]},
                                {call, ?V, remove_grouping, [id(Size), maybe_oneof(calc_groupings(O)), O]},
 
-                               {call, ?V, add_fw_rule, [id(Size), non_blank_string(), O]},
-                               {call, ?V, remove_fw_rule, [id(Size), maybe_oneof(calc_fw_rules(O)), O]},
+                               {call, ?V, add_fw_rule, [id(Size), fw_rule(), O]},
+                               {call, ?V, remove_fw_rule, [id(Size), maybe_oneof(calc_fw_rules(O), fw_rule()), O]},
 
                                {call, ?V, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?V, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
@@ -170,10 +177,10 @@ model_remove_grouping(E, U) ->
     r(<<"groupings">>, lists:delete(E, get_groupings(U)), U).
 
 model_add_fw_rule(E, U) ->
-    r(<<"fw_rules">>, lists:usort([E | get_fw_rules(U)]), U).
+    r(<<"fw_rules">>, lists:usort([ft_vm:fw_rule_to_json(E) | get_fw_rules(U)]), U).
 
 model_remove_fw_rule(E, U) ->
-    r(<<"fw_rules">>, lists:delete(E, get_fw_rules(U)), U).
+    r(<<"fw_rules">>, lists:delete(ft_vm:fw_rule_to_json(E), get_fw_rules(U)), U).
 
 model(R) ->
     ?V:to_json(R).
@@ -480,7 +487,7 @@ prop_remove_grouping() ->
             end).
 
 prop_add_fw_rule() ->
-    ?FORALL({E, O}, {non_blank_string(), vm()},
+    ?FORALL({E, O}, {fw_rule(), vm()},
             begin
                 Hv = eval(O),
                 O1 = ?V:add_fw_rule(id(?BIG_TIME), E, Hv),
@@ -491,7 +498,7 @@ prop_add_fw_rule() ->
             end).
 
 prop_remove_fw_rule() ->
-    ?FORALL({O, K}, ?LET(O, vm(), {O, maybe_oneof(calc_fw_rules(O))}),
+    ?FORALL({O, K}, ?LET(O, vm(), {O, maybe_oneof(calc_fw_rules(O), fw_rule())}),
             begin
                 Hv = eval(O),
                 O1 = ?V:remove_fw_rule(id(?BIG_TIME), K, Hv),

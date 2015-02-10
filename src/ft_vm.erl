@@ -11,13 +11,9 @@
 -define(OBJ, ?VM).
 -include("ft_helper.hrl").
 
--ifdef(TEST).
--ifdef(EQC).
--export([fw_rules_to_json/1]).
--endif.
--endif.
-
 -define(LOGLEN, 100).
+
+-export([fw_rules_to_json/1, fw_rule_to_json/1, json_to_fw_rule/1]).
 
 -export([
          is_a/1, load/2, new/1, getter/2, merge/2, to_json/1, set/4
@@ -574,5 +570,46 @@ log(ID, Time, Log, Vm) ->
 fw_rules_to_json(Rs) ->
     lists:sort([fw_rule_to_json(R) || R <- Rs]).
 
-fw_rule_to_json(R) ->
-    R.
+fw_rule_to_json({Action, Direction, Target, {Proto, Ports}}) ->
+    [
+     {<<"action">>, a2b(Action)},
+     {<<"direction">>, a2b(Direction)},
+     {<<"ports">>, Ports},
+     {<<"protocol">>, a2b(Proto)},
+     {<<"target">>, target_to_json(Target)}
+    ].
+json_to_fw_rule([
+                 {<<"action">>, Action},
+                 {<<"direction">>, Direction},
+                 {<<"ports">>, Ports},
+                 {<<"protocol">>, Proto},
+                 {<<"target">>, Target}
+                ]) ->
+    {json_to_action(Action),
+     json_to_direction(Direction),
+     json_to_target(Target),
+     {json_to_proto(Proto), Ports}}.
+
+json_to_action(<<"allow">>) ->
+    allow;
+json_to_action(<<"block">>) ->
+    block.
+
+json_to_direction(<<"inbound">>) ->
+    inbound;
+json_to_direction(<<"outboud">>) ->
+    outbound.
+
+json_to_target(<<"all">>) ->
+    all.
+json_to_proto(<<"tcp">>) ->
+    tcp;
+
+json_to_proto(<<"udp">>) ->
+    udp.
+
+a2b(A) ->
+    atom_to_binary(A, utf8).
+
+target_to_json(all) ->
+    <<"all">>.
