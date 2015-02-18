@@ -69,7 +69,7 @@
 ?IS_A.
 
 new(_) ->
-    #?VM{}.
+    #?OBJ{}.
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"alias">>, alias);
@@ -597,7 +597,7 @@ json_to_action(<<"block">>) ->
 
 json_to_direction(<<"inbound">>) ->
     inbound;
-json_to_direction(<<"outboud">>) ->
+json_to_direction(<<"outbound">>) ->
     outbound.
 
 json_to_target(<<"all">>) ->
