@@ -570,25 +570,27 @@ log(ID, Time, Log, Vm) ->
 fw_rules_to_json(Rs) ->
     lists:sort([fw_rule_to_json(R) || R <- Rs]).
 
-fw_rule_to_json({Action, Direction, Target, {Proto, Ports}}) ->
+fw_rule_to_json({Action, Direction, Target, {Proto, Filters}}) ->
     [
      {<<"action">>, a2b(Action)},
      {<<"direction">>, a2b(Direction)},
-     {<<"ports">>, Ports},
+     {<<"filters">>, filters_to_json(Filters)},
      {<<"protocol">>, a2b(Proto)},
      {<<"target">>, target_to_json(Target)}
     ].
+
 json_to_fw_rule([
                  {<<"action">>, Action},
                  {<<"direction">>, Direction},
-                 {<<"ports">>, Ports},
+                 {<<"filters">>, Filters},
                  {<<"protocol">>, Proto},
                  {<<"target">>, Target}
                 ]) ->
     {json_to_action(Action),
      json_to_direction(Direction),
      json_to_target(Target),
-     {json_to_proto(Proto), Ports}}.
+     {json_to_proto(Proto),
+      json_to_filters(Filters)}}.
 
 json_to_action(<<"allow">>) ->
     allow;
@@ -602,6 +604,10 @@ json_to_direction(<<"outbound">>) ->
 
 json_to_target(<<"all">>) ->
     all.
+
+json_to_proto(<<"icmp">>) ->
+    icmp;
+
 json_to_proto(<<"tcp">>) ->
     tcp;
 
@@ -613,3 +619,29 @@ a2b(A) ->
 
 target_to_json(all) ->
     <<"all">>.
+
+filters_to_json(L) when is_list(L) ->
+    [filter_to_json(P) || P <- L];
+filters_to_json(all) ->
+    <<"all">>.
+
+
+json_to_filters(L) when is_list(L) ->
+    [json_to_filter(P) || P <- L];
+json_to_filters(<<"all">>) ->
+    all.
+
+
+filter_to_json({icmp, Type}) ->
+    [{<<"type">>, Type}];
+filter_to_json({icmp, Type, Code}) ->
+    [{<<"code">>, Code}, {<<"type">>, Type}];
+filter_to_json(I) when is_integer(I) ->
+    I.
+
+json_to_filter(I) when is_integer(I) ->
+    I;
+json_to_filter([{<<"code">>, Code}, {<<"type">>, Type}]) ->
+    {icmp, Type, Code};
+json_to_filter([{<<"type">>, Type}]) ->
+    {icmp, Type}.

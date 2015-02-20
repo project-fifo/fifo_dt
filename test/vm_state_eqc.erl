@@ -23,7 +23,20 @@ ip() ->
 
 fw_rule() ->
     {oneof([allow, block]), oneof([inbound, outbound]), all,
-     {oneof([tcp, udp]), not_empty(pos_int())}}.
+     frequency([{2, udp_tcp()}, {1, icmp()}])}.
+
+udp_tcp() ->
+    {oneof([tcp, udp]), ports()}.
+
+ports()  ->
+    frequency([{20, not_empty(list(pos_int()))},
+               {1, all}]).
+
+icmp() ->
+    {icmp, not_empty(list(code_and_type()))}.
+
+code_and_type() ->
+    oneof([{icmp, pos_int()}, {icmp, pos_int(), pos_int()}]).
 
 pos_int() ->
     ?SUCHTHAT(I, int(), I > 0).
@@ -511,6 +524,16 @@ prop_remove_fw_rule() ->
 prop_to_json() ->
     ?FORALL(E, vm(),
             jsx:encode(?V:to_json(eval(E))) /= []).
+
+prop_fw_json() ->
+    ?FORALL(R, fw_rule(),
+            begin
+                RJSON = ft_vm:fw_rule_to_json(R),
+                R2 = ft_vm:json_to_fw_rule(RJSON),
+                ?WHENFAIL(io:format(user, "~p -> ~p -> ~p~n",
+                                    [R, RJSON, R2]),
+                          R =:= R2)
+            end).
 
 -endif.
 -endif.
