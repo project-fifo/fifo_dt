@@ -603,7 +603,22 @@ json_to_direction(<<"outbound">>) ->
     outbound.
 
 json_to_target(<<"all">>) ->
-    all.
+    all;
+
+json_to_target([{<<"ip">>, IP}]) ->
+    {ip, ft_iprange:parse_bin(IP)};
+
+json_to_target([{<<"mask">>, Mask},
+                {<<"subnet">>, Subnet}]) ->
+    {subnet, ft_iprange:parse_bin(Subnet), Mask}.
+
+target_to_json(all) ->
+    <<"all">>;
+target_to_json({ip, IP}) ->
+    [{<<"ip">>, ft_iprange:to_bin(IP)}];
+target_to_json({subnet, Subnet, Mask}) ->
+    [{<<"mask">>, Mask},
+     {<<"subnet">>, ft_iprange:to_bin(Subnet)}].
 
 json_to_proto(<<"icmp">>) ->
     icmp;
@@ -617,17 +632,15 @@ json_to_proto(<<"udp">>) ->
 a2b(A) ->
     atom_to_binary(A, utf8).
 
-target_to_json(all) ->
-    <<"all">>.
-
 filters_to_json(L) when is_list(L) ->
     [filter_to_json(P) || P <- L];
 filters_to_json(all) ->
     <<"all">>.
 
 
-json_to_filters(L) when is_list(L) ->
+json_to_filters(L) when is_list(L), length(L) > 0 ->
     [json_to_filter(P) || P <- L];
+
 json_to_filters(<<"all">>) ->
     all.
 

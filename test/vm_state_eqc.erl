@@ -22,8 +22,14 @@ ip() ->
     choose(16#00000000, 16#FFFFFFFF).
 
 fw_rule() ->
-    {oneof([allow, block]), oneof([inbound, outbound]), all,
+    {oneof([allow, block]), oneof([inbound, outbound]), target(),
      frequency([{2, udp_tcp()}, {1, icmp()}])}.
+
+target() ->
+    frequency(
+      [{1, all},
+       {100, {ip, ip()}},
+       {100, {subnet, ip(), choose(1, 32)}}]).
 
 udp_tcp() ->
     {oneof([tcp, udp]), ports()}.
