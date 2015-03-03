@@ -21,6 +21,7 @@
          name/1, name/3,
          password/1, password/3,
          permissions/1, grant/3, revoke/3, revoke_prefix/3,
+         ptree/1,
          roles/1, join/3, leave/3,
          join_org/3, leave_org/3, select_org/3, orgs/1, active_org/1,
          add_key/4, revoke_key/3, keys/1,
@@ -54,10 +55,40 @@
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
 
+new({_T, _ID}) ->
+    #?USER{}.
+
 %% -spec load({non_neg_integer(), atom()}, any_user()) -> user().
 
 load(_, #?USER{} = User) ->
     User;
+
+load(TID, #user_0_1_5{
+           uuid = UUID,
+           name = Name,
+           password = Passwd,
+           active_org = ActiveOrg,
+           permissions = Permissions,
+           roles = Roles,
+           ssh_keys = Keys,
+           orgs = Orgs,
+           yubikeys = YubiKeys,
+           metadata = Metadata
+          }) ->
+    U = #user_0{
+           uuid = UUID,
+           name = Name,
+           password = Passwd,
+           active_org = ActiveOrg,
+           permissions = Permissions,
+           ptree = to_ptree(Permissions),
+           roles = Roles,
+           ssh_keys = Keys,
+           orgs = Orgs,
+           yubikeys = YubiKeys,
+           metadata = Metadata
+          },
+    load(TID, U);
 
 load(TID,
      #user_0_1_4{
@@ -215,24 +246,6 @@ load(CT, UserSB) ->
             permissions = Permissions,
             metadata = statebox:new(fun() -> Metadata end)}).
 
-new({T, _ID}) ->
-    {ok, UUID} = ?NEW_LWW(<<>>, T),
-    {ok, Name} = ?NEW_LWW(<<>>, T),
-    {ok, Passwd} = ?NEW_LWW(<<>>, T),
-    {ok, ActiveOrg} = ?NEW_LWW(<<>>, T),
-    #?USER{
-        uuid = UUID,
-        name = Name,
-        password = Passwd,
-        active_org = ActiveOrg,
-        roles = riak_dt_orswot:new(),
-        permissions = riak_dt_orswot:new(),
-        yubikeys = riak_dt_orswot:new(),
-        ssh_keys = riak_dt_orswot:new(),
-        orgs = riak_dt_orswot:new(),
-        metadata = fifo_map:new()
-       }.
-
 to_json(#?USER{
             uuid = UUID,
             name = Name,
@@ -281,6 +294,7 @@ merge(#?USER{
           yubikeys = YubiKeys2,
           metadata = Metadata2
          }) ->
+    Permissions = riak_dt_orswot:merge(Permissions1, Permissions2),
     #?USER{
         uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
         name = riak_dt_lwwreg:merge(Name1, Name2),
@@ -289,7 +303,8 @@ merge(#?USER{
         roles = riak_dt_orswot:merge(Roles1, Roles2),
         ssh_keys = riak_dt_orswot:merge(Keys1, Keys2),
         yubikeys = riak_dt_orswot:merge(YubiKeys1, YubiKeys2),
-        permissions = riak_dt_orswot:merge(Permissions1, Permissions2),
+        permissions = Permissions,
+        ptree = to_ptree(Permissions),
         orgs = riak_dt_orswot:merge(Orgs1, Orgs2),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
@@ -378,12 +393,15 @@ password({T, _ID}, Hash, User) ->
     {ok, PWD1} = riak_dt_lwwreg:update({assign, Hash, T}, none, User#?USER.password),
     User#?USER{password = PWD1}.
 
+ptree(#?USER{ptree = PTree}) ->
+    PTree.
+
 permissions(User) ->
     riak_dt_orswot:value(User#?USER.permissions).
 
 grant({_T, ID}, P, User) ->
     {ok, P1} = riak_dt_orswot:update({add, P}, ID, User#?USER.permissions),
-    User#?USER{permissions = P1}.
+    User#?USER{permissions = P1, ptree = to_ptree(P1)}.
 
 
 revoke({_T, ID}, P, User) ->
@@ -391,7 +409,7 @@ revoke({_T, ID}, P, User) ->
         {error,{precondition,{not_present, P}}} ->
             User;
         {ok, P1} ->
-            User#?USER{permissions = P1}
+            User#?USER{permissions = P1, ptree = to_ptree(P1)}
     end.
 
 revoke_prefix({_T, ID}, Prefix, User) ->
@@ -408,7 +426,8 @@ revoke_prefix({_T, ID}, Prefix, User) ->
                              end
                      end, P0, Ps),
     User#?USER{
-            permissions = P1
+            permissions = P1,
+            ptree = to_ptree(P1)
            }.
 
 roles(User) ->
@@ -464,3 +483,6 @@ update_permissions(TID, U) ->
                     (_, Acc) ->
                         Acc
                 end, U, Permissions).
+
+to_ptree(Perms) ->
+    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).

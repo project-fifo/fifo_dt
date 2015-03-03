@@ -20,6 +20,7 @@
          load/2,
          uuid/1, uuid/3,
          name/1, name/3,
+         ptree/1,
          permissions/1, grant/3, revoke/3, revoke_prefix/3,
          metadata/1, set_metadata/3, set_metadata/4,
          merge/2,
@@ -33,6 +34,7 @@
               load/2,
               uuid/1, uuid/2,
               name/1, name/2,
+              ptree/1,
               permissions/1, grant/3, revoke/3, revoke_prefix/3,
               metadata/1, set_metadata/3, set_metadata/4,
               getter/2,
@@ -47,20 +49,28 @@
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
 
-new({T, _ID}) ->
-    {ok, UUID} = ?NEW_LWW(<<>>, T),
-    {ok, Name} = ?NEW_LWW(<<>>, T),
-    #?ROLE{
-        uuid = UUID,
-        name = Name,
-        permissions = riak_dt_orswot:new(),
-        metadata = fifo_map:new()
-       }.
+new({_T, _ID}) ->
+    #?ROLE{}.
 
 %%-spec load({integer(), atom()}, any_role()) -> role().
 
 load(_, #?ROLE{} = Role) ->
     Role;
+
+load(TID, #role_0_1_0{
+            uuid = UUID,
+            name = Name,
+            permissions = Permissions,
+            metadata = Metadata
+           }) ->
+    R = #role_0{
+           uuid = UUID,
+           name = Name,
+           permissions = Permissions,
+           ptree = to_ptree(Permissions),
+           metadata = Metadata
+          },
+    load(TID, R);
 
 load(TID,
      #group_0_1_1{
@@ -144,10 +154,12 @@ merge(#?ROLE{
           permissions = Permissions2,
           metadata = Metadata2
          }) ->
+    P1 = riak_dt_orswot:merge(Permissions1, Permissions2),
     #?ROLE{
         uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
         name = riak_dt_lwwreg:merge(Name1, Name2),
-        permissions = riak_dt_orswot:merge(Permissions1, Permissions2),
+        permissions = P1,
+        ptree = to_ptree(P1),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
 
@@ -167,13 +179,17 @@ uuid({T, _ID}, UUID, Role = #?ROLE{}) ->
     {ok, V} = riak_dt_lwwreg:update({assign, UUID, T}, none, Role#?ROLE.uuid),
     Role#?ROLE{uuid = V}.
 
+ptree(#?ROLE{ptree = PTree}) ->
+    PTree.
+
 permissions(Role) ->
     riak_dt_orswot:value(Role#?ROLE.permissions).
 
 grant({_T, ID}, Permission, Role = #?ROLE{}) ->
     {ok, V} = riak_dt_orswot:update({add, Permission},
                                     ID, Role#?ROLE.permissions),
-    Role#?ROLE{permissions = V}.
+    Role#?ROLE{permissions = V,
+               ptree = to_ptree(V)}.
 
 
 revoke({_T, ID}, Permission, Role) ->
@@ -181,7 +197,8 @@ revoke({_T, ID}, Permission, Role) ->
         {error, {precondition, {not_present, Permission}}} ->
             Role;
         {ok, V} ->
-            Role#?ROLE{permissions = V}
+            Role#?ROLE{permissions = V,
+                       ptree = to_ptree(V)}
     end.
 
 revoke_prefix({_T, ID}, Prefix, Role) ->
@@ -198,7 +215,8 @@ revoke_prefix({_T, ID}, Prefix, Role) ->
                              end
                      end, P0, Ps),
     Role#?ROLE{
-            permissions = P1
+            permissions = P1,
+            ptree = to_ptree(P1)
            }.
 
 metadata(Role) ->
@@ -238,3 +256,6 @@ update_permissions(TID, Rl) ->
                     (_, Acc) ->
                         Acc
                 end, Rl, Permissions).
+
+to_ptree(Perms) ->
+    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).

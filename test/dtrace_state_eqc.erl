@@ -5,7 +5,6 @@
 
 -import(ft_test_helper, [id/1, maybe_oneof/1]).
 
--include_lib("eqc/include/eqc_fsm.hrl").
 -include_lib("fqc/include/fqc.hrl").
 
 -compile(export_all).

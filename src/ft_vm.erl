@@ -609,7 +609,7 @@ json_to_target([{<<"ip">>, IP}]) ->
     {ip, ft_iprange:parse_bin(IP)};
 
 json_to_target([{<<"mask">>, Mask},
-                {<<"subnet">>, Subnet}]) ->
+                {<<"subnet">>, Subnet}]) when is_integer(Mask)->
     {subnet, ft_iprange:parse_bin(Subnet), Mask}.
 
 target_to_json(all) ->
