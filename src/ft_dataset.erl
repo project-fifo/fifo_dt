@@ -74,13 +74,14 @@
 
 ?IS_A.
 
-new({T, _ID}) ->
-    {ok, Imported} = ?NEW_LWW(0, T),
-    {ok, Status} = ?NEW_LWW(<<"new">>, T),
+new({_T, _ID}) ->
+    {ok, Imported} = ?NEW_LWW(0, 1),
+    {ok, Status} = ?NEW_LWW(<<"new">>, 1),
     #?DATASET{
         imported = Imported,
         status = Status
        }.
+
 ?G(<<"uuid">>, uuid);
 ?G(<<"kernel_version">>, uuid);
 ?G(<<"type">>, type);

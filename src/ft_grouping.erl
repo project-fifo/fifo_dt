@@ -49,6 +49,9 @@
 
 ?IS_A.
 
+new(_) ->
+    #?GROUPING{}.
+
 uuid(H) ->
     riak_dt_lwwreg:value(H#?GROUPING.uuid).
 
@@ -129,9 +132,6 @@ load(TID, #grouping_0_1_0{
             metadata = Metadata
            },
     load(TID, G1).
-
-new(_) ->
-    #?GROUPING{}.
 
 metadata(G) ->
     fifo_map:value(G#?GROUPING.metadata).

@@ -45,6 +45,9 @@
 
 ?IS_A.
 
+new(_) ->
+    #?DTRACE{}.
+
 uuid(H) ->
     riak_dt_lwwreg:value(H#?DTRACE.uuid).
 
@@ -132,9 +135,6 @@ load({T, ID}, D) ->
              uuid = UUID1
             },
     load({T, ID}, D1).
-
-new(_) ->
-    #?DTRACE{}.
 
 to_json(D) ->
     [

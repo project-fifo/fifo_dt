@@ -56,6 +56,19 @@
 
 ?IS_A.
 
+-spec new({integer(), atom()}) -> package().
+new({_T, _ID}) ->
+    {ok, Undefined} = ?NEW_LWW(undefined, 1),
+    {ok, Off} = ?NEW_LWW(<<"off">>, 1),
+    #?PACKAGE{
+        blocksize = Undefined,
+        cpu_shares = Undefined,
+        cpu_cap = Undefined,
+        compression = Off,
+        max_swap = Undefined,
+        zfs_io_priority = Undefined
+       }.
+
 -spec to_json(Package :: package()) -> jsxd:object().
 
 to_json(P) ->
@@ -289,19 +302,6 @@ load({T, ID}, Sb) ->
            zfs_io_priority = ZFSIOPriority1
           },
     load({T, ID}, D1).
-
--spec new({integer(), atom()}) -> package().
-new({_T, _ID}) ->
-    {ok, Undefined} = ?NEW_LWW(undefined, 1),
-    {ok, Off} = ?NEW_LWW(<<"off">>, 1),
-    #?PACKAGE{
-        blocksize = Undefined,
-        cpu_shares = Undefined,
-        cpu_cap = Undefined,
-        compression = Off,
-        max_swap = Undefined,
-        zfs_io_priority = Undefined
-       }.
 
 -spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], package()) -> package().
 set_metadata(ID, [{K, V} | R] , Obj) ->

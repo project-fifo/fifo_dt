@@ -40,6 +40,9 @@
 
 ?IS_A.
 
+new(_) ->
+    #?NETWORK{}.
+
 set({T, ID}, <<"metadata">>, V, H) ->
     H#?NETWORK{metadata = fifo_map:from_orddict(V, ID, T)};
 
@@ -104,9 +107,6 @@ load({T, ID},  Sb) ->
        metadata = Metadata1
       },
     load({T, ID}, N1).
-
-new(_) ->
-    #?NETWORK{}.
 
 metadata(H) ->
     fifo_map:value(H#?NETWORK.metadata).
