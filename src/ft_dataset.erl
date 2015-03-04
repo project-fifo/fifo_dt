@@ -32,7 +32,7 @@
          homepage/1, homepage/3,
          image_size/1, image_size/3,
          name/1, name/3,
-         networks/1, networks/3,
+         networks/1, add_network/3, remove_network/3,
          nic_driver/1, nic_driver/3,
          os/1, os/3,
          sha1/1, sha1/3,
@@ -57,7 +57,7 @@
               homepage/1, homepage/3,
               image_size/1, image_size/3,
               name/1, name/3,
-              networks/1, networks/3,
+              networks/1, add_network/3, remove_network/3,
               nic_driver/1, nic_driver/3,
               os/1, os/3,
               users/1, users/3,
@@ -136,8 +136,6 @@ zone_type({T, _ID}, V, H) when V =:= lx ->
 ?S(image_size).
 ?G(name).
 ?S(name).
-?G(networks).
-?S(networks).
 ?G(nic_driver).
 ?S(nic_driver).
 ?G(os).
@@ -165,6 +163,21 @@ remove_requirement({_T, ID}, V, H) ->
             H;
         {ok, O1} ->
             H#?DATASET{requirements = O1}
+    end.
+
+networks(H) ->
+    riak_dt_orswot:value(H#?DATASET.networks).
+
+add_network({_T, ID}, V, H) ->
+    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?DATASET.networks),
+    H#?DATASET{networks = O1}.
+
+remove_network({_T, ID}, V, H) ->
+    case riak_dt_orswot:update({remove, V}, ID, H#?DATASET.networks) of
+        {error,{precondition,{not_present,_}}} ->
+            H;
+        {ok, O1} ->
+            H#?DATASET{networks = O1}
     end.
 
 metadata(H) ->
@@ -203,7 +216,10 @@ to_json(D) ->
           {<<"imported">>, fun imported/1},
           {<<"metadata">>, fun metadata/1},
           {<<"name">>, fun name/1},
-          {<<"networks">>, fun networks/1},
+          {<<"networks">>,
+           fun(D1) ->
+                   net_to_json(networks(D1))
+           end},
           {<<"nic_driver">>, fun nic_driver/1},
           {<<"os">>, fun os/1},
           {<<"requirements">>,
@@ -243,6 +259,50 @@ add([{N, F} | R], In, D) ->
 
 load(_, #?DATASET{} = H) ->
     H;
+
+load({T, ID}, #dataset_0{
+            description    = Desc,
+            disk_driver    = DiskD,
+            homepage       = Homepage,
+            image_size     = ImageSize,
+            imported       = Imported,
+            metadata       = Metadata,
+            name           = Name,
+            networks       = Networks,
+            nic_driver     = NicD,
+            os             = OS,
+            requirements   = Reqs,
+            status         = Status,
+            type           = Type,
+            users          = Users,
+            uuid           = UUID,
+            version        = Version
+           }) ->
+    Networks1 = [{NetName, NetDesc} ||
+                    [[{<<"description">>,NetDesc},
+                      {<<"name">>, NetName}]]<- riak_dt_lwwreg:value(Networks)],
+    {ok, Networks2} = riak_dt_orswot:update(
+                        {add_all, Networks1}, ID,
+                        riak_dt_orswot:new()),
+    D =  #dataset_1{
+            description    = Desc,
+            disk_driver    = DiskD,
+            homepage       = Homepage,
+            image_size     = ImageSize,
+            imported       = Imported,
+            metadata       = Metadata,
+            name           = Name,
+            networks       = Networks2,
+            nic_driver     = NicD,
+            os             = OS,
+            requirements   = Reqs,
+            status         = Status,
+            type           = Type,
+            users          = Users,
+            uuid           = UUID,
+            version        = Version
+           },
+    load({T, ID}, D);
 
 load(TID, #dataset_0_1_1{
             description    = Desc,
@@ -475,7 +535,7 @@ merge(#?DATASET{
         kernel_version = riak_dt_lwwreg:merge(KernelVersion1, KernelVersion2),
         metadata       = fifo_map:merge(Metadata1, Metadata2),
         name           = riak_dt_lwwreg:merge(Name1, Name2),
-        networks       = riak_dt_lwwreg:merge(Networks1, Networks2),
+        networks       = riak_dt_orswot:merge(Networks1, Networks2),
         nic_driver     = riak_dt_lwwreg:merge(NicD1, NicD2),
         os             = riak_dt_lwwreg:merge(OS1, OS2),
         requirements   = riak_dt_orswot:merge(Reqs1, Reqs2),
@@ -487,3 +547,7 @@ merge(#?DATASET{
         version        = riak_dt_lwwreg:merge(Version1, Version2),
         zone_type      = riak_dt_lwwreg:merge(ZoneType1, ZoneType2)
        }.
+
+net_to_json(Nets) ->
+    lists:sort([ [{<<"description">>, Desc}, {<<"name">>, Name}]
+                 || {Name, Desc} <- Nets]).

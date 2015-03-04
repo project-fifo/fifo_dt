@@ -23,6 +23,11 @@ zone_type() ->
 dataset() ->
     ?SIZED(Size, dataset(Size+1)).
 
+network() ->
+    {non_blank_string(), non_blank_string()}.
+
+net_to_js({Name, Desc}) ->
+    [{<<"description">>, Desc}, {<<"name">>, Name}].
 
 dataset(Size) ->
     ?LAZY(oneof([{call, ?D, new, [id(Size)]} || Size == 1] ++
@@ -43,13 +48,15 @@ dataset(Size) ->
                                {call, ?D, homepage, [id(Size), non_blank_string(), O]},
                                {call, ?D, image_size, [id(Size), non_blank_string(), O]},
                                {call, ?D, name, [id(Size), non_blank_string(), O]},
-                               {call, ?D, networks, [id(Size), list(non_blank_string()), O]},
                                {call, ?D, nic_driver, [id(Size), non_blank_string(), O]},
                                {call, ?D, os, [id(Size), non_blank_string(), O]},
                                {call, ?D, sha1, [id(Size), non_blank_string(), O]},
                                {call, ?D, users, [id(Size), list(non_blank_string()), O]},
                                {call, ?D, version, [id(Size), non_blank_string(), O]},
                                {call, ?D, kernel_version, [id(Size), non_blank_string(), O]},
+
+                               {call, ?D, add_network, [id(Size), network(), O]},
+                               {call, ?D, remove_network, [id(Size), maybe_oneof(calc_networks(O), network()), O]},
 
                                {call, ?D, add_requirement, [id(Size), requirement(), O]},
                                {call, ?D, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O), requirement()), O]},
@@ -76,6 +83,15 @@ calc_requirements({call, _, add_requirements, [_, E, U]}) ->
 calc_requirements({call, _, _, P}) ->
     calc_requirements(lists:last(P));
 calc_requirements(_) ->
+    [].
+
+calc_networks({call, _, remove_network, [_, K, U]}) ->
+    lists:delete(K, lists:usort(calc_networks(U)));
+calc_networks({call, _, add_networks, [_, E, U]}) ->
+    [E | calc_networks(U)];
+calc_networks({call, _, _, P}) ->
+    calc_networks(lists:last(P));
+calc_networks(_) ->
     [].
 
 r(K, V, U) ->
@@ -114,9 +130,6 @@ model_image_size(N, R) ->
 model_name(N, R) ->
     r(<<"name">>, N, R).
 
-model_networks(N, R) ->
-    r(<<"networks">>, N, R).
-
 model_nic_driver(N, R) ->
     r(<<"nic_driver">>, N, R).
 
@@ -134,6 +147,12 @@ model_add_requirement(E, U) ->
 
 model_remove_requirement(E, U) ->
     r(<<"requirements">>, lists:delete(fifo_dt:req2js(E), requirements(U)), U).
+
+model_add_network(E, U) ->
+    r(<<"networks">>, lists:usort([net_to_js(E) | networks(U)]), U).
+
+model_remove_network(E, U) ->
+    r(<<"networks">>, lists:delete(net_to_js(E), networks(U)), U).
 
 model_set_metadata(K, V, U) ->
     r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
@@ -153,6 +172,9 @@ requirements(U) ->
     {<<"requirements">>, M} = lists:keyfind(<<"requirements">>, 1, U),
     M.
 
+networks(U) ->
+    {<<"networks">>, M} = lists:keyfind(<<"networks">>, 1, U),
+    M.
 
 prop_merge() ->
     ?FORALL(R,
@@ -277,16 +299,6 @@ prop_name() ->
                               model_name(N, model(Hv)))
             end).
 
-prop_networks() ->
-    ?FORALL({N, R},
-            {non_blank_string(), dataset()},
-            begin
-                Hv = eval(R),
-                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
-                          model(?D:networks(id(?BIG_TIME), N, Hv)) ==
-                              model_networks(N, model(Hv)))
-            end).
-
 prop_nic_driver() ->
     ?FORALL({N, R},
             {non_blank_string(), dataset()},
@@ -346,6 +358,28 @@ prop_remove_requirement() ->
                 Hv = eval(O),
                 O1 = ?D:remove_requirement(id(?BIG_TIME), K, Hv),
                 M1 = model_remove_requirement(K, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_add_network() ->
+    ?FORALL({E, O}, {network(), dataset()},
+            begin
+                Hv = eval(O),
+                O1 = ?D:add_network(id(?BIG_TIME), E, Hv),
+                M1 = model_add_network(E, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_network() ->
+    ?FORALL({O, K}, ?LET(O, dataset(), {O, maybe_oneof(calc_networks(O), network())}),
+            begin
+                Hv = eval(O),
+                O1 = ?D:remove_network(id(?BIG_TIME), K, Hv),
+                M1 = model_remove_network(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)
