@@ -279,8 +279,8 @@ load({T, ID}, #dataset_0{
             version        = Version
            }) ->
     Networks1 = [{NetName, NetDesc} ||
-                    [[{<<"description">>,NetDesc},
-                      {<<"name">>, NetName}]]<- riak_dt_lwwreg:value(Networks)],
+                    [{<<"description">>,NetDesc},
+                     {<<"name">>, NetName}] <- riak_dt_lwwreg:value(Networks)],
     {ok, Networks2} = riak_dt_orswot:update(
                         {add_all, Networks1}, ID,
                         riak_dt_orswot:new()),
