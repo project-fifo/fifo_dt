@@ -14,7 +14,7 @@
 
           requirements    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
 
-          metadata        = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata        = old_map:new()    :: old_map:map()
 
         }).
 
@@ -34,7 +34,7 @@
 
           requirements    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
 
-          metadata        = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata        = old_map:new()    :: old_map:map()
 
         }).
 -define(PACKAGE, package_0).

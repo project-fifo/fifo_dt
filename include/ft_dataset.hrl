@@ -5,7 +5,7 @@
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata       = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           disk_driver    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -26,7 +26,7 @@
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata       = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           disk_driver    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -51,7 +51,7 @@
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata       = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           disk_driver    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -77,7 +77,7 @@
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           networks       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata       = riak_dt_map:new()    :: riak_dt_map:map(),
+          metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           disk_driver    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),

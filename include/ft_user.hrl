@@ -38,7 +38,7 @@
           roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -record(user_0_1_4, {
@@ -51,7 +51,7 @@
           ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -record(user_0_1_5, {
@@ -64,7 +64,7 @@
           ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -record(user_0, {
@@ -78,7 +78,7 @@
           ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -define(USER, user_0).

@@ -11,7 +11,7 @@
 
           free           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           used           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata       = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata       = old_map:new()    :: old_map:map()
         }).
 
 -define(IPRANGE, iprange_0_1_0).

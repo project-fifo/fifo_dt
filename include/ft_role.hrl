@@ -9,14 +9,14 @@
           uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -record(role_0_1_0, {
           uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 -record(role_0, {
@@ -24,7 +24,7 @@
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           ptree       = libsnarlmatch_tree:new(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = old_map:new()    :: old_map:map()
          }).
 
 

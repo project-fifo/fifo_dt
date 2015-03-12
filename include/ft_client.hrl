@@ -7,7 +7,7 @@
           redirect_uris = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           permissions   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           roles         = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata      = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata      = old_map:new()    :: old_map:map()
          }).
 
 -record(client_1, {
@@ -20,7 +20,7 @@
           permissions   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           ptree         = libsnarlmatch_tree:new(),
           roles         = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata      = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata      = old_map:new()    :: old_map:map()
          }).
 
 -define(CLIENT, client_1).

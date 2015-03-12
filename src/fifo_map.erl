@@ -13,34 +13,34 @@
 
 -define(SET, riak_dt_orswot).
 -define(REG, riak_dt_lwwreg).
--define(MAP, riak_dt_map).
+-define(MAP, old_map).
 -define(COUNTER, riak_dt_pncounter).
 
--spec new() -> riak_dt_map:map().
+-spec new() -> old_map:map().
 
 new() ->
-    riak_dt_map:new().
+    old_map:new().
 
 merge(A, B) ->
-    riak_dt_map:merge(A, B).
+    old_map:merge(A, B).
 
--spec get(Keys::[binary()]|binary(), Map::riak_dt_map:map()) ->
+-spec get(Keys::[binary()]|binary(), Map::old_map:map()) ->
                  term().
 
 get([K], M) ->
-    Keys = riak_dt_map:value(keyset, M),
+    Keys = old_map:value(keyset, M),
     case orddict:find(K, Keys) of
         {ok, T} ->
-            value_(riak_dt_map:value({get, {K, T}}, M));
+            value_(old_map:value({get, {K, T}}, M));
         E ->
             E
     end;
 
 get([K | Ks], M) ->
-    Keys = riak_dt_map:value(keyset, M),
+    Keys = old_map:value(keyset, M),
     case orddict:find(K, Keys) of
         {ok, ?MAP} ->
-            M1 = riak_dt_map:value({get_crdt, {K, ?MAP}}, M),
+            M1 = old_map:value({get_crdt, {K, ?MAP}}, M),
             get(Ks, M1);
         {ok, T} ->
             {error, {bad_type, K, T}};
@@ -53,8 +53,8 @@ get(K, M) ->
 
 -spec set(Key::[binary()]|binary(), Value::term(),
           Actor::atom(), Timestamp::non_neg_integer(),
-          Map::riak_dt_map:map()) ->
-                 {ok, riak_dt_map:map()}.
+          Map::old_map:map()) ->
+                 {ok, old_map:map()}.
 
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
@@ -68,11 +68,11 @@ set(Ks, V, A, T, M) ->
     case split_path(Ks, [], M) of
         {ok, {[FirstNew | Missing], []}} ->
             Ops = nested_create([FirstNew | Missing], V, T),
-            riak_dt_map:update({update, Ops}, A, M);
+            old_map:update({update, Ops}, A, M);
         {ok, {Missing, Existing}} ->
             Ops = nested_update(Existing,
                                 nested_create(Missing, V, T)),
-            riak_dt_map:update({update, Ops}, A, M);
+            old_map:update({update, Ops}, A, M);
         E ->
             E
     end.
@@ -87,7 +87,7 @@ remove(Ks, A, M) when is_list(Ks) ->
     case remove_path(Ks, [], M) of
         {ok, {Path, K}} ->
             Ops = nested_update(Path, [{remove, K}]),
-            riak_dt_map:update({update, Ops}, A, M);
+            old_map:update({update, Ops}, A, M);
         {ok, missing} ->
             {ok, M}
     end;
@@ -96,12 +96,12 @@ remove(K, A, M) ->
     remove([K], A, M).
 
 value(M) ->
-    value_(riak_dt_map:value(M)).
+    value_(old_map:value(M)).
 
 -spec from_orddict(D::orddict:orddict(),
                    Actor::term(),
                    Timestamp::non_neg_integer()) ->
-                          riak_dt_map:map().
+                          old_map:map().
 
 from_orddict(D, Actor, Timestamp) ->
     lists:foldl(fun({Ks, V}, Map) ->
@@ -113,7 +113,7 @@ from_orddict(D, Actor, Timestamp) ->
 %%% Internal Functions
 %%%===================================================================
 
--spec split_path([binary()], [binary()], riak_dt_map:map()) ->
+-spec split_path([binary()], [binary()], old_map:map()) ->
                         {error, not_a_map, term(), [binary()]} |
                         {ok, {[binary()], [binary()]}}.
 %%split_path([K | Ks], Existing, M) when is_list(Ks) ->
@@ -122,10 +122,10 @@ split_path([], Existing, _M) ->
     {ok, {[], lists:reverse(Existing)}};
 
 split_path([K | Ks], Existing, M) ->
-    Keys = riak_dt_map:value(keyset, M),
+    Keys = old_map:value(keyset, M),
     case orddict:find(K, Keys) of
         {ok, ?MAP} ->
-            M1 = riak_dt_map:value({get_crdt, {K, ?MAP}}, M),
+            M1 = old_map:value({get_crdt, {K, ?MAP}}, M),
             split_path(Ks, [K | Existing], M1);
         {ok, T} when
               Ks =/= [] ->
@@ -137,7 +137,7 @@ split_path([K | Ks], Existing, M) ->
     end.
 
 remove_path([K], Path, M) ->
-    Keys = riak_dt_map:value(keyset, M),
+    Keys = old_map:value(keyset, M),
     case orddict:find(K, Keys) of
         {ok, T} ->
             {ok, {lists:reverse(Path), {K, T}}};
@@ -146,10 +146,10 @@ remove_path([K], Path, M) ->
     end;
 
 remove_path([K | Ks], Path, M) ->
-    Keys = riak_dt_map:value(keyset, M),
+    Keys = old_map:value(keyset, M),
     case orddict:find(K, Keys) of
         {ok, ?MAP} ->
-            M1 = riak_dt_map:value({get_crdt, {K, ?MAP}}, M),
+            M1 = old_map:value({get_crdt, {K, ?MAP}}, M),
             remove_path(Ks, [K | Path], M1);
         _ ->
             {ok, missing}
