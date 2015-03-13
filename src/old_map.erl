@@ -37,7 +37,7 @@
 -export([new/0, value/1, value/2, update/3, merge/2,
          equal/2, to_binary/1, from_binary/1, precondition_context/1, stats/1, stat/2]).
 
--export_type([map/0, binary_map/0, map_op/0]).
+-export_type([old_map/0, binary_map/0, map_op/0]).
 
 -type binary_map() :: binary(). %% A binary that from_binary/1 will accept
 -type old_map() :: {riak_dt_vclock:vclock(), valuelist()}.
@@ -202,9 +202,6 @@ merge({LHSClock, LHSEntries}, {RHSClock, RHSEntries}) ->
 
 %% @doc check if each element in `Entries' should be in the merged
 %% set.
--spec merge_disjoint_fields(sets:set(), valuelist(),
-                            riak_dt_vclock:vclock(), valuelist()) ->
-                                   valuelist().
 merge_disjoint_fields(Fields, Entries, SetClock, Accumulator) ->
     sets:fold(fun(Field, Acc) ->
                       {Dots, Value} = orddict:fetch(Field, Entries),
@@ -223,7 +220,6 @@ merge_disjoint_fields(Fields, Entries, SetClock, Accumulator) ->
 
 %% @doc merges the minimal clocks and values for the common entries in
 %% both sets.
--spec merge_common_fields(sets:set(), valuelist(), valuelist()) -> valuelist().
 merge_common_fields(CommonFields, Entries1, Entries2) ->
     sets:fold(fun({_Name, Mod}=Field, Acc) ->
                       {Dots1, V1} = orddict:fetch(Field, Entries1),
