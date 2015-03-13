@@ -121,57 +121,7 @@ sub_getter(O, K) ->
     jsxd:get(K, to_json(O)).
 
 load(_, #?IPRANGE{} = I) ->
-    I;
-
-load({T, ID}, Sb) ->
-    I = statebox:value(Sb),
-    {ok, UUID} = jsxd:get(<<"uuid">>, I),
-    {ok, Name} = jsxd:get(<<"name">>, I),
-    {ok, Network} = jsxd:get(<<"network">>, I),
-    {ok, Gateway} = jsxd:get(<<"gateway">>, I),
-    {ok, Netmask} = jsxd:get(<<"netmask">>, I),
-    {ok, First} = jsxd:get(<<"first">>, I),
-    {ok, Last} = jsxd:get(<<"last">>, I),
-    {ok, Current} = jsxd:get(<<"current">>, I),
-    {ok, Tag} = jsxd:get(<<"tag">>, I),
-    {ok, VLAN} = jsxd:get(<<"vlan">>, I),
-    Returned = jsxd:get(<<"returned">>, [], I),
-    Metadata = jsxd:get(<<"metadata">>, [], I),
-    {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(Current, Last)}, ID,
-                                       riak_dt_orswot:new()),
-    {ok, Used} = case First == Current of
-                     true ->
-                         {ok, riak_dt_orswot:new()};
-                     false ->
-                         riak_dt_orswot:update({add_all, lists:seq(First, Current - 1)}, ID,
-                                         riak_dt_orswot:new())
-                 end,
-    {ok, UUID1} = ?NEW_LWW(UUID, T),
-    {ok, Name1} = ?NEW_LWW(Name, T),
-    {ok, Network1} = ?NEW_LWW(Network, T),
-    {ok, Netmask1} = ?NEW_LWW(Netmask, T),
-    {ok, Gateway1} = ?NEW_LWW(Gateway, T),
-    {ok, Tag1} = ?NEW_LWW(Tag, T),
-    {ok, Vlan1} = ?NEW_LWW(VLAN, T),
-
-    {ok, Free1} = riak_dt_orswot:update({add_all, Returned}, ID, Free),
-    {ok, Used1} = riak_dt_orswot:update({remove_all, Returned}, ID, Used),
-    Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-
-    #?IPRANGE{
-        uuid     = UUID1,
-        name     = Name1,
-
-        network  = Network1,
-        netmask  = Netmask1,
-        gateway  = Gateway1,
-        tag      = Tag1,
-        vlan     = Vlan1,
-
-        free     = Free1,
-        used     = Used1,
-        metadata = Metadata1
-       }.
+    I.
 
 new({_T, ID}, S, E) when S < E ->
     {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(S, E)}, ID,

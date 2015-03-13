@@ -251,56 +251,6 @@ load({T, ID}, #package_0_1_0{
 
            zfs_io_priority = ZFSIOPriority1
           },
-    load({T, ID}, D1);
-
-load({T, ID}, Sb) ->
-    D = statebox:value(Sb),
-    {ok, UUID} = jsxd:get(<<"uuid">>, D),
-    {ok, Name} = jsxd:get(<<"name">>, D),
-    BlockSize = or_dflt(<<"blocksize">>, undefined, D),
-    Compression = jsxd:get(<<"compression">>, <<"off">>, D),
-    CpuCap = or_dflt(<<"cpu_cap">>, undefined, D),
-    CpuShares = or_dflt(<<"cpu_shares">>, undefined, D),
-    MaxSwap = or_dflt(<<"max_swap">>, undefined, D),
-    {ok, Quota} = jsxd:get(<<"quota">>, D),
-    {ok, RAM} = jsxd:get(<<"ram">>, D),
-    ZFSIOPriority = or_dflt(<<"zfs_io_priority">>, undefined, D),
-    Requirements = or_dflt(<<"requirements">>, [], D),
-    Metadata = or_dflt(<<"metadata">>, [], D),
-
-    {ok, UUID1} = ?NEW_LWW(UUID, T),
-    {ok, Name1} = ?NEW_LWW(Name, T),
-    {ok, BlockSize1} = ?NEW_LWW(BlockSize, T),
-    {ok, Compression1} = ?NEW_LWW(Compression, T),
-    {ok, CpuCap1} = ?NEW_LWW(CpuCap, T),
-    {ok, CpuShares1} = ?NEW_LWW(CpuShares, T),
-    {ok, MaxSwap1} = ?NEW_LWW(MaxSwap, T),
-    {ok, Quota1} = ?NEW_LWW(Quota, T),
-    {ok, MaxSwap1} = ?NEW_LWW(MaxSwap, T),
-    {ok, RAM1} = ?NEW_LWW(RAM, T),
-    {ok, ZFSIOPriority1} = ?NEW_LWW(ZFSIOPriority, T),
-    {ok, Requirements1} = riak_dt_orswot:update(
-                            {add_all, Requirements}, ID,
-                            riak_dt_orswot:new()),
-    Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-
-    D1 =
-        #package_0_1_0{
-           uuid            = UUID1,
-           name            = Name1,
-           metadata        = Metadata1,
-
-           blocksize       = BlockSize1,
-           compression     = Compression1,
-           cpu_cap         = CpuCap1,
-           cpu_shares      = CpuShares1,
-           max_swap        = MaxSwap1,
-           quota           = Quota1,
-           ram             = RAM1,
-           requirements    = Requirements1,
-
-           zfs_io_priority = ZFSIOPriority1
-          },
     load({T, ID}, D1).
 
 -spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], package()) -> package().
@@ -363,11 +313,3 @@ merge(#?PACKAGE{
         uuid            = riak_dt_lwwreg:merge(UUID1, UUID2),
         zfs_io_priority = riak_dt_lwwreg:merge(ZFSIOPriority1, ZFSIOPriority2)
        }.
-
-or_dflt(K, Dflt, O) ->
-    case jsxd:get(K, O) of
-        {ok, V} when is_integer(V), V > 0 ->
-            V;
-        _ ->
-            Dflt
-    end.

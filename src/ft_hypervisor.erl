@@ -301,63 +301,7 @@ getter(O, [<<"resources">> | K]) ->
 ?G_JSX.
 
 load(_, #?HYPERVISOR{} = H) ->
-    H;
-
-load({T, ID}, Sb) ->
-    H = statebox:value(Sb),
-    Characteristics = case jsxd:get([<<"characteristics">>],  H) of
-                          {ok, V} when V /= [{}] ->
-                              V;
-                          _ ->
-                              []
-                      end,
-    {ok, Etherstubs} = jsxd:get([<<"etherstubs">>], H),
-    {ok, Host} = jsxd:get([<<"host">>], H),
-    Metadata = jsxd:get([<<"metadata">>], [], H),
-    {ok, Alias} = jsxd:get([<<"alias">>], H),
-    {ok, Networks} = jsxd:get([<<"networks">>], H),
-    {ok, Pools} = jsxd:get([<<"pools">>], H),
-    {ok, Port} = jsxd:get([<<"port">>], H),
-    {ok, Resources} = jsxd:get([<<"resources">>], H),
-    Services = jsxd:get([<<"services">>], [], H),
-    {ok, Sysinfo} = jsxd:get([<<"sysinfo">>], H),
-    {ok, UUID} = jsxd:get([<<"uuid">>], H),
-    {ok, Version} = jsxd:get([<<"version">>], H),
-    {ok, Virtualisation} = jsxd:get([<<"virtualisation">>], H),
-
-    Characteristics1 = fifo_map:from_orddict(Characteristics, ID, T),
-    {ok, Alias1} = ?NEW_LWW(Alias, T),
-    {ok, Etherstubs1} = ?NEW_LWW(Etherstubs, T),
-    {ok, Host1} = ?NEW_LWW(Host, T),
-    Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-    {ok, Networks1} = ?NEW_LWW(Networks, T),
-    Pools1 = fifo_map:from_orddict(Pools, ID, T),
-    {ok, Path} = ?NEW_LWW([{UUID, 1}], T),
-    {ok, Port1} = ?NEW_LWW(Port, T),
-    Resources1 = fifo_map:from_orddict(Resources, ID, T),
-    Services1 = fifo_map:from_orddict(Services, ID, T),
-    {ok, Sysinfo1} = ?NEW_LWW(Sysinfo, T),
-    {ok, UUID1} = ?NEW_LWW(UUID, T),
-    {ok, Version1} = ?NEW_LWW(Version, T),
-    {ok, Virtualisation1} = ?NEW_LWW(Virtualisation, T),
-    H1 = #hypervisor_0_1_0{
-            characteristics = Characteristics1,
-            alias = Alias1,
-            etherstubs = Etherstubs1,
-            host = Host1,
-            metadata = Metadata1,
-            networks = Networks1,
-            path = Path,
-            pools = Pools1,
-            port = Port1,
-            resources = Resources1,
-            services = Services1,
-            sysinfo = Sysinfo1,
-            uuid = UUID1,
-            version = Version1,
-            virtualisation = Virtualisation1
-           },
-    load({T, ID}, H1).
+    H.
 
 to_json(H) ->
     [

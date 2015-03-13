@@ -126,45 +126,6 @@ load({T, ID},
             name = Name,
             triggers = Triggers1,
             metadata = Metadata
-           });
-
-load({T, ID},
-     #organisation_0_1_0{
-        uuid = UUID,
-        name = Name,
-        triggers = Triggers,
-        metadata = Metadata
-       }) ->
-    {ok, UUID1} = ?NEW_LWW(vlwwregister:value(UUID), T),
-    {ok, Name1} = ?NEW_LWW(vlwwregister:value(Name), T),
-    {ok, Triggers1} = ?CONVERT_VORSET(Triggers),
-    Metadata1 = fifo_map:from_orddict(statebox:value(Metadata), ID, T),
-    load({T, ID},
-         #organisation_0_1_1{
-            uuid = UUID1,
-            name = Name1,
-            triggers = Triggers1,
-            metadata = Metadata1
-           });
-
-load({T, ID}, OrgSB) ->
-    Size = 50,
-    Org = statebox:value(OrgSB),
-    {ok, Name} = jsxd:get([<<"name">>], Org),
-    {ok, UUID} = jsxd:get([<<"uuid">>], Org),
-    ID0 = {{0,0,0}, load},
-    Triggers0 = jsxd:get([<<"triggers">>], [], Org),
-    Metadata = jsxd:get([<<"metadata">>], [], Org),
-    Triggers = lists:foldl(
-                 fun (G, Acc) ->
-                         vorsetg:add(ID0, G, Acc)
-                 end, vorsetg:new(Size), Triggers0),
-    load({T, ID},
-         #organisation_0_1_0{
-            uuid = vlwwregister:new(UUID),
-            name = vlwwregister:new(Name),
-            triggers = Triggers,
-            metadata = statebox:new(fun () -> Metadata end)
            }).
 
 jsonify_trigger({Trigger, Action}) ->

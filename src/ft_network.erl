@@ -86,27 +86,7 @@ remove_iprange({_T, ID}, V, H) ->
 ?G_JSX.
 
 load(_, #?NETWORK{} = N) ->
-    N;
-
-load({T, ID},  Sb) ->
-    N = statebox:value(Sb),
-    {ok, UUID} = jsxd:get([<<"uuid">>], N),
-    {ok, Name} = jsxd:get([<<"name">>], N),
-    IPRanges = jsxd:get([<<"ipranges">>], [], N),
-    Metadata = jsxd:get([<<"metadata">>], [], N),
-    {ok, UUID1} = ?NEW_LWW(UUID, T),
-    {ok, Name1} = ?NEW_LWW(Name, T),
-    {ok, IPRanges1} = riak_dt_orswot:update(
-                        {add_all, IPRanges}, ID,
-                        riak_dt_orswot:new()),
-    Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-    N1 = #network_0_1_0{
-       uuid = UUID1,
-       name = Name1,
-       ipranges = IPRanges1,
-       metadata = Metadata1
-      },
-    load({T, ID}, N1).
+    N.
 
 metadata(H) ->
     fifo_map:value(H#?NETWORK.metadata).

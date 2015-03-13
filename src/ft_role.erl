@@ -85,46 +85,7 @@ load(TID,
             permissions = Permissions,
             metadata = Metadata
            },
-    load(TID, update_permissions(TID, Rl));
-
-load({T, ID},
-     #group_0_1_0{
-        uuid = UUID,
-        name = Name,
-        permissions = Permissions,
-        metadata = Metadata
-       }) ->
-    {ok, UUID1} = ?NEW_LWW(vlwwregister:value(UUID), T),
-    {ok, Name1} = ?NEW_LWW(vlwwregister:value(Name), T),
-    {ok, Permissions1} = ?CONVERT_VORSET(Permissions),
-    Metadata1 = fifo_map:from_orddict(statebox:value(Metadata), ID, T),
-    load({T, ID},
-         #group_0_1_1{
-            uuid = UUID1,
-            name = Name1,
-            permissions = Permissions1,
-            metadata = Metadata1
-           });
-
-load(IDT, RoleSB) ->
-    Size = 50,
-    Role = statebox:value(RoleSB),
-    {ok, Name} = jsxd:get([<<"name">>], Role),
-    {ok, UUID} = jsxd:get([<<"uuid">>], Role),
-    ID0 = {{0,0,0}, load},
-    Permissions0 = jsxd:get([<<"permissions">>], [], Role),
-    Metadata = jsxd:get([<<"metadata">>], [], Role),
-    Permissions = lists:foldl(
-                    fun (G, Acc) ->
-                            vorsetg:add(ID0, G, Acc)
-                    end, vorsetg:new(Size), Permissions0),
-    load(IDT,
-         #group_0_1_0{
-            uuid = vlwwregister:new(UUID),
-            name = vlwwregister:new(Name),
-            permissions = Permissions,
-            metadata = statebox:new(fun () -> Metadata end)
-           }).
+    load(TID, update_permissions(TID, Rl)).
 
 to_json(#?ROLE{
             uuid = UUID,
