@@ -1,6 +1,6 @@
 -module(fifo_dt).
 
--export([type/1, js2req/1, req2js/1]).
+-export([type/1, js2req/1, req2js/1, update_set/1, update_map/1]).
 
 -spec type(any()) ->
                   ft_dataset | ft_dtrace | ft_grouping | ft_hypervisor |
@@ -104,3 +104,13 @@ make_random(C) ->
     {ok, Low} = jsxd:get(<<"low">>, C),
     {ok, High} = jsxd:get(<<"high">>, C),
     {random, Low, High}.
+
+update_set(Old) ->
+    Values = old_set:value(Old),
+    {ok, New} = riak_dt_orswot:update({add_all, Values}, update,
+                                      riak_dt_orswot:new()),
+    New.
+
+update_map(Old) ->
+    V = fifo_old_map:value(Old),
+    fifo_map:from_orddict(V, update, 1).

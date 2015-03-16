@@ -81,4 +81,19 @@
           metadata    = old_map:new()    :: old_map:map()
          }).
 
--define(USER, user_0).
+-record(user_1, {
+          uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          ptree       = libsnarlmatch_tree:new(),
+          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+
+-define(USER, user_1).
