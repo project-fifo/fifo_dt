@@ -63,6 +63,22 @@ new(_) ->
 load(_, #?ORG{} = Org) ->
     Org;
 
+load(TID, #organisation_0_1_5{
+           uuid = UUID,
+           name = Name,
+           resources = Resources,
+           triggers = Triggers,
+           metadata = Metadata
+          }) ->
+    O = #organisation_0{
+           uuid = UUID,
+           name = Name,
+           resources = fifo_dt:update_set(Resources),
+           triggers = fifo_dt:update_map(Triggers),
+           metadata = fifo_dt:update_map(Metadata)
+          },
+    load(TID, O);
+
 load(TID,
      #organisation_0_1_4{
         uuid = UUID,

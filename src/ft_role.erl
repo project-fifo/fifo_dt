@@ -56,6 +56,21 @@ new({_T, _ID}) ->
 
 load(_, #?ROLE{} = Role) ->
     Role;
+load(TID, #role_0{
+           uuid = UUID,
+           name = Name,
+           permissions = Permissions,
+           ptree = PTree,
+           metadata = Metadata
+          }) ->
+    R = #role_1{
+           uuid = UUID,
+           name = Name,
+           permissions = fifo_dt:update_set(Permissions),
+           ptree = PTree,
+           metadata = fifo_dt:update_map(Metadata)
+          },
+    load(TID, R);
 
 load(TID, #role_0_1_0{
             uuid = UUID,
@@ -67,7 +82,7 @@ load(TID, #role_0_1_0{
            uuid = UUID,
            name = Name,
            permissions = Permissions,
-           ptree = to_ptree(Permissions),
+           ptree = fifo_dt:to_ptree(Permissions),
            metadata = Metadata
           },
     load(TID, R);
@@ -120,7 +135,7 @@ merge(#?ROLE{
         uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
         name = riak_dt_lwwreg:merge(Name1, Name2),
         permissions = P1,
-        ptree = to_ptree(P1),
+        ptree = fifo_dt:to_ptree(P1),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
 
@@ -149,8 +164,7 @@ permissions(Role) ->
 grant({_T, ID}, Permission, Role = #?ROLE{}) ->
     {ok, V} = riak_dt_orswot:update({add, Permission},
                                     ID, Role#?ROLE.permissions),
-    Role#?ROLE{permissions = V,
-               ptree = to_ptree(V)}.
+    Role#?ROLE{permissions = V, ptree = fifo_dt:to_ptree(V)}.
 
 
 revoke({_T, ID}, Permission, Role) ->
@@ -158,8 +172,7 @@ revoke({_T, ID}, Permission, Role) ->
         {error, {precondition, {not_present, Permission}}} ->
             Role;
         {ok, V} ->
-            Role#?ROLE{permissions = V,
-                       ptree = to_ptree(V)}
+            Role#?ROLE{permissions = V, ptree = fifo_dt:to_ptree(V)}
     end.
 
 revoke_prefix({_T, ID}, Prefix, Role) ->
@@ -177,7 +190,7 @@ revoke_prefix({_T, ID}, Prefix, Role) ->
                      end, P0, Ps),
     Role#?ROLE{
             permissions = P1,
-            ptree = to_ptree(P1)
+            ptree = fifo_dt:to_ptree(P1)
            }.
 
 metadata(Role) ->
@@ -217,6 +230,3 @@ update_permissions(TID, Rl) ->
                     (_, Acc) ->
                         Acc
                 end, Rl, Permissions).
-
-to_ptree(Perms) ->
-    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).

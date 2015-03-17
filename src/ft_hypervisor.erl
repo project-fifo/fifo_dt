@@ -109,13 +109,13 @@ new(_) ->
     {ok, Si} = ?NEW_LWW([], 0),
     {ok, Vi} = ?NEW_LWW([], 0),
     #?HYPERVISOR{
-          etherstubs      = Es,
-          networks        = Ns,
-          path            = Ps,
-          sysinfo         = Si,
-          virtualisation  = Vi
-        }
-    #?HYPERVISOR{}.
+        etherstubs      = Es,
+        networks        = Ns,
+        path            = Ps,
+        sysinfo         = Si,
+        virtualisation  = Vi
+       }
+        #?HYPERVISOR{}.
 
 alias(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.alias).
@@ -301,7 +301,42 @@ getter(O, [<<"resources">> | K]) ->
 ?G_JSX.
 
 load(_, #?HYPERVISOR{} = H) ->
-    H.
+    H;
+load(TID, #hypervisor_0_1_0{
+             characteristics = Characteristics,
+             etherstubs      = Etherstubs,
+             host            = Host,
+             metadata        = Metadata,
+             alias           = Alias,
+             networks        = Networks,
+             path            = Path,
+             pools           = Pools,
+             port            = Port,
+             resources       = Rsources,
+             services        = Services,
+             sysinfo         = Sysinfo,
+             uuid            = UUID,
+             version         = Version,
+             virtualisation  = Virt
+            }) ->
+    H1 = #hypervisor_0{
+            characteristics = fifo_dt:update_map(Characteristics),
+            etherstubs      = Etherstubs,
+            host            = Host,
+            metadata        = fifo_dt:update_map(Metadata),
+            alias           = Alias,
+            networks        = Networks,
+            path            = Path,
+            pools           = fifo_dt:update_map(Pools),
+            port            = Port,
+            resources       = fifo_dt:update_map(Rsources),
+            services        = fifo_dt:update_map(Services),
+            sysinfo         = Sysinfo,
+            uuid            = UUID,
+            version         = Version,
+            virtualisation  = Virt
+           },
+    load(TID, H1).
 
 to_json(H) ->
     [

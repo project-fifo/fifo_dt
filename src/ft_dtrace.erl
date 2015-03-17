@@ -115,6 +115,22 @@ set_config({T, ID}, Attribute, Value, G) ->
 
 load(_, #?DTRACE{} = D) ->
     D;
+load(TID, #dtrace_0_1_0{
+             config = Config,
+             metadata = Metadata,
+             script = Script,
+             name = Name,
+             uuid = UUID
+            }) ->
+    D1 = #dtrace_0{
+            config = fifo_dt:update_map(Config),
+            metadata = fifo_dt:update_map(Metadata),
+            script = Script,
+            name = Name,
+            uuid = UUID
+           },
+    load(TID, D1);
+
 load({T, ID}, D) ->
     {ok, UUID} = jsxd:get([<<"uuid">>], D),
     {ok, Name} = jsxd:get([<<"name">>], D),
@@ -127,7 +143,7 @@ load({T, ID}, D) ->
     {ok, Script1} = ?NEW_LWW(Script, T),
     Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
     Config1 = fifo_map:from_orddict(Config, ID, T),
-    D1 = #?DTRACE{
+    D1 = #dtrace_0_1_0{
              config = Config1,
              metadata = Metadata1,
              script = Script1,

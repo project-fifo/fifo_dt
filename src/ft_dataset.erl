@@ -260,24 +260,70 @@ add([{N, F} | R], In, D) ->
 load(_, #?DATASET{} = H) ->
     H;
 
-load({T, ID}, #dataset_0{
+load({T, ID}, #dataset_1{
+                 description    = Desc,
+                 disk_driver    = DiskD,
+                 homepage       = Homepage,
+                 image_size     = ImageSize,
+                 imported       = Imported,
+                 metadata       = Metadata,
+                 name           = Name,
+                 networks       = Networks,
+                 nic_driver     = NicD,
+                 os             = OS,
+                 requirements   = Reqs,
+                 status         = Status,
+                 type           = Type,
+                 users          = Users,
+                 uuid           = UUID,
+                 version        = Version,
+                 zone_type      = ZType,
+                 sha1           = SHA1,
+                 kernel_version = KVersion
+                }) ->
+
+    D =  #dataset_2{
             description    = Desc,
             disk_driver    = DiskD,
             homepage       = Homepage,
             image_size     = ImageSize,
             imported       = Imported,
-            metadata       = Metadata,
+            metadata       = fifo_dt:update_map(Metadata),
             name           = Name,
-            networks       = Networks,
+            networks       = fifo_dt:update_set(Networks),
             nic_driver     = NicD,
             os             = OS,
-            requirements   = Reqs,
+            requirements   = fifo_dt:update_set(Reqs),
             status         = Status,
             type           = Type,
             users          = Users,
             uuid           = UUID,
-            version        = Version
-           }) ->
+            version        = Version,
+            zone_type      = ZType,
+            sha1           = SHA1,
+            kernel_version = KVersion
+           },
+    load({T, ID}, D);
+
+
+load({T, ID}, #dataset_0{
+                 description    = Desc,
+                 disk_driver    = DiskD,
+                 homepage       = Homepage,
+                 image_size     = ImageSize,
+                 imported       = Imported,
+                 metadata       = Metadata,
+                 name           = Name,
+                 networks       = Networks,
+                 nic_driver     = NicD,
+                 os             = OS,
+                 requirements   = Reqs,
+                 status         = Status,
+                 type           = Type,
+                 users          = Users,
+                 uuid           = UUID,
+                 version        = Version
+                }) ->
     Networks1 = [{NetName, NetDesc} ||
                     [{<<"description">>,NetDesc},
                      {<<"name">>, NetName}] <- riak_dt_lwwreg:value(Networks)],
@@ -305,23 +351,23 @@ load({T, ID}, #dataset_0{
     load({T, ID}, D);
 
 load(TID, #dataset_0_1_1{
-            description    = Desc,
-            disk_driver    = DiskD,
-            homepage       = Homepage,
-            image_size     = ImageSize,
-            imported       = Imported,
-            metadata       = Metadata,
-            name           = Name,
-            networks       = Networks,
-            nic_driver     = NicD,
-            os             = OS,
-            requirements   = Reqs,
-            status         = Status,
-            type           = Type,
-            users          = Users,
-            uuid           = UUID,
-            version        = Version
-           }) ->
+             description    = Desc,
+             disk_driver    = DiskD,
+             homepage       = Homepage,
+             image_size     = ImageSize,
+             imported       = Imported,
+             metadata       = Metadata,
+             name           = Name,
+             networks       = Networks,
+             nic_driver     = NicD,
+             os             = OS,
+             requirements   = Reqs,
+             status         = Status,
+             type           = Type,
+             users          = Users,
+             uuid           = UUID,
+             version        = Version
+            }) ->
     D1 = #dataset_0{
             description    = Desc,
             disk_driver    = DiskD,

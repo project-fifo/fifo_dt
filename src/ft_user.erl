@@ -63,25 +63,53 @@ new({_T, _ID}) ->
 load(_, #?USER{} = User) ->
     User;
 
-load(TID, #user_0_1_5{
+load(TID,  #user_0{
+              uuid = UUID,
+              name = Name,
+              password = Passwd,
+              active_org = ActiveOrg,
+              permissions = Permissions,
+              ptree = PTree,
+              roles = Roles,
+              ssh_keys = Keys,
+              orgs = Orgs,
+              yubikeys = YubiKeys,
+              metadata = Metadata
+             }) ->
+    U = #user_1{
            uuid = UUID,
            name = Name,
            password = Passwd,
            active_org = ActiveOrg,
-           permissions = Permissions,
-           roles = Roles,
-           ssh_keys = Keys,
-           orgs = Orgs,
-           yubikeys = YubiKeys,
-           metadata = Metadata
-          }) ->
+           permissions = fifo_dt:update_set(Permissions),
+           ptree = PTree,
+           roles = fifo_dt:update_set(Roles),
+           ssh_keys = fifo_dt:update_set(Keys),
+           orgs = fifo_dt:update_set(Orgs),
+           yubikeys = fifo_dt:update_set(YubiKeys),
+           metadata = fifo_dt:update_map(Metadata)
+          },
+    load(TID, U);
+
+load(TID, #user_0_1_5{
+             uuid = UUID,
+             name = Name,
+             password = Passwd,
+             active_org = ActiveOrg,
+             permissions = Permissions,
+             roles = Roles,
+             ssh_keys = Keys,
+             orgs = Orgs,
+             yubikeys = YubiKeys,
+             metadata = Metadata
+            }) ->
     U = #user_0{
            uuid = UUID,
            name = Name,
            password = Passwd,
            active_org = ActiveOrg,
            permissions = Permissions,
-           ptree = to_ptree(Permissions),
+           ptree = fifo_dt:to_ptree(Permissions),
            roles = Roles,
            ssh_keys = Keys,
            orgs = Orgs,
@@ -200,7 +228,7 @@ merge(#?USER{
         ssh_keys = riak_dt_orswot:merge(Keys1, Keys2),
         yubikeys = riak_dt_orswot:merge(YubiKeys1, YubiKeys2),
         permissions = Permissions,
-        ptree = to_ptree(Permissions),
+        ptree = fifo_dt:to_ptree(Permissions),
         orgs = riak_dt_orswot:merge(Orgs1, Orgs2),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
@@ -297,7 +325,7 @@ permissions(User) ->
 
 grant({_T, ID}, P, User) ->
     {ok, P1} = riak_dt_orswot:update({add, P}, ID, User#?USER.permissions),
-    User#?USER{permissions = P1, ptree = to_ptree(P1)}.
+    User#?USER{permissions = P1, ptree = fifo_dt:to_ptree(P1)}.
 
 
 revoke({_T, ID}, P, User) ->
@@ -305,7 +333,7 @@ revoke({_T, ID}, P, User) ->
         {error,{precondition,{not_present, P}}} ->
             User;
         {ok, P1} ->
-            User#?USER{permissions = P1, ptree = to_ptree(P1)}
+            User#?USER{permissions = P1, ptree = fifo_dt:to_ptree(P1)}
     end.
 
 revoke_prefix({_T, ID}, Prefix, User) ->
@@ -323,7 +351,7 @@ revoke_prefix({_T, ID}, Prefix, User) ->
                      end, P0, Ps),
     User#?USER{
             permissions = P1,
-            ptree = to_ptree(P1)
+            ptree = fifo_dt:to_ptree(P1)
            }.
 
 roles(User) ->
@@ -379,6 +407,3 @@ update_permissions(TID, U) ->
                     (_, Acc) ->
                         Acc
                 end, U, Permissions).
-
-to_ptree(Perms) ->
-    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).

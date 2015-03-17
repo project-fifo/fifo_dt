@@ -121,7 +121,36 @@ sub_getter(O, K) ->
     jsxd:get(K, to_json(O)).
 
 load(_, #?IPRANGE{} = I) ->
-    I.
+    I;
+load(TID, #iprange_0_1_0{
+             uuid           = UUID,
+             name           = Name,
+
+             network        = Network,
+             netmask        = Netmask,
+             gateway        = Gateway,
+             tag            = Tag,
+             vlan           = VLan,
+
+             free           = Free,
+             used           = Used,
+             metadata       = Metadata
+            }) ->
+    I = #iprange_0{
+           uuid           = UUID,
+           name           = Name,
+
+           network        = Network,
+           netmask        = Netmask,
+           gateway        = Gateway,
+           tag            = Tag,
+           vlan           = VLan,
+
+           free           = fifo_dt:update_set(Free),
+           used           = fifo_dt:update_set(Used),
+           metadata       = fifo_dt:update_map(Metadata)
+          },
+    load(TID, I).
 
 new({_T, ID}, S, E) when S < E ->
     {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(S, E)}, ID,

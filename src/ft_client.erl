@@ -46,6 +46,33 @@ new({_T, _ID}) ->
 
 load(_, #?CLIENT{} = Client) ->
     Client;
+
+load(TID, #client_1{
+             uuid          = UUID1,
+             name          = Name1,
+             client_id     = ClientID1,
+             secret        = Secret1,
+             type          = Type1,
+             redirect_uris = RedirectURIs1,
+             permissions   = Permissions1,
+             ptree         = PTree,
+             roles         = Roles1,
+             metadata      = Metadata1
+            }) ->
+    C = #client_2{
+           uuid          = UUID1,
+           name          = Name1,
+           client_id     = ClientID1,
+           secret        = Secret1,
+           type          = Type1,
+           redirect_uris = fifo_dt:update_set(RedirectURIs1),
+           permissions   = fifo_dt:update_set(Permissions1),
+           ptree         = PTree,
+           roles         = fifo_dt:update_set(Roles1),
+           metadata      = fifo_dt:update_map(Metadata1)
+          },
+    load(TID, C);
+
 load(TID, #client_0{
              uuid          = UUID1,
              name          = Name1,
@@ -65,7 +92,7 @@ load(TID, #client_0{
            type          = Type1,
            redirect_uris = RedirectURIs1,
            permissions   = Permissions1,
-           ptree         = to_ptree(Permissions1),
+           ptree         = fifo_dt:to_ptree(Permissions1),
            roles         = Roles1,
            metadata      = Metadata1
           },
@@ -124,7 +151,7 @@ merge(#?CLIENT{
         type          = riak_dt_lwwreg:merge(Type1, Type2),
         redirect_uris = riak_dt_orswot:merge(RedirectURIs1, RedirectURIs2),
         permissions   = P1,
-        ptree         = to_ptree(P1),
+        ptree         = fifo_dt:to_ptree(P1),
         roles         = riak_dt_orswot:merge(Roles1, Roles2),
         metadata      = fifo_map:merge(Metadata1, Metadata2)
        }.
@@ -163,7 +190,7 @@ permissions(Client) ->
 
 grant({_T, ID}, P, Client) ->
     {ok, P1} = riak_dt_orswot:update({add, P}, ID, Client#?CLIENT.permissions),
-    Client#?CLIENT{permissions = P1, ptree = to_ptree(P1)}.
+    Client#?CLIENT{permissions = P1, ptree = fifo_dt:to_ptree(P1)}.
 
 
 revoke({_T, ID}, P, Client) ->
@@ -171,7 +198,7 @@ revoke({_T, ID}, P, Client) ->
         {error,{precondition,{not_present, P}}} ->
             Client;
         {ok, P1} ->
-            Client#?CLIENT{permissions = P1, ptree = to_ptree(P1)}
+            Client#?CLIENT{permissions = P1, ptree = fifo_dt:to_ptree(P1)}
     end.
 
 roles(Client) ->
@@ -210,6 +237,3 @@ set_metadata({_T, ID}, Attribute, delete, Client) ->
 set_metadata({T, ID}, Attribute, Value, Client) ->
     {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Client#?CLIENT.metadata),
     Client#?CLIENT{metadata = M1}.
-
-to_ptree(Perms) ->
-    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).

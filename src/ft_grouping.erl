@@ -114,6 +114,25 @@ remove_grouping({_T, ID}, V, H) ->
 load(_, #?GROUPING{} = G) ->
     G;
 
+load(TID, #grouping_0{
+             uuid = UUID,
+             name = Name,
+             type = Type,
+             groupings = Groupings,
+             elements = Elements,
+             metadata = Metadata,
+             config = Config
+            }) ->
+    G1 = #grouping_1{
+            uuid = UUID,
+            name = Name,
+            type = Type,
+            groupings = fifo_dt:update_set(Groupings),
+            elements = fifo_dt:update_set(Elements),
+            metadata = fifo_dt:update_map(Metadata),
+            config = fifo_dt:update_map(Config)
+           },
+    load(TID, G1);
 
 load(TID, #grouping_0_1_0{
                   uuid = UUID,

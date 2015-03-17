@@ -86,7 +86,22 @@ remove_iprange({_T, ID}, V, H) ->
 ?G_JSX.
 
 load(_, #?NETWORK{} = N) ->
-    N.
+    N;
+
+load(TID, #network_0_1_0{
+             uuid           = UUID,
+             name           = Name,
+             ipranges       = IPRanges,
+             metadata       = Metadata
+        }) ->
+    N = #network_0{
+           uuid           = UUID,
+           name           = Name,
+           ipranges       = fifo_dt:update_set(IPRanges),
+           metadata       = fifo_dt:update_map(Metadata)
+          },
+    load(TID, N).
+
 
 metadata(H) ->
     fifo_map:value(H#?NETWORK.metadata).

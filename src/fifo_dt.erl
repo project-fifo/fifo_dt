@@ -1,6 +1,6 @@
 -module(fifo_dt).
 
--export([type/1, js2req/1, req2js/1, update_set/1, update_map/1]).
+-export([type/1, js2req/1, req2js/1, update_set/1, update_map/1, to_ptree/1]).
 
 -spec type(any()) ->
                   ft_dataset | ft_dtrace | ft_grouping | ft_hypervisor |
@@ -114,3 +114,9 @@ update_set(Old) ->
 update_map(Old) ->
     V = fifo_old_map:value(Old),
     fifo_map:from_orddict(V, update, 1).
+
+to_ptree({_, _} = Perms) ->
+    libsnarlmatch_tree:from_list(old_set:value(Perms));
+to_ptree(Perms) ->
+    libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).
+

@@ -345,7 +345,77 @@ set_snapshot({T, ID}, Attribute, Value, G) ->
 load(_, #?VM{} = V) ->
     V;
 
-load(_, #vm_0_1_0{
+load(TID, #vm_0_1_1{
+             uuid           = UUID,
+             alias          = Alias,
+             owner          = Owner,
+
+             dataset        = Dataset,
+             package        = Package,
+             hypervisor     = HV,
+             network_map    = NetMap,
+
+             config         = Config,
+             info           = Info,
+             services       = Services,
+             backups        = Backups,
+             snapshots      = Snaps,
+
+             logs           = Logs,
+             groupings      = Groupings,
+             state          = State,
+             fw_rules       = FWRules,
+
+             metadata       = Metadata
+            }) ->
+    V = #vm_0{
+           uuid           = UUID,
+           alias          = Alias,
+           owner          = Owner,
+
+           dataset        = Dataset,
+           package        = Package,
+           hypervisor     = HV,
+           network_map    = fifo_dt:update_map(NetMap),
+
+           config         = fifo_dt:update_map(Config),
+           info           = fifo_dt:update_map(Info),
+           services       = fifo_dt:update_map(Services),
+           backups        = fifo_dt:update_map(Backups),
+           snapshots      = fifo_dt:update_map(Snaps),
+
+           logs           = fifo_dt:update_set(Logs),
+           groupings      = fifo_dt:update_set(Groupings),
+           fw_rules       = fifo_dt:update_set(FWRules),
+           state          = State,
+
+           metadata       = fifo_dt:update_map(Metadata)
+          },
+        load(TID, V);
+
+load(TID, #vm_0_1_0{
+             uuid           = UUID,
+             alias          = Alias,
+             owner          = Owner,
+
+             dataset        = Dataset,
+             package        = Package,
+             hypervisor     = HV,
+             network_map    = NetMap,
+
+             config         = Config,
+             info           = Info,
+             services       = Services,
+             backups        = Backups,
+             snapshots      = Snaps,
+
+             logs           = Logs,
+             groupings      = Groupings,
+             state          = State,
+
+             metadata       = Metadata
+            }) ->
+    V = #vm_0_1_1{
            uuid           = UUID,
            alias          = Alias,
            owner          = Owner,
@@ -366,29 +436,8 @@ load(_, #vm_0_1_0{
            state          = State,
 
            metadata       = Metadata
-          }) ->
-    #vm_0_1_1{
-       uuid           = UUID,
-       alias          = Alias,
-       owner          = Owner,
-
-       dataset        = Dataset,
-       package        = Package,
-       hypervisor     = HV,
-       network_map    = NetMap,
-
-       config         = Config,
-       info           = Info,
-       services       = Services,
-       backups        = Backups,
-       snapshots      = Snaps,
-
-       logs           = Logs,
-       groupings      = Groupings,
-       state          = State,
-
-       metadata       = Metadata
-      }.
+          },
+    load(TID, V).
 
 -spec to_json(vm()) -> jsxd:object().
 

@@ -209,14 +209,47 @@ fix_reqs(ID, Requirements) ->
     Rs = riak_dt_orswot:value(Requirements),
     Rs1 = [fifo_dt:js2req(R) || R <- Rs],
     {ok, Rs2} = riak_dt_orswot:update(
-                            {add_all, Rs1}, ID,
-                            riak_dt_orswot:new()),
+                  {add_all, Rs1}, ID,
+                  riak_dt_orswot:new()),
     Rs2.
 
 -spec load({integer(), atom()}, term()) -> package().
 
 load(_, #?PACKAGE{} = P) ->
     P;
+load(TID, #package_0{
+             uuid            = UUID,
+             name            = Name,
+             metadata        = Metadata,
+
+             blocksize       = BlockSize,
+             compression     = Compression,
+             cpu_cap         = CpuCap,
+             cpu_shares      = CpuShares,
+             max_swap        = MaxSwap,
+             quota           = Quota,
+             ram             = RAM,
+             requirements    = Requirements,
+
+             zfs_io_priority = ZFSIOPriority1
+            }) ->
+    P = #package_1{
+           uuid            = UUID,
+           name            = Name,
+           metadata        = fifo_dt:update_map(Metadata),
+
+           blocksize       = BlockSize,
+           compression     = Compression,
+           cpu_cap         = CpuCap,
+           cpu_shares      = CpuShares,
+           max_swap        = MaxSwap,
+           quota           = Quota,
+           ram             = RAM,
+           requirements    = fifo_dt:update_set(Requirements),
+
+           zfs_io_priority = ZFSIOPriority1
+          },
+    load(TID, P);
 
 load({T, ID}, #package_0_1_0{
                  uuid            = UUID1,
@@ -234,23 +267,22 @@ load({T, ID}, #package_0_1_0{
 
                  zfs_io_priority = ZFSIOPriority1
                 }) ->
-    D1 =
-        #package_0{
-           uuid            = UUID1,
-           name            = Name1,
-           metadata        = Metadata1,
+    D1 = #package_0{
+            uuid            = UUID1,
+            name            = Name1,
+            metadata        = Metadata1,
 
-           blocksize       = BlockSize1,
-           compression     = Compression1,
-           cpu_cap         = CpuCap1,
-           cpu_shares      = CpuShares1,
-           max_swap        = MaxSwap1,
-           quota           = Quota1,
-           ram             = RAM1,
-           requirements    = fix_reqs(ID, Requirements1),
+            blocksize       = BlockSize1,
+            compression     = Compression1,
+            cpu_cap         = CpuCap1,
+            cpu_shares      = CpuShares1,
+            max_swap        = MaxSwap1,
+            quota           = Quota1,
+            ram             = RAM1,
+            requirements    = fix_reqs(ID, Requirements1),
 
-           zfs_io_priority = ZFSIOPriority1
-          },
+            zfs_io_priority = ZFSIOPriority1
+           },
     load({T, ID}, D1).
 
 -spec set_metadata({integer(), atom()}, [{jsxd:key(), jsxd:value()}], package()) -> package().
