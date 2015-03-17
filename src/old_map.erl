@@ -83,8 +83,11 @@ new() ->
 %% @doc get the current set of values for this Map
 -spec value(old_map()) -> values().
 value({_Clock, Values}) ->
-    orddict:fold(fun({_Name, Mod}=Key, {_Dots, Value}, Acc) ->
-                       [{Key, Mod:value(Value)} | Acc] end,
+    orddict:fold(fun({_Name, riak_dt_map}=Key, {_Dots, Value}, Acc) ->
+                         [{Key, old_map:value(Value)} | Acc];
+                    ({_Name, Mod}=Key, {_Dots, Value}, Acc) ->
+                         [{Key, Mod:value(Value)} | Acc]
+                 end,
                  [],
                  Values).
 
@@ -95,11 +98,18 @@ value({_Clock, Values}) ->
 -spec value(map_q(), old_map()) -> term().
 value(size, {_Clock, Values}) ->
     length(keys(Values));
+value({get, {_Name, riak_dt_map}=Field}, Map) ->
+    case value({get_crdt, Field}, Map) of
+        error -> error;
+        CRDT -> old_map:value(CRDT)
+    end;
 value({get, {_Name, Mod}=Field}, Map) ->
     case value({get_crdt, Field}, Map) of
         error -> error;
         CRDT -> Mod:value(CRDT)
     end;
+value({get_crdt, {_Name, riak_dt_map}=Field}, {_Clock, Values}) ->
+    get_crdt(orddict:find(Field, Values), old_map);
 value({get_crdt, {_Name, Mod}=Field}, {_Clock, Values}) ->
     get_crdt(orddict:find(Field, Values), Mod);
 value(keyset, {_Clock, Values}) ->
@@ -221,12 +231,19 @@ merge_disjoint_fields(Fields, Entries, SetClock, Accumulator) ->
 %% @doc merges the minimal clocks and values for the common entries in
 %% both sets.
 merge_common_fields(CommonFields, Entries1, Entries2) ->
-    sets:fold(fun({_Name, Mod}=Field, Acc) ->
+    sets:fold(fun({_Name, riak_dt_map}=Field, Acc) ->
+                      {Dots1, V1} = orddict:fetch(Field, Entries1),
+                      {Dots2, V2} = orddict:fetch(Field, Entries2),
+                      Dots = riak_dt_vclock:merge([Dots1, Dots2]),
+                      V = old_map:merge(V1, V2),
+                      orddict:store(Field, {Dots, V}, Acc);
+                 ({_Name, Mod}=Field, Acc) ->
                       {Dots1, V1} = orddict:fetch(Field, Entries1),
                       {Dots2, V2} = orddict:fetch(Field, Entries2),
                       Dots = riak_dt_vclock:merge([Dots1, Dots2]),
                       V = Mod:merge(V1, V2),
-                      orddict:store(Field, {Dots, V}, Acc) end,
+                      orddict:store(Field, {Dots, V}, Acc)
+              end,
               orddict:new(),
               CommonFields).
 
