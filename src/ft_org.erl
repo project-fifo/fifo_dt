@@ -134,7 +134,7 @@ load({T, ID},
         metadata = Metadata
        }) ->
     UUIDb = riak_dt_lwwreg:value(UUID),
-    Ts = [{trigger_uuid(UUIDb, Tr), Tr} || Tr <- riak_dt_orswot:value(Triggers)],
+    Ts = [{trigger_uuid(UUIDb, Tr), Tr} || Tr <- old_set:value(Triggers)],
     Triggers1 = fifo_map:from_orddict(orddict:from_list(Ts), ID, T),
     load({T, ID},
          #organisation_0_1_2{

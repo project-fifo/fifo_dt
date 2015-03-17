@@ -34,10 +34,10 @@
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          permissions = old_set:new() :: old_set:orswot(),
+          roles       = old_set:new() :: old_set:orswot(),
+          ssh_keys    = old_set:new() :: old_set:orswot(),
+          orgs        = old_set:new() :: old_set:orswot(),
           metadata    = old_map:new()    :: old_map:map()
          }).
 
@@ -46,11 +46,11 @@
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          permissions = old_set:new() :: old_set:orswot(),
+          roles       = old_set:new() :: old_set:orswot(),
+          ssh_keys    = old_set:new() :: old_set:orswot(),
+          orgs        = old_set:new() :: old_set:orswot(),
+          yubikeys    = old_set:new() :: old_set:orswot(),
           metadata    = old_map:new()    :: old_map:map()
          }).
 
@@ -59,11 +59,11 @@
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          permissions = old_set:new() :: old_set:orswot(),
+          roles       = old_set:new() :: old_set:orswot(),
+          ssh_keys    = old_set:new() :: old_set:orswot(),
+          orgs        = old_set:new() :: old_set:orswot(),
+          yubikeys    = old_set:new() :: old_set:orswot(),
           metadata    = old_map:new()    :: old_map:map()
          }).
 
@@ -72,12 +72,12 @@
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           password    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           active_org  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          permissions = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          permissions = old_set:new() :: old_set:orswot(),
           ptree       = libsnarlmatch_tree:new(),
-          roles       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          roles       = old_set:new() :: old_set:orswot(),
+          ssh_keys    = old_set:new() :: old_set:orswot(),
+          orgs        = old_set:new() :: old_set:orswot(),
+          yubikeys    = old_set:new() :: old_set:orswot(),
           metadata    = old_map:new()    :: old_map:map()
          }).
 

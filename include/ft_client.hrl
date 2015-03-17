@@ -4,9 +4,9 @@
           client_id     = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           secret        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           type          = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          redirect_uris = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          permissions   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          roles         = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          redirect_uris = old_set:new() :: old_set:orswot(),
+          permissions   = old_set:new() :: old_set:orswot(),
+          roles         = old_set:new() :: old_set:orswot(),
           metadata      = old_map:new()    :: old_map:map()
          }).
 
@@ -16,10 +16,10 @@
           client_id     = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           secret        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           type          = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          redirect_uris = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          permissions   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          redirect_uris = old_set:new() :: old_set:orswot(),
+          permissions   = old_set:new() :: old_set:orswot(),
           ptree         = libsnarlmatch_tree:new(),
-          roles         = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          roles         = old_set:new() :: old_set:orswot(),
           metadata      = old_map:new()    :: old_map:map()
          }).
 

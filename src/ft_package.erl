@@ -206,11 +206,11 @@ metadata(H) ->
 
 
 fix_reqs(ID, Requirements) ->
-    Rs = riak_dt_orswot:value(Requirements),
+    Rs = old_set:value(Requirements),
     Rs1 = [fifo_dt:js2req(R) || R <- Rs],
-    {ok, Rs2} = riak_dt_orswot:update(
+    {ok, Rs2} = old_set:update(
                   {add_all, Rs1}, ID,
-                  riak_dt_orswot:new()),
+                  old_set:new()),
     Rs2.
 
 -spec load({integer(), atom()}, term()) -> package().

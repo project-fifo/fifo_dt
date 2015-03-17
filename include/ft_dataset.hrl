@@ -4,7 +4,7 @@
           type           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements   = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -25,7 +25,7 @@
           type           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements   = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -50,7 +50,7 @@
 
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements   = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -75,8 +75,8 @@
 
           status         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           imported       = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          requirements   = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          networks       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements   = old_set:new() :: old_set:orswot(),
+          networks       = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map(),
 
           description    = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),

@@ -15,8 +15,8 @@
           backups        = old_map:new()    :: old_map:map(),
           snapshots      = old_map:new()    :: old_map:map(),
 
-          logs           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          groupings      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          logs           = old_set:new() :: old_set:orswot(),
+          groupings      = old_set:new() :: old_set:orswot(),
           state          = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
 
           metadata       = old_map:new()    :: old_map:map()
@@ -41,11 +41,11 @@
           backups        = old_map:new()    :: old_map:map(),
           snapshots      = old_map:new()    :: old_map:map(),
 
-          logs           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          groupings      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          logs           = old_set:new() :: old_set:orswot(),
+          groupings      = old_set:new() :: old_set:orswot(),
           state          = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
 
-          fw_rules       = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          fw_rules       = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map()
 
         }).

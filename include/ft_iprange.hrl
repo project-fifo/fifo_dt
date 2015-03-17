@@ -9,8 +9,8 @@
           tag            = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           vlan           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
 
-          free           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          used           = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          free           = old_set:new() :: old_set:orswot(),
+          used           = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map()
         }).
 

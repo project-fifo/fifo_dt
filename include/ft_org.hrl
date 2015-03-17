@@ -8,7 +8,7 @@
 -record(organisation_0_1_1, {
           uuid        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           name        = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
-          triggers    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          triggers    = old_set:new() :: old_set:orswot(),
           metadata    = old_map:new()    :: old_map:map()
          }).
 
@@ -30,7 +30,7 @@
           uuid           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           name           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           triggers       = old_map:new()    :: old_map:map(),
-          resources      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          resources      = old_set:new() :: old_set:orswot(),
           s3_id          = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           s3_key         = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           default_bucket = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
@@ -42,7 +42,7 @@
           uuid           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           name           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           triggers       = old_map:new()    :: old_map:map(),
-          resources      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          resources      = old_set:new() :: old_set:orswot(),
           metadata       = old_map:new()    :: old_map:map()
          }).
 

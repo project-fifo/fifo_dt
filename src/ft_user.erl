@@ -166,7 +166,6 @@ load(TID,
                  roles = Roles1,
                  ssh_keys = Keys1,
                  orgs = Orgs1,
-                 yubikeys = riak_dt_orswot:new(),
                  metadata = Metadata1
                 }).
 

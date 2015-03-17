@@ -255,8 +255,6 @@ add([{N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, V, D))
     end.
 
-
-
 load(_, #?DATASET{} = H) ->
     H;
 
@@ -327,9 +325,9 @@ load({T, ID}, #dataset_0{
     Networks1 = [{NetName, NetDesc} ||
                     [{<<"description">>,NetDesc},
                      {<<"name">>, NetName}] <- riak_dt_lwwreg:value(Networks)],
-    {ok, Networks2} = riak_dt_orswot:update(
+    {ok, Networks2} = old_set:update(
                         {add_all, Networks1}, ID,
-                        riak_dt_orswot:new()),
+                        old_set:new()),
     D =  #dataset_1{
             description    = Desc,
             disk_driver    = DiskD,

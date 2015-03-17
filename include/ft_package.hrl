@@ -12,7 +12,7 @@
           ram             = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           zfs_io_priority = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
 
-          requirements    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements    = old_set:new() :: old_set:orswot(),
 
           metadata        = old_map:new()    :: old_map:map()
 
@@ -32,7 +32,7 @@
           ram             = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
           zfs_io_priority = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
 
-          requirements    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          requirements    = old_set:new() :: old_set:orswot(),
 
           metadata        = old_map:new()    :: old_map:map()
 
