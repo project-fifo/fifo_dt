@@ -171,7 +171,7 @@ release_ip({_T, ID}, IP, I) when
       is_integer(IP) ->
     case riak_dt_orswot:update({remove, IP}, ID, I#?IPRANGE.used) of
         {error,{precondition,{not_present,_}}} ->
-            I;
+            {ok, I};
         {ok, Used} ->
             {ok, Free} = riak_dt_orswot:update({add, IP}, ID, I#?IPRANGE.free),
             {ok, I#?IPRANGE{free=Free, used=Used}}
