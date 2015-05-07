@@ -71,13 +71,15 @@
 ?IS_A.
 
 new(_) ->
-    {ok, Deleting} = ?NEW_LWW(false, 1),
-    #?OBJ{deleting = Deleting}.
+    {ok, False} = ?NEW_LWW(false, 1),
+    #?OBJ{deleting = False,
+          creating = False}.
 
 ?G(<<"uuid">>, uuid);
 ?G(<<"alias">>, alias);
 ?G(<<"state">>, state);
 ?G(<<"deleting">>, deleting);
+?G(<<"creating">>, creating);
 ?G(<<"owner">>, owner);
 ?G(<<"dataset">>, dataset);
 ?G(<<"package">>, package);
@@ -91,6 +93,7 @@ new(_) ->
 ?S(<<"alias">>, alias);
 ?S(<<"state">>, state);
 ?S(<<"deleting">>, deleting);
+?S(<<"creating">>, creating);
 ?S(<<"owner">>, owner);
 ?S(<<"dataset">>, dataset);
 ?S(<<"package">>, package);
@@ -166,6 +169,8 @@ set(ID, [<<"metadata">> | R], V, H) ->
 ?S(state).
 ?G(deleting).
 ?S(deleting).
+?G(creating).
+?S(creating).
 ?G(owner).
 ?S(owner).
 ?G(dataset).
@@ -352,6 +357,58 @@ set_snapshot({T, ID}, Attribute, Value, G) ->
 load(_, #?VM{} = V) ->
     V;
 
+load(TID, #vm_1{
+             uuid           = UUID,
+             alias          = Alias,
+             owner          = Owner,
+
+             dataset        = Dataset,
+             package        = Package,
+             hypervisor     = HV,
+             network_map    = NetMap,
+
+             config         = Config,
+             info           = Info,
+             services       = Services,
+             backups        = Backups,
+             snapshots      = Snaps,
+
+             logs           = Logs,
+             groupings      = Groupings,
+             state          = State,
+             deleting       = Deleting,
+             fw_rules       = FWRules,
+
+             metadata       = Metadata
+            }) ->
+    {ok, Creating} = ?NEW_LWW(false, 1),
+    V = #vm_002{
+           uuid           = UUID,
+           alias          = Alias,
+           owner          = Owner,
+
+           dataset        = Dataset,
+           package        = Package,
+           hypervisor     = HV,
+           network_map    = NetMap,
+
+           config         = Config,
+           info           = Info,
+           services       = Services,
+           backups        = Backups,
+           snapshots      = Snaps,
+
+           logs           = Logs,
+           groupings      = Groupings,
+           fw_rules       = FWRules,
+           state          = State,
+           deleting       = Deleting,
+           creating       = Creating,
+
+           metadata       = Metadata
+          },
+        load(TID, V);
+
 load(TID, #vm_0{
              uuid           = UUID,
              alias          = Alias,
@@ -506,6 +563,12 @@ to_json(V) ->
           [[{<<"date">>, T},
             {<<"log">>, L}] ||
               {T, L} <- logs(V)]),
+    Creating = case creating(V) of
+                   false ->
+                       false;
+                   _ ->
+                       true
+               end,
     [
      {<<"alias">>, alias(V)},
      {<<"backups">>, backups(V)},
@@ -523,6 +586,7 @@ to_json(V) ->
      {<<"snapshots">>, snapshots(V)},
      {<<"state">>, state(V)},
      {<<"deleting">>, deleting(V)},
+     {<<"creating">>, Creating},
      {<<"fw_rules">>, fw_rules_to_json(fw_rules(V))},
      {<<"uuid">>, uuid(V)}
     ].
@@ -536,6 +600,7 @@ merge(#?VM{
           hypervisor = Hypervisor1,
           state = State1,
           deleting = Deleting1,
+          creating = Creating1,
 
           logs = Logs1,
           groupings = Groupings1,
@@ -559,6 +624,7 @@ merge(#?VM{
           hypervisor = Hypervisor2,
           state = State2,
           deleting = Deleting2,
+          creating = Creating2,
 
           logs = Logs2,
           groupings = Groupings2,
@@ -581,6 +647,7 @@ merge(#?VM{
         hypervisor = riak_dt_lwwreg:merge(Hypervisor1, Hypervisor2),
         state = riak_dt_lwwreg:merge(State1, State2),
         deleting = riak_dt_lwwreg:merge(Deleting1, Deleting2),
+        creating = riak_dt_lwwreg:merge(Creating1, Creating2),
 
         logs = riak_dt_orswot:merge(Logs1, Logs2),
         groupings = riak_dt_orswot:merge(Groupings1, Groupings2),
