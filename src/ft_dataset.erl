@@ -117,6 +117,10 @@ type({T, _ID}, V, H) when V =:= kvm;
 ?G(zone_type).
 zone_type(ID, <<"lx">>, H) ->
     zone_type(ID, lx, H);
+zone_type(ID, <<"ipkg">>, H) ->
+    zone_type(ID, ipkg, H);
+zone_type(ID, <<"lipkg">>, H) ->
+    zone_type(ID, lipkg, H);
 zone_type({T, _ID}, V, H) when V =:= lx ->
     {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.zone_type),
     H#?DATASET{zone_type = V1}.
