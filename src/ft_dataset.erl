@@ -248,6 +248,10 @@ add([{<<"zone_type">> = N, F} | R], In, D) ->
     case F(In) of
         <<>> ->
             add(R, In, D);
+        ipkg ->
+            add(R, In, jsxd:set(N, <<"ipkg">>, D));
+        lipkg ->
+            add(R, In, jsxd:set(N, <<"lipkg">>, D));
         lx ->
             add(R, In, jsxd:set(N, <<"lx">>, D))
     end;
