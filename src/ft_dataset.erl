@@ -85,7 +85,7 @@ new({_T, _ID}) ->
 ?G(<<"uuid">>, uuid);
 ?G(<<"kernel_version">>, uuid);
 ?G(<<"type">>, type);
-?G(<<"zone_type">>, type);
+?G(<<"zone_type">>, zone_type);
 ?G(<<"status">>, status);
 ?G(<<"imported">>, imported);
 
