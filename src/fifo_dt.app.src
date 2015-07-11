@@ -5,6 +5,7 @@
   {registered, []},
   {applications, [
                   kernel,
+                  riak_dt,
                   stdlib
                  ]},
   {mod, { fifo_dt_app, []}}
