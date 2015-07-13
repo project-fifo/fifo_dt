@@ -6,7 +6,13 @@
   {applications, [
                   kernel,
                   riak_dt,
-                  stdlib
+                  stdlib,
+                  uuid,
+                  jsx,
+                  jsxd,
+                  libsnarlmatch
                  ]},
-  {mod, { fifo_dt_app, []}}
+  {contributors, ["Heinz N. Gies"]},
+  {licenses, ["CDDL"]},
+  {links, [{"Github", "https://github.com/project-fifo/fifo_dt"}]}
  ]}.

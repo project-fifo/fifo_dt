@@ -7,7 +7,7 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
-[ "0${SKIP_TEST}" -eq "1" ] && exit 0
+[ "0${SKIP}" -eq "1" ] && exit 0
 
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then
