@@ -1,9 +1,9 @@
-REBAR = $(shell pwd)/rebar
+REBAR = $(shell pwd)/rebar3
 VSN = $(shell cat src/*.app.src | grep vsn | sed 's/^[^"]*"//' | sed 's/".*$//')
 
-.PHONY: deps all test
+.PHONY: all test
 
-all: cp-hooks deps compile
+all: cp-hooks compile
 
 cp-hooks:
 	cp hooks/* .git/hooks
@@ -11,24 +11,12 @@ cp-hooks:
 compile:
 	$(REBAR) compile
 
-deps:
-	$(REBAR) get-deps
-
 clean:
 	$(REBAR) clean
 
-long-test:
-	-rm -r .eunit
-	$(REBAR) skip_deps=true -DEQC_LONG_TESTS eunit -v -r
-
 test: 
-	$(REBAR) compile
-	-rm -r .eunit
-	$(REBAR) eunit skip_deps=true -r -v
-
-quick-test:
-	-rm -r .eunit
-	$(REBAR) -DEQC_SHORT_TEST skip_deps=true eunit -r -v
+	$(REBAR) eunit
+	$(REBAR) as eqc eqc
 
 ###
 ### Docs

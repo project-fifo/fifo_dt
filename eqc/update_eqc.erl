@@ -1,8 +1,7 @@
 -module(update_eqc).
 
--ifdef(TEST).
--ifdef(EQC).
--include_lib("fqc/include/fqc.hrl").
+-include_lib("eqc/include/eqc.hrl").
+-import(fqc, [non_blank_string/0]).
 -compile(export_all).
 
 -define(OM, fifo_old_map).
@@ -96,6 +95,3 @@ prop_convert_set() ->
                                     [S, OldV, NewV]),
                           OldV == NewV)
             end).
-
--endif.
--endif.

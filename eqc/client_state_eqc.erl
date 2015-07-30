@@ -1,13 +1,12 @@
 -module(client_state_eqc).
 
--ifdef(TEST).
--ifdef(EQC).
 
 -import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
--include_lib("fqc/include/fqc.hrl").
+-import(fqc, [non_blank_string/0, maybe_oneof/2]).
+
+-include_lib("eqc/include/eqc.hrl").
 
 -compile(export_all).
-
 
 -define(U, ft_client).
 
@@ -270,6 +269,3 @@ prop_remove_metadata() ->
 prop_to_json() ->
     ?FORALL(E, client(),
             jsx:encode(?U:to_json(eval(E))) /= []).
-
--endif.
--endif.

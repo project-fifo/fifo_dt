@@ -1,11 +1,9 @@
 -module(iprange_state_eqc).
 
--ifdef(TEST).
--ifdef(EQC).
-
 -import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(fqc, [non_blank_string/0, maybe_oneof/2]).
 
--include_lib("fqc/include/fqc.hrl").
+-include_lib("eqc/include/eqc.hrl").
 
 -compile(export_all).
 
@@ -213,6 +211,3 @@ prop_remove_metadata() ->
 prop_to_json() ->
     ?FORALL(E, iprange(),
             jsx:encode(?I:to_json(eval(E))) /= []).
-
--endif.
--endif.

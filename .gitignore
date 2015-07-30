@@ -4,3 +4,6 @@ _build
 deps/
 ebin/
 .eqc-info
+TEST-*
+current_counterexample.eqc
+.eqc

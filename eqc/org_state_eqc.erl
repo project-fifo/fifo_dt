@@ -2,11 +2,9 @@
 
 %% sync:stop(), c('test/org_state_eqc', [{d, 'TEST'}, {d, 'EQC'}]), sync:start().
 
--ifdef(TEST).
--ifdef(EQC).
-
 -import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
--include_lib("fqc/include/fqc.hrl").
+-import(fqc, [non_blank_string/0, maybe_oneof/2]).
+-include_lib("eqc/include/eqc.hrl").
 
 -compile(export_all).
 
@@ -221,7 +219,3 @@ prop_resource_action() ->
 prop_to_json() ->
     ?FORALL(E, org(),
             jsx:encode(?O:to_json(eval(E))) /= []).
-
-
--endif.
--endif.

@@ -1,11 +1,9 @@
 -module(vm_state_eqc).
 
--ifdef(TEST).
--ifdef(EQC).
-
 -import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(fqc, [non_blank_string/0, maybe_oneof/2, not_empty/1]).
 
--include_lib("fqc/include/fqc.hrl").
+-include_lib("eqc/include/eqc.hrl").
 
 -compile(export_all).
 
@@ -553,6 +551,3 @@ prop_fw_json() ->
                                     [R, RJSON, R2]),
                           R =:= R2)
             end).
-
--endif.
--endif.

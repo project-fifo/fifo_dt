@@ -12,7 +12,7 @@
 -define(OBJ, ?ORG).
 -include("ft_helper.hrl").
 
--ifdef(TEST).
+-ifdef(EQC).
 -export([update_triggers/2, jsonify_trigger/1, res_json/3]).
 -endif.
 
