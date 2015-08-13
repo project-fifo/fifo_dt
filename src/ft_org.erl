@@ -13,7 +13,7 @@
 -include("ft_helper.hrl").
 
 -ifdef(EQC).
--export([update_triggers/2, jsonify_trigger/1, res_json/3]).
+-export([update_triggers/2, jsonify_trigger/1]).
 -endif.
 
 -export([
@@ -23,7 +23,6 @@
          name/1, name/3,
          triggers/1, add_trigger/4, remove_trigger/3,
          metadata/1, set_metadata/3, set_metadata/4,
-         resource_action/6, resources/1,
          remove_target/3,
          merge/2,
          to_json/1,
@@ -38,7 +37,6 @@
               name/1, name/3,
               triggers/1, add_trigger/4, remove_trigger/3,
               metadata/1, set_metadata/3, set_metadata/4,
-              resource_action/6, resources/1,
               remove_target/3,
               merge/2,
               to_json/1,
@@ -62,6 +60,20 @@ new(_) ->
 
 load(_, #?ORG{} = Org) ->
     Org;
+
+load(TID, #organisation_0{
+           uuid = UUID,
+           name = Name,
+           triggers = Triggers,
+           metadata = Metadata
+          }) ->
+    O = #organisation_1{
+           uuid = UUID,
+           name = Name,
+           triggers = Triggers,
+           metadata = Metadata
+          },
+    load(TID, O);
 
 load(TID, #organisation_0_1_5{
            uuid = UUID,
@@ -176,58 +188,32 @@ jsonify_permission(Permission) ->
 
 -spec to_json(Org::org()) -> fifo:attr_list().
 to_json(Org) ->
-    Res = lists:foldl(fun ({E, T, A, O}, [{E, D} | Acc]) ->
-                              [{E, [res_json(T, A, O) | D]} | Acc];
-                          ({E, T, A, O}, Acc) ->
-                              [{E, [res_json(T, A, O)]} | Acc]
-                      end, [], resources(Org)),
     jsxd:from_list(
       [
        {<<"uuid">>, uuid(Org)},
        {<<"name">>, name(Org)},
-       {<<"resources">>, Res},
        {<<"triggers">>, [{U, jsonify_trigger(T)} || {U, T} <- triggers(Org)]},
        {<<"metadata">>, metadata(Org)}
       ]).
-
-res_json(T, A, O) ->
-    [
-     {<<"action">>, a2b(A)},
-     {<<"opts">>, jsxd:from_list([{a2b(K), V} || {K, V} <- O])},
-     {<<"time">>, T}
-    ].
 
 merge(#?ORG{
           uuid = UUID1,
           name = Name1,
           triggers = Triggers1,
-          resources = Res1,
           metadata = Metadata1
          },
       #?ORG{
           uuid = UUID2,
           name = Name2,
           triggers = Triggers2,
-          resources = Res2,
           metadata = Metadata2
          }) ->
     #?ORG{
         uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
         name = riak_dt_lwwreg:merge(Name1, Name2),
         triggers = fifo_map:merge(Triggers1, Triggers2),
-        resources = riak_dt_orswot:merge(Res1, Res2),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
-
-resource_action({_T, ID}, Resource, TimeStamp, Action, Opts, Org) ->
-    {ok, Res} = riak_dt_orswot:update({add, {Resource, TimeStamp, Action, Opts}}, ID,
-                                      Org#?ORG.resources),
-    Org#?ORG{
-           resources = Res
-          }.
-
-resources(Org) ->
-    riak_dt_orswot:value(Org#?ORG.resources).
 
 ?G(name).
 ?S(name).
@@ -319,6 +305,3 @@ replace_group([F | R], Acc) ->
 
 replace_group([], Acc) ->
     lists:reverse(Acc).
-
-a2b(A) ->
-    list_to_binary(atom_to_list(A)).

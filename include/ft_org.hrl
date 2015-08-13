@@ -54,4 +54,12 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:map()
          }).
 
--define(ORG, organisation_0).
+-record(organisation_1, {
+          uuid           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          name           = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg(),
+          triggers       = riak_dt_map:new()    :: riak_dt_map:map(),
+          resources      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
+          metadata       = riak_dt_map:new()    :: riak_dt_map:map()
+         }).
+
+-define(ORG, organisation_1).

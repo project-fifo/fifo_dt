@@ -17,9 +17,6 @@
 name() ->
     oneof([a, b, c, d, e, f, g]).
 
-resource_actions() ->
-    oneof([create, destroy, change]).
-
 trigger() ->
     {name(), action()}.
 
@@ -28,10 +25,6 @@ action() ->
            {grant, user, <<"a">>, permission()},
            {join, role, non_blank_string()},
            {join, org, non_blank_string()}]).
-
-resource_action(O) ->
-    {maybe_oneof(calc_resources(O)), choose(0, 10000), resource_actions(),
-     list({name(), non_blank_string()})}.
 
 org() ->
     ?SIZED(Size, org(Size)).
@@ -47,19 +40,9 @@ org(Size) ->
                                {call, ?O, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?O, set_metadata, [id(Size), maybe_oneof(calc_metadata(O)), delete, O]},
                                {call, ?O, add_trigger, [id(Size), non_blank_string(), trigger(), O]},
-                               {call, ?O, remove_trigger, [id(Size), maybe_oneof(calc_triggers(O)), O]},
-                               ?LET({R, T, A, Opt}, resource_action(O),
-                                    {call, ?O, resource_action, [id(Size), R, T, A, Opt, O]})
+                               {call, ?O, remove_trigger, [id(Size), maybe_oneof(calc_triggers(O)), O]}
                               ]))
                      || Size > 0])).
-
-calc_resources({call, _, resource_action, [_, R, _, _, _, U]}) ->
-    [R | calc_resources(U)];
-calc_resources({call, _, _, P}) ->
-    calc_metadata(lists:last(P));
-calc_resources(_) ->
-    [].
-
 
 calc_metadata({call, _, set_metadata, [_, delete, K, U]}) ->
     lists:delete(K, lists:usort(calc_metadata(U)));
@@ -94,24 +77,6 @@ model_set_metadata(K, V, U) ->
 model_delete_metadata(K, U) ->
     r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
-model_resource_action(R, T, A, O, U) ->
-    E = res_json(T, A, O),
-    Rs = resources(U),
-    Vs = case lists:keyfind(R, 1, Rs) of
-             {R, Vs1} ->
-                 lists:usort([E | Vs1]);
-             _ ->
-                 [E]
-         end,
-    Rs1 = r(R, Vs, Rs),
-    r(<<"resources">>, lists:sort(Rs1), U).
-
-res_json(T, A, O) ->
-    [
-     {<<"action">>, a2b(A)},
-     {<<"opts">>, jsxd:from_list([{a2b(K), V} || {K, V} <- O])},
-     {<<"time">>, T}
-    ].
 
 a2b(A) ->
     list_to_binary(atom_to_list(A)).
@@ -125,9 +90,7 @@ model_remove_trigger(I, U) ->
 
 
 model(R) ->
-    J = ?O:to_json(R),
-    Res1 = [{K, lists:sort(V)} || {K, V} <- resources(J)],
-    r(<<"resources">>, Res1, J).
+    ?O:to_json(R).
 
 metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
@@ -135,10 +98,6 @@ metadata(U) ->
 
 triggers(U) ->
     {<<"triggers">>, M} = lists:keyfind(<<"triggers">>, 1, U),
-    M.
-
-resources(U) ->
-    {<<"resources">>, M} = lists:keyfind(<<"resources">>, 1, U),
     M.
 
 prop_name() ->
@@ -201,18 +160,6 @@ prop_remove_trigger() ->
                 M1 = model_remove_trigger(T, model(Org)),
                 ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
                                     "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
-                          model(O1) == M1)
-            end).
-
-prop_resource_action() ->
-    ?FORALL({O, {R, T, A, Opt}}, ?LET(O, org(), {O, resource_action(O)}),
-            begin
-                Org = eval(O),
-                O1 = ?O:resource_action(id(?BIG_TIME), R, T, A, Opt, Org),
-                M1 = model_resource_action(R, T, A, Opt, model(Org)),
-                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
-                                    "Org': ~p~nModel': ~p~nExpected: ~p~n",
-                                    [O, Org, model(Org), O1, M1, model(O1)]),
                           model(O1) == M1)
             end).
 
