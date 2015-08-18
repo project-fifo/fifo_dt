@@ -1,7 +1,8 @@
 -module(update_eqc).
 
 -include_lib("eqc/include/eqc.hrl").
--import(fqc, [non_blank_string/0]).
+-include_lib("fqc/include/fqci.hrl").
+
 -compile(export_all).
 
 -define(OM, fifo_old_map).

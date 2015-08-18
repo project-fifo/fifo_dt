@@ -1,9 +1,9 @@
 -module(network_state_eqc).
 
 -import(ft_test_helper, [id/1, maybe_oneof/1]).
--import(fqc, [non_blank_string/0, maybe_oneof/2]).
 
 -include_lib("eqc/include/eqc.hrl").
+-include_lib("fqc/include/fqci.hrl").
 
 -compile(export_all).
 

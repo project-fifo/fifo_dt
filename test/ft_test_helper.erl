@@ -6,8 +6,7 @@ id(I) ->
     {I+1, eqc}.
 
 timestamp() ->
-    {Mega, Sec, Micro} = erlang:now(),
-    (Mega * 1000000  + Sec) * 1000000 + Micro.
+    erlang:system_time().
 
 id() ->
     id(timestamp()).
