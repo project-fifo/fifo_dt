@@ -27,9 +27,7 @@
          add_key/4, revoke_key/3, keys/1,
          metadata/1, set_metadata/3, set_metadata/4,
          add_yubikey/3, yubikeys/1, remove_yubikey/3,
-         tokens/1, add_token/3,
-         remove_token/3, get_token/2,
-         remove_token_by_id/3, get_token_by_id/2,
+         tokens/1, add_token/3, remove_token/3, get_token/2, get_token_by_id/2,
          merge/2,
          to_json/1,
          is_a/1, getter/2
@@ -129,15 +127,6 @@ remove_token({_T, ID}, Token, User) ->
             User#?USER{tokens = Ts}
     end.
 
-remove_token_by_id({_T, ID}, TokenID, User) ->
-    case get_token_by_id(TokenID, User) of
-        not_found ->
-            User;
-        T ->
-            {ok, Ts} = riak_dt_orswot:update({remove, T}, ID, User#?USER.tokens),
-            User#?USER{tokens = Ts}
-    end.
-
 get_token(Token, User) ->
     Ts = tokens(User),
     case [T || T = #{token := T1} <-  Ts, T1 =:= Token] of
@@ -165,7 +154,36 @@ tokens(#?USER{tokens = Ts}) ->
 load_(_, #?USER{} = User) ->
     User;
 
-load_(TID,  #user_0{
+load_(TID, #user_1{
+              uuid = UUID,
+              name = Name,
+              password = Passwd,
+              active_org = ActiveOrg,
+              permissions = Permissions,
+              ptree = PTree,
+              roles = Roles,
+              ssh_keys = Keys,
+              orgs = Orgs,
+              yubikeys = YubiKeys,
+              metadata = Metadata
+             }) ->
+    U = #user_2{
+           uuid = UUID,
+           name = Name,
+           password = Passwd,
+           active_org = ActiveOrg,
+           permissions = Permissions,
+           ptree = PTree,
+           roles = Roles,
+           ssh_keys = Keys,
+           orgs = Orgs,
+           yubikeys = YubiKeys,
+           tokens = riak_dt_orswot:new(),
+           metadata = Metadata
+          },
+    load_(TID, U);
+
+load_(TID, #user_0{
               uuid = UUID,
               name = Name,
               password = Passwd,
