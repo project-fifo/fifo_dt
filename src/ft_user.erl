@@ -59,7 +59,8 @@
              token => binary(),
              expiery => pos_integer() | infinity,
              client => binary() | undefined,
-             scope => [binary()]
+             scope => [binary()],
+             comment => binary() | undefined
             }.
 
 ?IS_A.
@@ -84,7 +85,7 @@ clean_tokens({_T, ID}, User = #?USER{tokens = Ts}) ->
 
 -spec to_json(token()) -> [{binary(), term()}].
 token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
-                scope := Scope}) ->
+                scope := Scope, comment := Comment}) ->
     J = [{<<"type">>, atom_to_binary(Type, utf8)},
          {<<"id">>, ID},
          {<<"scope">>, Scope}],
@@ -100,21 +101,29 @@ token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
              _ ->
                  [{<<"client">>, Client} | J2]
          end,
-    lists:sort(J3).
+    J4 = case Comment of
+             undefined ->
+                 J3;
+             _ ->
+                 [{<<"comment">>, Comment} | J3]
+         end,
+    lists:sort(J4).
 
-add_token({_T, ID}, {TokenID, Type, Token, Expiery, Client, Scope}, User)
+add_token({_T, ID}, {TokenID, Type, Token, Expiery, Client, Scope, Comment}, User)
   when is_binary(TokenID),
        (Type =:= access orelse Type =:= refresh),
        is_binary(Token),
        ((is_integer(Expiery) andalso Expiery) > 0 orelse Expiery =:= infinity),
        (is_binary(Client) orelse Client =:= undefined),
+       (is_binary(Comment) orelse Comment =:= undefined),
        is_list(Scope) ->
     T = #{id => TokenID,
           type => Type,
           token => Token,
           expiery => Expiery,
           client => Client,
-          scope => Scope},
+          scope => Scope,
+          comment => Comment},
     {ok, Ts1} = riak_dt_orswot:update({add, T}, ID, User#?USER.tokens),
     User#?USER{tokens = Ts1}.
 

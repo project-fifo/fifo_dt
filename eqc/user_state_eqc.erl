@@ -37,6 +37,9 @@ prefixed_id(Pfx) ->
 client() ->
     oneof([prefixed_id(<<"client-">>), undefined]).
 
+comment() ->
+    oneof([?NBS, undefined]).
+
 scope() ->
     list(?NBS).
 
@@ -60,7 +63,9 @@ token() ->
       %% Client that requested the token
       client(),
       %% requested scope
-      scope()
+      scope(),
+      %% Optional comment for the token
+      comment()
     }.
 
 user() ->
@@ -102,8 +107,7 @@ user_calls(Size) ->
 
               %% Token functions
               {call, ?U, add_token, [id(Size), token(), U]},
-              {call, ?M, remove_token, [id(Size), maybe_oneof(calc_tokens(U)), U]},
-              {call, ?M, remove_token_id, [id(Size), maybe_oneof(calc_tokens(U)), U]}
+              {call, ?M, remove_token, [id(Size), maybe_oneof(calc_tokens(U)), U]}
              ])).
 
 user(Size) ->
@@ -117,12 +121,7 @@ remove_token(ID, {_TokenID, Token}, User) ->
 remove_token(ID, Token, User) ->
     ?U:remove_token(ID, Token, User).
 
-remove_token_id(ID, {TokenID, _Token}, User) ->
-    ?U:remove_token_by_id(ID, TokenID, User);
-remove_token_id(ID, TokenID, User) ->
-    ?U:remove_token_by_id(ID, TokenID, User).
-
-calc_tokens({call, _, add_token, [_, {ID, _, Token, _, _, _}, U]}) ->
+calc_tokens({call, _, add_token, [_, {ID, _, Token, _, _, _, _}, U]}) ->
     [{ID, Token} | calc_tokens(U)];
 calc_tokens({call, _, remove_token, [_, TID, U]}) ->
     lists:delete(TID, lists:usort(calc_tokens(U)));
@@ -238,7 +237,7 @@ model_add_yubikey(K, U) ->
 model_remove_yubikey(P, U) ->
     r(<<"yubikeys">>, lists:delete(P, yubikeys(U)), U).
 
-model_token({ID, Type, _Token, Exp, Client, Scope}) ->
+model_token({ID, Type, _Token, Exp, Client, Scope, Comment}) ->
     J = [{<<"type">>, atom_to_binary(Type, utf8)},
          {<<"id">>, ID},
          {<<"scope">>, Scope}],
@@ -254,7 +253,13 @@ model_token({ID, Type, _Token, Exp, Client, Scope}) ->
              _ ->
                  [{<<"client">>, Client} | J2]
          end,
-    lists:sort(J3).
+    J4 = case Comment of
+             undefined ->
+                 J3;
+             _ ->
+                 [{<<"comment">>, Comment} | J3]
+         end,
+    lists:sort(J4).
 
 model_add_token(T, U) ->
     r(<<"tokens">>, lists:usort([model_token(T) | tokens(U)]), U).
@@ -425,23 +430,6 @@ prop_remove_token() ->
                                     [U, User, M, U1, T, M1, model(U1)]),
                           model(U1) == M1)
             end).
-
-prop_remove_token_by_id() ->
-    ?FORALL({U, T}, ?LET(U, user(), {U, maybe_oneof(calc_tokens(U))}),
-            begin
-                User = eval(U),
-                M = model(User),
-                U1 = ?M:remove_token_id(id(?BIG_TIME), T, User),
-                M1 = model_remove_token(T, model(User)),
-                ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
-                                    "U': ~p~n"
-                                    "T: ~p~n"
-                                    "M': ~p~n"
-                                    "M(U'): ~p~n",
-                                    [U, User, M, U1, T, M1, model(U1)]),
-                          model(U1) == M1)
-            end).
-
 
 prop_add_key() ->
     ?FORALL({I, K, U},
