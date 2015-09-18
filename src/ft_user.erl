@@ -27,7 +27,7 @@
          add_key/4, revoke_key/3, keys/1,
          metadata/1, set_metadata/3, set_metadata/4,
          add_yubikey/3, yubikeys/1, remove_yubikey/3,
-         tokens/1, add_token/8,
+         tokens/1, add_token/3,
          remove_token/3, get_token/2,
          remove_token_by_id/3, get_token_by_id/2,
          merge/2,
@@ -46,7 +46,7 @@
               metadata/1, set_metadata/3, set_metadata/4,
               join_org/3, leave_org/3, select_org/3, orgs/1, active_org/1,
               add_yubikey/3, yubikeys/1, remove_yubikey/3,
-              tokens/1, add_token/8,
+              tokens/1, add_token/3,
               remove_token/3, get_token/2,
               remove_token_by_id/3, get_token_by_id/2,
               merge/2, getter/2,
@@ -104,7 +104,7 @@ token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
          end,
     lists:sort(J3).
 
-add_token({_T, ID}, TokenID, Type, Token, Expiery, Client, Scope, User)
+add_token({_T, ID}, {TokenID, Type, Token, Expiery, Client, Scope}, User)
   when is_binary(TokenID),
        (Type =:= access orelse Type =:= refresh),
        is_binary(Token),

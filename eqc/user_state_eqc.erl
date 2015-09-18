@@ -101,7 +101,7 @@ user_calls(Size) ->
               ?C(remove_yubikey, [id(Size), maybe_oneof(calc_yubikeys(U)), U]),
 
               %% Token functions
-              {call, ?M, add_token, [id(Size), token(), U]},
+              {call, ?U, add_token, [id(Size), token(), U]},
               {call, ?M, remove_token, [id(Size), maybe_oneof(calc_tokens(U)), U]},
               {call, ?M, remove_token_id, [id(Size), maybe_oneof(calc_tokens(U)), U]}
              ])).
@@ -111,10 +111,6 @@ user(Size) ->
        oneof(
          [?C(new, [id(Size)]) || Size == 0] ++
              [user_calls(Size) || Size > 0])).
-
-
-add_token(ID, {TokenID, Type, Token, Expiery, Client, Scope}, User) ->
-    ?U:add_token(ID, TokenID, Type, Token, Expiery, Client, Scope, User).
 
 remove_token(ID, {_TokenID, Token}, User) ->
     ?U:remove_token(ID, Token, User);
@@ -403,7 +399,7 @@ prop_add_token() ->
             {token(), user()},
             begin
                 User = eval(U),
-                User1 = ?M:add_token(id(?BIG_TIME), T, User),
+                User1 = ?U:add_token(id(?BIG_TIME), T, User),
                 M = model(User),
                 M1 = model_add_token(T, M),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
