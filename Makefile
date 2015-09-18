@@ -1,4 +1,4 @@
-REBAR = $(shell pwd)/rebar3
+REBAR = rebar3
 VSN = $(shell cat src/*.app.src | grep vsn | sed 's/^[^"]*"//' | sed 's/".*$//')
 
 .PHONY: all test
@@ -16,7 +16,7 @@ clean:
 
 test: 
 	$(REBAR) eunit
-	$(REBAR) as eqc eqc
+	$(REBAR) as eqc eqc -x
 
 ###
 ### Docs

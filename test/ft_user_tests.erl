@@ -41,6 +41,7 @@ to_json_test() ->
              {<<"orgs">>, []},
              {<<"permissions">>, []},
              {<<"roles">>, []},
+             {<<"tokens">>, []},
              {<<"uuid">>, <<>> },
              {<<"yubikeys">>, []}
             ],

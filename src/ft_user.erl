@@ -27,6 +27,9 @@
          add_key/4, revoke_key/3, keys/1,
          metadata/1, set_metadata/3, set_metadata/4,
          add_yubikey/3, yubikeys/1, remove_yubikey/3,
+         tokens/1, add_token/8,
+         remove_token/3, get_token/2,
+         remove_token_by_id/3, get_token_by_id/2,
          merge/2,
          to_json/1,
          is_a/1, getter/2
@@ -43,12 +46,23 @@
               metadata/1, set_metadata/3, set_metadata/4,
               join_org/3, leave_org/3, select_org/3, orgs/1, active_org/1,
               add_yubikey/3, yubikeys/1, remove_yubikey/3,
+              tokens/1, add_token/8,
+              remove_token/3, get_token/2,
+              remove_token_by_id/3, get_token_by_id/2,
               merge/2, getter/2,
               to_json/1
              ]).
 
 -type user() :: #?OBJ{}.
 -export_type([user/0]).
+-type token() :: #{
+             id => binary(),
+             type => access|refresh,
+             token => binary(),
+             expiery => pos_integer() | infinity,
+             client => binary() | undefined,
+             scope => [binary()]
+            }.
 
 ?IS_A.
 
@@ -58,12 +72,100 @@
 new({_T, _ID}) ->
     #?USER{}.
 
-%% -spec load({non_neg_integer(), atom()}, any_user()) -> user().
 
-load(_, #?USER{} = User) ->
+load(TID, User) ->
+    clean_tokens(TID, load_(TID, User)).
+
+clean_tokens({_T, ID}, User = #?USER{tokens = Ts}) ->
+    Tvs = riak_dt_orswot:value(Ts),
+    T0 = erlang:system_time(seconds),
+    Expired = [T || T = #{expiery := E} <- Tvs,
+                    E =< T0],
+    {ok, Ts1} = riak_dt_orswot:update({remove_all, Expired}, ID, Ts),
+    User#?USER{tokens = Ts1}.
+
+-spec to_json(token()) -> [{binary(), term()}].
+token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
+                scope := Scope}) ->
+    J = [{<<"type">>, atom_to_binary(Type, utf8)},
+         {<<"id">>, ID},
+         {<<"scope">>, Scope}],
+    J2 = case Exp of
+             infinity ->
+                 J;
+             _ ->
+                 [{<<"expiery">>, Exp} | J]
+         end,
+    J3 = case Client of
+             undefined ->
+                 J2;
+             _ ->
+                 [{<<"client">>, Client} | J2]
+         end,
+    lists:sort(J3).
+
+add_token({_T, ID}, TokenID, Type, Token, Expiery, Client, Scope, User)
+  when is_binary(TokenID),
+       (Type =:= access orelse Type =:= refresh),
+       is_binary(Token),
+       ((is_integer(Expiery) andalso Expiery) > 0 orelse Expiery =:= infinity),
+       (is_binary(Client) orelse Client =:= undefined),
+       is_list(Scope) ->
+    T = #{id => TokenID,
+          type => Type,
+          token => Token,
+          expiery => Expiery,
+          client => Client,
+          scope => Scope},
+    {ok, Ts1} = riak_dt_orswot:update({add, T}, ID, User#?USER.tokens),
+    User#?USER{tokens = Ts1}.
+
+remove_token({_T, ID}, Token, User) ->
+    case get_token(Token, User) of
+        not_found ->
+            User;
+        T ->
+            {ok, Ts} = riak_dt_orswot:update({remove, T}, ID, User#?USER.tokens),
+            User#?USER{tokens = Ts}
+    end.
+
+remove_token_by_id({_T, ID}, TokenID, User) ->
+    case get_token_by_id(TokenID, User) of
+        not_found ->
+            User;
+        T ->
+            {ok, Ts} = riak_dt_orswot:update({remove, T}, ID, User#?USER.tokens),
+            User#?USER{tokens = Ts}
+    end.
+
+get_token(Token, User) ->
+    Ts = tokens(User),
+    case [T || T = #{token := T1} <-  Ts, T1 =:= Token] of
+        [] ->
+            not_found;
+        [T] ->
+            T
+    end.
+
+get_token_by_id(TokenID, User) ->
+    Ts = tokens(User),
+    case [T || T = #{id := T1} <-  Ts, T1 =:= TokenID] of
+        [] ->
+            not_found;
+        [T] ->
+            T
+    end.
+
+tokens(#?USER{tokens = Ts}) ->
+    riak_dt_orswot:value(Ts).
+
+
+%% -spec load_({non_neg_integer(), atom()}, any_user()) -> user().
+
+load_(_, #?USER{} = User) ->
     User;
 
-load(TID,  #user_0{
+load_(TID,  #user_0{
               uuid = UUID,
               name = Name,
               password = Passwd,
@@ -89,9 +191,9 @@ load(TID,  #user_0{
            yubikeys = fifo_dt:update_set(YubiKeys),
            metadata = fifo_dt:update_map(Metadata)
           },
-    load(TID, U);
+    load_(TID, U);
 
-load(TID, #user_0_1_5{
+load_(TID, #user_0_1_5{
              uuid = UUID,
              name = Name,
              password = Passwd,
@@ -116,9 +218,9 @@ load(TID, #user_0_1_5{
            yubikeys = YubiKeys,
            metadata = Metadata
           },
-    load(TID, U);
+    load_(TID, U);
 
-load(TID,
+load_(TID,
      #user_0_1_4{
         uuid = UUID,
         name = Name,
@@ -143,9 +245,9 @@ load(TID,
            yubikeys = YubiKeys,
            metadata = Metadata
           },
-    load(TID, update_permissions(TID, U));
+    load_(TID, update_permissions(TID, U));
 
-load(TID,
+load_(TID,
      #user_0_1_3{
         uuid = UUID1,
         name = Name1,
@@ -157,7 +259,7 @@ load(TID,
         orgs = Orgs1,
         metadata = Metadata1
        }) ->
-    load(TID, #user_0_1_4{
+    load_(TID, #user_0_1_4{
                  uuid = UUID1,
                  name = Name1,
                  password = Passwd1,
@@ -178,6 +280,7 @@ to_json(#?USER{
             active_org = Org,
             orgs = Orgs,
             yubikeys = YubiKeys,
+            tokens = Tokens,
             metadata = Metadata
            }) ->
     jsxd:from_list(
@@ -190,6 +293,7 @@ to_json(#?USER{
        {<<"keys">>, riak_dt_orswot:value(Keys)},
        {<<"org">>, riak_dt_lwwreg:value(Org)},
        {<<"orgs">>, riak_dt_orswot:value(Orgs)},
+       {<<"tokens">>, lists:usort([token_to_json(T) || T <- riak_dt_orswot:value(Tokens)])},
        {<<"metadata">>, fifo_map:value(Metadata)}
       ]).
 
@@ -202,6 +306,7 @@ merge(#?USER{
           ssh_keys = Keys1,
           active_org = Org1,
           orgs = Orgs1,
+          tokens = Tokens1,
           yubikeys = YubiKeys1,
           metadata = Metadata1
          },
@@ -214,6 +319,7 @@ merge(#?USER{
           ssh_keys = Keys2,
           active_org = Org2,
           orgs = Orgs2,
+          tokens = Tokens2,
           yubikeys = YubiKeys2,
           metadata = Metadata2
          }) ->
@@ -229,6 +335,7 @@ merge(#?USER{
         permissions = Permissions,
         ptree = fifo_dt:to_ptree(Permissions),
         orgs = riak_dt_orswot:merge(Orgs1, Orgs2),
+        tokens = riak_dt_orswot:merge(Tokens1, Tokens2),
         metadata = fifo_map:merge(Metadata1, Metadata2)
        }.
 

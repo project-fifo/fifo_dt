@@ -9,36 +9,133 @@
 
 
 -define(U, ft_user).
+-define(M, ?MODULE).
+-define(NBS, non_blank_string()).
+-define(C(Fn, Args), {call, ?U, Fn, Args}).
 
 %% This is larger then and time we ever get in the size, used for ensure setting data
 %% in LWW registers.
 -define(BIG_TIME, 1000000000).
 
+token_type() ->
+    oneof([access,refresh]).
+
+%% We want the expiery time somewhere around our current time.
+%% this is a bit problematic since test **might** run just at the
+%% switch of a second leading to the real elemet being expired but the
+%% model not. Need to figure out if this is a real problem or not.
+expiery() ->
+    oneof([?LET(S, choose(-20, 20), erlang:system_time(seconds) + S),
+           infinity]).
+
+uuid() ->
+    uuid:uuid4s().
+
+prefixed_id(Pfx) ->
+    ?LET(Prefix, Pfx, <<Prefix/binary, (uuid())/binary>>).
+
+client() ->
+    oneof([prefixed_id(<<"client-">>), undefined]).
+
+scope() ->
+    list(?NBS).
+
+token_id() ->
+    prefixed_id(<<"tid-">>).
+
+token_token() ->
+    prefixed_id(<<"token-">>).
+
+token() ->
+    {
+      %% ID of the token
+      token_id(),
+      %% type of the token
+      token_type(),
+      %% token itself, for simplifications we use a uuid here since tokens
+      %% are by definition unique. Any other unique binary would sufice.
+      token_token(),
+      %% the expiery time, we want to
+      expiery(),
+      %% Client that requested the token
+      client(),
+      %% requested scope
+      scope()
+    }.
+
 user() ->
     ?SIZED(Size, user(Size)).
 
+user_calls(Size) ->
+    ?LETSHRINK(
+       [U], [user(Size - 1)],
+       oneof([
+              %% General functions for users
+              ?C(load, [id(Size), U]),
+              ?C(uuid, [id(Size), ?NBS, U]),
+              ?C(name, [id(Size), ?NBS, U]),
+              ?C(password, [id(Size), ?NBS, U]),
+
+              %% Metadata functions
+              ?C(set_metadata, [id(Size), ?NBS, ?NBS, U]),
+              ?C(set_metadata, [id(Size), maybe_oneof(calc_metadata(U)), delete, U]),
+
+              %% permission related functions
+              ?C(grant, [id(Size), permission(), U]),
+              ?C(revoke, [id(Size), maybe_oneof(calc_perms(U)), U]),
+
+              %% Role functions
+              ?C(join, [id(Size), ?NBS, U]),
+              ?C(leave, [id(Size), maybe_oneof(calc_roles(U)), U]),
+
+              %% Org functions
+              ?C(join_org, [id(Size), ?NBS, U]),
+              ?C(leave_org, [id(Size), maybe_oneof(calc_orgs(U)), U]),
+
+              %% SSH Key functions
+              ?C(add_key, [id(Size), ?NBS, ?NBS, U]),
+              ?C(revoke_key, [id(Size), maybe_oneof(calc_keys(U)), U]),
+
+              %% Yubikey functions
+              ?C(add_yubikey, [id(Size), ?NBS, U]),
+              ?C(remove_yubikey, [id(Size), maybe_oneof(calc_yubikeys(U)), U]),
+
+              %% Token functions
+              {call, ?M, add_token, [id(Size), token(), U]},
+              {call, ?M, remove_token, [id(Size), maybe_oneof(calc_tokens(U)), U]},
+              {call, ?M, remove_token_id, [id(Size), maybe_oneof(calc_tokens(U)), U]}
+             ])).
+
 user(Size) ->
-    ?LAZY(oneof([{call, ?U, new, [id(Size)]} || Size == 0] ++
-                    [?LETSHRINK(
-                        [U], [user(Size - 1)],
-                        oneof([
-                               {call, ?U, load, [id(Size), U]},
-                               {call, ?U, uuid, [id(Size), non_blank_string(), U]},
-                               {call, ?U, name, [id(Size), non_blank_string(), U]},
-                               {call, ?U, add_key, [id(Size), non_blank_string(), non_blank_string(), U]},
-                               {call, ?U, add_yubikey, [id(Size), non_blank_string(), U]},
-                               {call, ?U, join, [id(Size), non_blank_string(), U]},
-                               {call, ?U, join_org, [id(Size), non_blank_string(), U]},
-                               {call, ?U, grant, [id(Size), permission(), U]},
-                               {call, ?U, password, [id(Size), non_blank_string(), U]},
-                               {call, ?U, set_metadata, [id(Size), non_blank_string(), non_blank_string(), U]},
-                               {call, ?U, set_metadata, [id(Size), maybe_oneof(calc_metadata(U)), delete, U]},
-                               {call, ?U, revoke_key, [id(Size), maybe_oneof(calc_keys(U)), U]},
-                               {call, ?U, remove_yubikey, [id(Size), maybe_oneof(calc_yubikeys(U)), U]},
-                               {call, ?U, leave, [id(Size), maybe_oneof(calc_roles(U)), U]},
-                               {call, ?U, leave_org, [id(Size), maybe_oneof(calc_orgs(U)), U]},
-                               {call, ?U, revoke, [id(Size), maybe_oneof(calc_perms(U)), U]}]))
-                     || Size > 0])).
+    ?LAZY(
+       oneof(
+         [?C(new, [id(Size)]) || Size == 0] ++
+             [user_calls(Size) || Size > 0])).
+
+
+add_token(ID, {TokenID, Type, Token, Expiery, Client, Scope}, User) ->
+    ?U:add_token(ID, TokenID, Type, Token, Expiery, Client, Scope, User).
+
+remove_token(ID, {_TokenID, Token}, User) ->
+    ?U:remove_token(ID, Token, User);
+remove_token(ID, Token, User) ->
+    ?U:remove_token(ID, Token, User).
+
+remove_token_id(ID, {TokenID, _Token}, User) ->
+    ?U:remove_token_by_id(ID, TokenID, User);
+remove_token_id(ID, TokenID, User) ->
+    ?U:remove_token_by_id(ID, TokenID, User).
+
+calc_tokens({call, _, add_token, [_, {ID, _, Token, _, _, _}, U]}) ->
+    [{ID, Token} | calc_tokens(U)];
+calc_tokens({call, _, remove_token, [_, TID, U]}) ->
+    lists:delete(TID, lists:usort(calc_tokens(U)));
+calc_tokens({call, _, remove_token_id, [_, TID, U]}) ->
+    lists:delete(TID, lists:usort(calc_tokens(U)));
+calc_tokens({call, _, _, P}) ->
+    calc_tokens(lists:last(P));
+calc_tokens(_) ->
+    [].
 
 calc_yubikeys({call, _, add_yubikey, [_, K, U]}) ->
     [K | calc_yubikeys(U)];
@@ -145,6 +242,38 @@ model_add_yubikey(K, U) ->
 model_remove_yubikey(P, U) ->
     r(<<"yubikeys">>, lists:delete(P, yubikeys(U)), U).
 
+model_token({ID, Type, _Token, Exp, Client, Scope}) ->
+    J = [{<<"type">>, atom_to_binary(Type, utf8)},
+         {<<"id">>, ID},
+         {<<"scope">>, Scope}],
+    J2 = case Exp of
+             infinity ->
+                 J;
+             _ ->
+                 [{<<"expiery">>, Exp} | J]
+         end,
+    J3 = case Client of
+             undefined ->
+                 J2;
+             _ ->
+                 [{<<"client">>, Client} | J2]
+         end,
+    lists:sort(J3).
+
+model_add_token(T, U) ->
+    r(<<"tokens">>, lists:usort([model_token(T) | tokens(U)]), U).
+
+%% We need to use the same model for removing tokens and token id's
+%% since in the model the token itself is never printed!
+model_remove_token({TID, _Token}, U) ->
+    Tokens = lists:filter(fun (T) ->
+                                  jsxd:get(<<"id">>, T) =/= {ok, TID}
+                          end, tokens(U)),
+    r(<<"tokens">>, Tokens, U);
+%% if we have a non existant token we simply won't remove it.
+model_remove_token(_, U) ->
+    U.
+
 permissions(U) ->
     {<<"permissions">>, Ps} = lists:keyfind(<<"permissions">>, 1, U),
     Ps.
@@ -169,6 +298,10 @@ metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
     M.
 
+tokens(U) ->
+    {<<"tokens">>, M} = lists:keyfind(<<"tokens">>, 1, U),
+    M.
+
 has_permissions(U) ->
     ?U:permissions(U) =/= [].
 
@@ -186,7 +319,7 @@ has_keys(U) ->
 
 prop_name() ->
     ?FORALL({N,U},
-            {non_blank_string(),user()},
+            {?NBS,user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~n", [U, User]),
@@ -196,7 +329,7 @@ prop_name() ->
 
 prop_uuid() ->
     ?FORALL({N,U},
-            {non_blank_string(),user()},
+            {?NBS,user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~n", [U, User]),
@@ -206,7 +339,7 @@ prop_uuid() ->
 
 prop_password() ->
     ?FORALL({N,U},
-            {non_blank_string(),user()},
+            {?NBS,user()},
             begin
                 User = eval(U),
                 U1 = ?U:password(id(?BIG_TIME),N,User),
@@ -237,7 +370,7 @@ prop_revoke() ->
 
 prop_add_role() ->
     ?FORALL({R,U},
-            {non_blank_string(),user()},
+            {?NBS,user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n", [U, User, model(User)]),
@@ -247,7 +380,7 @@ prop_add_role() ->
 
 prop_add_org() ->
     ?FORALL({O,U},
-            {non_blank_string(), user()},
+            {?NBS, user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n", [U, User, model(User)]),
@@ -257,7 +390,7 @@ prop_add_org() ->
 
 prop_add_yubikey() ->
     ?FORALL({K, U},
-            {non_blank_string(), user()},
+            {?NBS, user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n", [U, User, model(User)]),
@@ -265,9 +398,58 @@ prop_add_yubikey() ->
                               model_add_yubikey(K, model(User)))
             end).
 
+prop_add_token() ->
+    ?FORALL({T, U},
+            {token(), user()},
+            begin
+                User = eval(U),
+                User1 = ?M:add_token(id(?BIG_TIME), T, User),
+                M = model(User),
+                M1 = model_add_token(T, M),
+                ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
+                                    "U': ~p~n"
+                                    "M': ~p~n"
+                                    "M(U'): ~p~n",
+                                    [U, User, M, User1, M1, model(User1)]),
+                          model(User1) == M1)
+            end).
+
+prop_remove_token() ->
+    ?FORALL({U, T}, ?LET(U, user(), {U, maybe_oneof(calc_tokens(U))}),
+            begin
+                User = eval(U),
+                M = model(User),
+                U1 = ?M:remove_token(id(?BIG_TIME), T, User),
+                M1 = model_remove_token(T, model(User)),
+                ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
+                                    "U': ~p~n"
+                                    "T: ~p~n"
+                                    "M': ~p~n"
+                                    "M(U'): ~p~n",
+                                    [U, User, M, U1, T, M1, model(U1)]),
+                          model(U1) == M1)
+            end).
+
+prop_remove_token_by_id() ->
+    ?FORALL({U, T}, ?LET(U, user(), {U, maybe_oneof(calc_tokens(U))}),
+            begin
+                User = eval(U),
+                M = model(User),
+                U1 = ?M:remove_token_id(id(?BIG_TIME), T, User),
+                M1 = model_remove_token(T, model(User)),
+                ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
+                                    "U': ~p~n"
+                                    "T: ~p~n"
+                                    "M': ~p~n"
+                                    "M(U'): ~p~n",
+                                    [U, User, M, U1, T, M1, model(U1)]),
+                          model(U1) == M1)
+            end).
+
+
 prop_add_key() ->
     ?FORALL({I, K, U},
-            {non_blank_string(), non_blank_string(), user()},
+            {?NBS, ?NBS, user()},
             begin
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n", [U, User, model(User)]),
@@ -281,7 +463,7 @@ prop_leave_org() ->
                 User = eval(U),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n", [U, User, model(User)]),
                           model(?U:leave_org(id(?BIG_TIME), O, User)) ==
-                                             model_leave_org(O, model(User)))
+                              model_leave_org(O, model(User)))
             end).
 
 prop_leave_role() ->
@@ -313,7 +495,7 @@ prop_remove_key() ->
             end).
 
 prop_set_metadata() ->
-    ?FORALL({K, V, U}, {non_blank_string(), non_blank_string(), user()},
+    ?FORALL({K, V, U}, {?NBS, ?NBS, user()},
             begin
                 User = eval(U),
                 U1 = ?U:set_metadata(id(?BIG_TIME), K, V, User),
