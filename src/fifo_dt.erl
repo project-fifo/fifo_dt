@@ -105,18 +105,18 @@ make_random(C) ->
     {ok, High} = jsxd:get(<<"high">>, C),
     {random, Low, High}.
 
+-spec update_set(old_set:orswot()) -> riak_dt_orswot:orswot().
 update_set(Old) ->
     Values = old_set:value(Old),
     {ok, New} = riak_dt_orswot:update({add_all, Values}, update,
                                       riak_dt_orswot:new()),
     New.
 
+-spec update_map(old_map:old_map()) -> riak_dt_map:riak_dt_map().
 update_map(Old) ->
     V = fifo_old_map:value(Old),
     fifo_map:from_orddict(V, update, 1).
 
-to_ptree({_, _} = Perms) ->
-    libsnarlmatch_tree:from_list(old_set:value(Perms));
 to_ptree(Perms) ->
     libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).
 

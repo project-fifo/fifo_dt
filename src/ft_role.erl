@@ -11,9 +11,6 @@
 -define(OBJ, ?ROLE).
 -include("ft_helper.hrl").
 
--ifdef(TEST).
--export([update_permissions/2]).
--endif.
 
 -export([
          new/1,
@@ -82,25 +79,10 @@ load(TID, #role_0_1_0{
            uuid = UUID,
            name = Name,
            permissions = Permissions,
-           ptree = fifo_dt:to_ptree(Permissions),
+           ptree = fifo_dt:to_ptree(fifo_dt:update_set(Permissions)),
            metadata = Metadata
           },
-    load(TID, R);
-
-load(TID,
-     #group_0_1_1{
-        uuid = UUID,
-        name = Name,
-        permissions = Permissions,
-        metadata = Metadata
-       }) ->
-    Rl = #role_0_1_0{
-            uuid = UUID,
-            name = Name,
-            permissions = Permissions,
-            metadata = Metadata
-           },
-    load(TID, update_permissions(TID, Rl)).
+    load(TID, R).
 
 to_json(#?ROLE{
             uuid = UUID,
@@ -212,21 +194,3 @@ set_metadata({_T, ID}, Attribute, delete, Role) ->
 set_metadata({T, ID}, Attribute, Value, Role) ->
     {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Role#?ROLE.metadata),
     Role#?ROLE{metadata = M1}.
-
-update_permissions(TID, Rl) ->
-    Permissions = permissions(Rl),
-    lists:foldl(fun ([<<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [<<"roles">> | R], Acc0);
-                    ([F, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, <<"roles">> | R], Acc0);
-                    ([F, S, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, S, <<"roles">> | R], Acc0);
-                    ([F, S, T, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, S, T, <<"roles">> | R], Acc0);
-                    (_, Acc) ->
-                        Acc
-                end, Rl, Permissions).

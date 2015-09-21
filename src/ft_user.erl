@@ -11,9 +11,6 @@
 -define(OBJ, ?USER).
 -include("ft_helper.hrl").
 
--export([update_permissions/2]).
--ignore_xref([update_permissions/2]).
-
 -export([
          new/1,
          load/2,
@@ -83,7 +80,7 @@ clean_tokens({_T, ID}, User = #?USER{tokens = Ts}) ->
     {ok, Ts1} = riak_dt_orswot:update({remove_all, Expired}, ID, Ts),
     User#?USER{tokens = Ts1}.
 
--spec to_json(token()) -> [{binary(), term()}].
+-spec token_to_json(token()) -> [{binary(), term()}].
 token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
                 scope := Scope, comment := Comment}) ->
     J = [{<<"type">>, atom_to_binary(Type, utf8)},
@@ -238,65 +235,14 @@ load_(TID, #user_0_1_5{
            password = Passwd,
            active_org = ActiveOrg,
            permissions = Permissions,
-           ptree = fifo_dt:to_ptree(Permissions),
+           ptree = fifo_dt:to_ptree(fifo_dt:update_set(Permissions)),
            roles = Roles,
            ssh_keys = Keys,
            orgs = Orgs,
            yubikeys = YubiKeys,
            metadata = Metadata
           },
-    load_(TID, U);
-
-load_(TID,
-     #user_0_1_4{
-        uuid = UUID,
-        name = Name,
-        password = Passwd,
-        active_org = ActiveOrg,
-        permissions = Permissions,
-        roles = Roles,
-        ssh_keys = Keys,
-        orgs = Orgs,
-        yubikeys = YubiKeys,
-        metadata = Metadata
-       }) ->
-    U = #user_0_1_5{
-           uuid = UUID,
-           name = Name,
-           password = Passwd,
-           active_org = ActiveOrg,
-           permissions = Permissions,
-           roles = Roles,
-           ssh_keys = Keys,
-           orgs = Orgs,
-           yubikeys = YubiKeys,
-           metadata = Metadata
-          },
-    load_(TID, update_permissions(TID, U));
-
-load_(TID,
-     #user_0_1_3{
-        uuid = UUID1,
-        name = Name1,
-        password = Passwd1,
-        active_org = ActiveOrg1,
-        permissions = Permissions1,
-        roles = Roles1,
-        ssh_keys = Keys1,
-        orgs = Orgs1,
-        metadata = Metadata1
-       }) ->
-    load_(TID, #user_0_1_4{
-                 uuid = UUID1,
-                 name = Name1,
-                 password = Passwd1,
-                 active_org = ActiveOrg1,
-                 permissions = Permissions1,
-                 roles = Roles1,
-                 ssh_keys = Keys1,
-                 orgs = Orgs1,
-                 metadata = Metadata1
-                }).
+    load_(TID, U).
 
 to_json(#?USER{
             uuid = UUID,
@@ -522,21 +468,3 @@ set_metadata({_T, ID}, Attribute, delete, User) ->
 set_metadata({T, ID}, Attribute, Value, User) ->
     {ok, M1} = fifo_map:set(Attribute, Value, ID, T, User#?USER.metadata),
     User#?USER{metadata = M1}.
-
-update_permissions(TID, U) ->
-    Permissions = permissions(U),
-    lists:foldl(fun ([<<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [<<"roles">> | R], Acc0);
-                    ([F, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, <<"roles">> | R], Acc0);
-                    ([F, S, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, S, <<"roles">> | R], Acc0);
-                    ([F, S, T, <<"groups">> | R] = P, Acc) ->
-                        Acc0 = revoke(TID, P, Acc),
-                        grant(TID, [F, S, T, <<"roles">> | R], Acc0);
-                    (_, Acc) ->
-                        Acc
-                end, U, Permissions).

@@ -555,7 +555,7 @@ load(TID, #vm_0_1_0{
           },
     load(TID, V).
 
--spec to_json(vm()) -> jsxd:object().
+-spec to_json(vm()) -> [{binary(), term()}].
 
 to_json(V) ->
     M = lists:sort(

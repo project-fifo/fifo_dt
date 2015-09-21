@@ -92,7 +92,7 @@ load(TID, #client_0{
            type          = Type1,
            redirect_uris = RedirectURIs1,
            permissions   = Permissions1,
-           ptree         = fifo_dt:to_ptree(Permissions1),
+           ptree         = fifo_dt:to_ptree(fifo_dt:update_set(Permissions1)),
            roles         = Roles1,
            metadata      = Metadata1
           },

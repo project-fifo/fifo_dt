@@ -43,7 +43,7 @@
 -type old_map() :: {riak_dt_vclock:vclock(), valuelist()}.
 -type field() :: {Name::term(), Type::crdt_mod()}.
 -type crdt_mod() :: riak_dt_pncounter | riak_dt_lwwreg |
-                    riak_dt_od_flag |
+                    riak_dt_od_flag | riak_dt_map |
                     old_map | riak_dt_orswot.
 -type valuelist() :: [{field(), entry()}].
 -type entry() :: {minimal_clock(), crdt()}.
@@ -103,7 +103,7 @@ value({get, {_Name, riak_dt_map}=Field}, Map) ->
         error -> error;
         CRDT -> old_map:value(CRDT)
     end;
-value({get, {_Name, Mod}=Field}, Map) ->
+value({get, {_Name, Mod}=Field}, {_Clock, _Values} = Map) ->
     case value({get_crdt, Field}, Map) of
         error -> error;
         CRDT -> Mod:value(CRDT)

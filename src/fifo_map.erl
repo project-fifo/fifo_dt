@@ -16,7 +16,10 @@
 -define(MAP, riak_dt_map).
 -define(COUNTER, riak_dt_pncounter).
 
--spec new() -> riak_dt_map:map().
+
+-type key() :: [binary()] | binary().
+
+-spec new() -> riak_dt_map:riak_dt_map().
 
 new() ->
     riak_dt_map:new().
@@ -24,7 +27,7 @@ new() ->
 merge(A, B) ->
     riak_dt_map:merge(A, B).
 
--spec get(Keys::[binary()]|binary(), Map::riak_dt_map:map()) ->
+-spec get(Keys::key(), Map::riak_dt_map:riak_dt_map()) ->
                  term().
 
 get(Ks, M) when is_list(Ks) ->
@@ -45,10 +48,14 @@ get_([K | Ks], M) ->
             E
     end.
 
--spec set(Key::[binary()]|binary(), Value::term(),
-          Actor::atom(), Timestamp::non_neg_integer(),
-          Map::riak_dt_map:map()) ->
-                 {ok, riak_dt_map:map()}.
+-type set_type() :: reg.
+-type set_value() :: {set_type(), term()} | term().
+-type set_values() :: [{key(), set_value()}].
+
+-spec set(Key::key(), set_value() | set_values(),
+           Actor::atom(), Timestamp::non_neg_integer(),
+           Map::riak_dt_map:riak_dt_map()) ->
+                 {ok, riak_dt_map:riak_dt_map()}.
 
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
@@ -77,6 +84,10 @@ split_path(P) when is_binary(P) ->
 split_path(P) ->
     P.
 
+-spec remove(Key::key(),
+             Actor::atom(),
+             Map::riak_dt_map:riak_dt_map()) ->
+                    {ok, riak_dt_map:riak_dt_map()}.
 remove(Ks, A, M) when is_list(Ks) ->
     case remove_path(Ks, M) of
         {ok, {Path, K}} ->
@@ -104,7 +115,7 @@ flatten_value({{K,?MAP}, Vs}) ->
 -spec from_orddict(D::orddict:orddict(),
                    Actor::term(),
                    Timestamp::non_neg_integer()) ->
-                          riak_dt_map:map().
+                          riak_dt_map:riak_dt_map().
 
 from_orddict(D, Actor, Timestamp) ->
     lists:foldl(fun({Ks, V}, Map) ->
@@ -116,6 +127,9 @@ from_orddict(D, Actor, Timestamp) ->
 %%% Internal Functions
 %%%===================================================================
 
+-spec split_path(Path::[binary()], Map::riak_dt_map:riak_dt_map()) ->
+                        {'error','not_a_map',term(),[binary()]} |
+                        {'ok',{[binary()],[binary()]}}.
 split_path(Path, Map) ->
     Map1 = riak_dt_map:value(Map),
     split_path(Path, [], Map1).
@@ -127,7 +141,7 @@ find_key(_K, [{{_K, T}, V} | _]) ->
 find_key(K, [_ | R]) ->
     find_key(K, R).
 
--spec split_path([binary()], [binary()], riak_dt_map:map()) ->
+-spec split_path([binary()], [binary()], [{term(), term()}]) ->
                         {error, not_a_map, term(), [binary()]} |
                         {ok, {[binary()], [binary()]}}.
 
@@ -185,8 +199,6 @@ nested_update([K | Ks], U) ->
     [{update, {K, ?MAP}, {update, nested_update(Ks, U)}}].
 
 nested_create([_K], [{}], _T) ->
-    %%Field = {K, ?MAP},
-    %%[{add, Field}];
     [];
 
 

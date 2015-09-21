@@ -38,7 +38,7 @@
           roles       = old_set:new() :: old_set:orswot(),
           ssh_keys    = old_set:new() :: old_set:orswot(),
           orgs        = old_set:new() :: old_set:orswot(),
-          metadata    = old_map:new()    :: old_map:map()
+          metadata    = old_map:new()    :: old_map:old_map()
          }).
 
 -record(user_0_1_4, {
@@ -51,7 +51,7 @@
           ssh_keys    = old_set:new() :: old_set:orswot(),
           orgs        = old_set:new() :: old_set:orswot(),
           yubikeys    = old_set:new() :: old_set:orswot(),
-          metadata    = old_map:new()    :: old_map:map()
+          metadata    = old_map:new()    :: old_map:old_map()
          }).
 
 -record(user_0_1_5, {
@@ -64,7 +64,7 @@
           ssh_keys    = old_set:new() :: old_set:orswot(),
           orgs        = old_set:new() :: old_set:orswot(),
           yubikeys    = old_set:new() :: old_set:orswot(),
-          metadata    = old_map:new()    :: old_map:map()
+          metadata    = old_map:new()    :: old_map:old_map()
          }).
 
 -record(user_0, {
@@ -78,7 +78,7 @@
           ssh_keys    = old_set:new() :: old_set:orswot(),
           orgs        = old_set:new() :: old_set:orswot(),
           yubikeys    = old_set:new() :: old_set:orswot(),
-          metadata    = old_map:new()    :: old_map:map()
+          metadata    = old_map:new()    :: old_map:old_map()
          }).
 
 -record(user_1, {
@@ -92,7 +92,7 @@
           ssh_keys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
 -record(user_2, {
@@ -107,7 +107,7 @@
           orgs        = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           yubikeys    = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
           tokens      = riak_dt_orswot:new() :: riak_dt_orswot:orswot(),
-          metadata    = riak_dt_map:new()    :: riak_dt_map:map()
+          metadata    = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
 

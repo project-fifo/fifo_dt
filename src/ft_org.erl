@@ -13,7 +13,7 @@
 -include("ft_helper.hrl").
 
 -ifdef(EQC).
--export([update_triggers/2, jsonify_trigger/1]).
+-export([jsonify_trigger/1]).
 -endif.
 
 -export([
@@ -121,40 +121,7 @@ load(TID,
            triggers = Triggers,
            metadata = Metadata
           },
-    load(TID, O);
-
-load(TID,
-     #organisation_0_1_2{
-        uuid = UUID,
-        name = Name,
-        triggers = Triggers,
-        metadata = Metadata
-       }) ->
-    O = #organisation_0_1_3{
-           uuid = UUID,
-           name = Name,
-           triggers = Triggers,
-           metadata = Metadata
-          },
-    load(TID, update_triggers(TID, O));
-
-load({T, ID},
-     #organisation_0_1_1{
-        uuid = UUID,
-        name = Name,
-        triggers = Triggers,
-        metadata = Metadata
-       }) ->
-    UUIDb = riak_dt_lwwreg:value(UUID),
-    Ts = [{trigger_uuid(UUIDb, Tr), Tr} || Tr <- old_set:value(Triggers)],
-    Triggers1 = fifo_map:from_orddict(orddict:from_list(Ts), ID, T),
-    load({T, ID},
-         #organisation_0_1_2{
-            uuid = UUID,
-            name = Name,
-            triggers = Triggers1,
-            metadata = Metadata
-           }).
+    load(TID, O).
 
 jsonify_trigger({Trigger, Action}) ->
     jsxd:set(<<"trigger">>, list_to_binary(atom_to_list(Trigger)),
@@ -253,12 +220,6 @@ set_metadata({T, ID}, Attribute, Value, Org) ->
     {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Org#?ORG.metadata),
     Org#?ORG{metadata = M1}.
 
--spec trigger_uuid(UUID::uuid:uuid_string(), Trigger::term()) -> uuid:uuid().
-
-trigger_uuid(UUID, Trigger) ->
-    list_to_binary(uuid:to_string(uuid:uuid5(UUID, term_to_binary(Trigger)))).
-
-
 remove_target(TID, Target, Org) ->
     Triggers = triggers(Org),
     GrantTriggers = [UUID || {UUID, {_, {grant, _, T, _}}} <- Triggers,
@@ -268,40 +229,3 @@ remove_target(TID, Target, Org) ->
     lists:foldl(fun(UUID, Acc) ->
                         remove_trigger(TID, UUID, Acc)
                 end, Org, GrantTriggers ++ JoinTriggers).
-
-
-update_triggers({T, ID}, O = #organisation_0_1_3{triggers = Triggers}) ->
-    T1 = lists:foldl(fun ({UUID, {A, {grant, group, R, Tr}}}, Acc) ->
-                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
-                             Trig = {A, {grant, role, R, replace_group(Tr)}},
-                             {ok, Acc2} = fifo_map:set(UUID, {reg, Trig}, ID, T,
-                                                       Acc1),
-                             Acc2;
-                         ({UUID, {A, {grant, E, R, Tr}}}, Acc) ->
-                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
-                             Trig = {A, {grant, E, R, replace_group(Tr)}},
-                             {ok, Acc2} = fifo_map:set(UUID, {reg, Trig}, ID, T,
-                                                       Acc1),
-                             Acc2;
-                         ({UUID, {A, {join, group, R}}}, Acc) ->
-                             {ok, Acc1} = fifo_map:remove(UUID, ID, Acc),
-                             Tr = {A, {join, role, R}},
-                             {ok, Acc2} = fifo_map:set(UUID, {reg, Tr}, ID, T,
-                                                       Acc1),
-                             Acc2;
-                         (_, Acc) ->
-                             Acc
-                     end, Triggers, fifo_map:value(Triggers)),
-    O#organisation_0_1_3{triggers = T1}.
-
-replace_group(R) ->
-    replace_group(R, []).
-
-replace_group([<<"groups">> | R], Acc) ->
-    replace_group(R, [<<"roles">> | Acc]);
-
-replace_group([F | R], Acc) ->
-    replace_group(R, [F | Acc]);
-
-replace_group([], Acc) ->
-    lists:reverse(Acc).

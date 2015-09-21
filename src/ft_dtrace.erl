@@ -129,28 +129,7 @@ load(TID, #dtrace_0_1_0{
             name = Name,
             uuid = UUID
            },
-    load(TID, D1);
-
-load({T, ID}, D) ->
-    {ok, UUID} = jsxd:get([<<"uuid">>], D),
-    {ok, Name} = jsxd:get([<<"name">>], D),
-    {ok, Script} = jsxd:get([<<"script">>], D),
-    Metadata = jsxd:get([<<"metadata">>], [], D),
-    {ok, Config} = jsxd:get([<<"config">>], D),
-
-    {ok, UUID1} = ?NEW_LWW(UUID, T),
-    {ok, Name1} = ?NEW_LWW(Name, T),
-    {ok, Script1} = ?NEW_LWW(Script, T),
-    Metadata1 = fifo_map:from_orddict(Metadata, ID, T),
-    Config1 = fifo_map:from_orddict(Config, ID, T),
-    D1 = #dtrace_0_1_0{
-             config = Config1,
-             metadata = Metadata1,
-             script = Script1,
-             name = Name1,
-             uuid = UUID1
-            },
-    load({T, ID}, D1).
+    load(TID, D1).
 
 to_json(D) ->
     [
