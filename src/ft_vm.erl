@@ -267,13 +267,19 @@ remove_grouping({_T, ID}, V, H) ->
             H#?VM{groupings = O1}
     end.
 
+-spec fw_rules(vm()) ->
+                      [fifo:fifo_fw_rule()].
 fw_rules(H) ->
     riak_dt_orswot:value(H#?VM.fw_rules).
 
+-spec add_fw_rule({integer(), atom()}, fifo:fifo_fw_rule(), vm()) ->
+                          vm().
 add_fw_rule({_T, ID}, V, H) ->
     {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?VM.fw_rules),
     H#?VM{fw_rules = O1}.
 
+-spec remove_fw_rule({integer(), atom()}, fifo:fifo_fw_rule(), vm()) ->
+                            vm().
 remove_fw_rule({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?VM.fw_rules) of
         {error,{precondition,{not_present,_}}} ->
