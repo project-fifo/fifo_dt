@@ -133,7 +133,7 @@ add([{N, F} | R], In, D) ->
 -spec cpu_cap(package()) -> pos_integer() | undefined.
 ?G(cpu_cap).
 
--spec cpu_shares(package()) -> pos_integer().
+-spec cpu_shares(package()) -> pos_integer() | undefined.
 ?G(cpu_shares).
 
 -spec max_swap(package()) -> pos_integer() | undefined.
