@@ -52,9 +52,12 @@ get_([K | Ks], M) ->
 -type set_value() :: {set_type(), term()} | term().
 -type set_values() :: [{key(), set_value()}].
 
+%% Dear dialyzer please kindly go fuck yourself.
+-dialyzer({nowarn_function, set/5}).
+
 -spec set(Key::key(), set_value() | set_values(),
-           Actor::atom(), Timestamp::non_neg_integer(),
-           Map::riak_dt_map:riak_dt_map()) ->
+          Actor::atom(), Timestamp::non_neg_integer(),
+          Map::riak_dt_map:riak_dt_map()) ->
                  {ok, riak_dt_map:riak_dt_map()}.
 
 set(K, V, A, T, M) when not is_list(K) ->
@@ -83,6 +86,9 @@ split_path(P) when is_binary(P) ->
 
 split_path(P) ->
     P.
+
+%% Dear dialyzer please kindly go fuck yourself.
+-dialyzer({nowarn_function, remove/3}).
 
 -spec remove(Key::key(),
              Actor::atom(),

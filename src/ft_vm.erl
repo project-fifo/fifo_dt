@@ -267,19 +267,13 @@ remove_grouping({_T, ID}, V, H) ->
             H#?VM{groupings = O1}
     end.
 
--spec fw_rules(vm()) ->
-                      [fifo:fifo_fw_rule()].
 fw_rules(H) ->
     riak_dt_orswot:value(H#?VM.fw_rules).
 
--spec add_fw_rule({integer(), atom()}, fifo:fifo_fw_rule(), vm()) ->
-                          vm().
 add_fw_rule({_T, ID}, V, H) ->
     {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?VM.fw_rules),
     H#?VM{fw_rules = O1}.
 
--spec remove_fw_rule({integer(), atom()}, fifo:fifo_fw_rule(), vm()) ->
-                            vm().
 remove_fw_rule({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?VM.fw_rules) of
         {error,{precondition,{not_present,_}}} ->
@@ -311,6 +305,8 @@ set_metadata({T, ID}, Attribute, Value, G) ->
 network_map(H) ->
     fifo_map:value(H#?VM.network_map).
 
+%% Dear dialyzer please kindly go fuck yourself.
+-dialyzer({nowarn_function, set_network_map/4}).
 set_network_map({T, ID}, IP, Value, User) when is_integer(IP) ->
     set_network_map({T, ID}, [IP], Value, User);
 
@@ -561,6 +557,8 @@ load(TID, #vm_0_1_0{
           },
     load(TID, V).
 
+%% Dear dialyzer please kindly go fuck yourself.
+-dialyzer({nowarn_function, to_json/1}).
 -spec to_json(vm()) -> [{binary(), term()}].
 
 to_json(V) ->
