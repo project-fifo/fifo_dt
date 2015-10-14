@@ -9,7 +9,6 @@
 -module(ft_org).
 
 -include("ft_org.hrl").
--define(OBJ, ?ORG).
 -include("ft_helper.hrl").
 
 -ifdef(EQC).
@@ -27,6 +26,7 @@
          merge/2,
          to_json/1,
          getter/2,
+         resources/1, resource/2, resource_inc/4, resource_dec/4,
          is_a/1
         ]).
 
@@ -41,10 +41,23 @@
               merge/2,
               to_json/1,
               getter/2,
+              resources/1, resource/2, resource_inc/4, resource_dec/4,
               is_a/1
              ]).
 
--type org() :: #?OBJ{}.
+-type resources() :: #{
+                binary() => riak_dt_pncounter:pncounter()
+               }.
+
+-type org() :: #{
+           type        => ?TYPE,
+           version    => non_neg_integer(),
+           uuid           => riak_dt_lwwreg:lwwreg(),
+           name           => riak_dt_lwwreg:lwwreg(),
+           triggers       => riak_dt_map:riak_dt_map(),
+           resources      => resources(),
+           metadata       => riak_dt_map:riak_dt_map()
+          }.
 -export_type([org/0]).
 
 ?IS_A.
@@ -54,19 +67,47 @@
 ?G_JSX.
 
 new(_) ->
-    #?ORG{}.
+    #{
+     type        => ?TYPE,
+     version     => ?VERSION,
+     uuid        => riak_dt_lwwreg:new(),
+     name        => riak_dt_lwwreg:new(),
+     triggers    => riak_dt_map:new(),
+     resources   => #{},
+     metadata    => riak_dt_map:new()
+    }.
 
 %%-spec load({non_neg_integer(), atom()}, any_organisation()) -> organisation().
 
-load(_, #?ORG{} = Org) ->
+load(_, #{type := Type})  when Type =/= ?TYPE ->
+    error(bad_arg);
+
+load(_, #{version := ?VERSION} = Org) ->
     Org;
 
-load(TID, #organisation_0{
+load(TID, #organisation_1{
            uuid = UUID,
            name = Name,
            triggers = Triggers,
            metadata = Metadata
           }) ->
+    load(TID,
+         #{
+           type      => ?TYPE,
+           version   => 0,
+           uuid      => UUID,
+           name      => Name,
+           resources => #{},
+           triggers  => Triggers,
+           metadata  => Metadata
+          });
+
+load(TID, #organisation_0{
+             uuid = UUID,
+             name = Name,
+             triggers = Triggers,
+             metadata = Metadata
+            }) ->
     O = #organisation_1{
            uuid = UUID,
            name = Name,
@@ -76,12 +117,12 @@ load(TID, #organisation_0{
     load(TID, O);
 
 load(TID, #organisation_0_1_5{
-           uuid = UUID,
-           name = Name,
-           resources = Resources,
-           triggers = Triggers,
-           metadata = Metadata
-          }) ->
+             uuid = UUID,
+             name = Name,
+             resources = Resources,
+             triggers = Triggers,
+             metadata = Metadata
+            }) ->
     O = #organisation_0{
            uuid = UUID,
            name = Name,
@@ -150,8 +191,8 @@ jsonify_permission(Permission) ->
     lists:map(fun (placeholder) ->
                       <<"$">>;
                   (E) ->
-                      E
-              end, Permission).
+                              E
+                      end, Permission).
 
 -spec to_json(Org::org()) -> fifo:attr_list().
 to_json(Org) ->
@@ -160,65 +201,80 @@ to_json(Org) ->
        {<<"uuid">>, uuid(Org)},
        {<<"name">>, name(Org)},
        {<<"triggers">>, [{U, jsonify_trigger(T)} || {U, T} <- triggers(Org)]},
+       {<<"resources">>, maps:to_list(resources(Org))},
        {<<"metadata">>, metadata(Org)}
       ]).
 
-merge(#?ORG{
-          uuid = UUID1,
-          name = Name1,
-          triggers = Triggers1,
-          metadata = Metadata1
-         },
-      #?ORG{
-          uuid = UUID2,
-          name = Name2,
-          triggers = Triggers2,
-          metadata = Metadata2
-         }) ->
-    #?ORG{
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
-        name = riak_dt_lwwreg:merge(Name1, Name2),
-        triggers = fifo_map:merge(Triggers1, Triggers2),
-        metadata = fifo_map:merge(Metadata1, Metadata2)
+merge(O = #{
+        type     := ?TYPE,
+        uuid     := UUID1,
+        name     := Name1,
+        triggers := Triggers1,
+        metadata := Metadata1
+       },
+      #{
+         type     := ?TYPE,
+         uuid     := UUID2,
+         name     := Name2,
+         triggers := Triggers2,
+         metadata := Metadata2
+       }) ->
+    O#{
+       uuid     := riak_dt_lwwreg:merge(UUID1, UUID2),
+       name     := riak_dt_lwwreg:merge(Name1, Name2),
+       triggers := fifo_map:merge(Triggers1, Triggers2),
+       metadata := fifo_map:merge(Metadata1, Metadata2)
        }.
 
-?G(name).
-?S(name).
-?G(uuid).
-?S(uuid).
+resources(#{type := ?TYPE, resources := R}) ->
+    maps:map(
+      fun (_K, V) ->
+              riak_dt_pncounter:value(V)
+      end, R).
+
+resource(#{type := ?TYPE, resources := Rs}, K) ->
+    case maps:find(K, Rs) of
+        {ok, Cx} ->
+            riak_dt_pncounter:value(Cx);
+        _ ->
+            not_found
+    end.
+
+
+resource_inc({_T, ID}, R, V, O = #{type := ?TYPE, resources := Rs}) ->
+    C0 = case maps:find(R, Rs) of
+             {ok, Cx} ->
+                 Cx;
+             _ ->
+                 riak_dt_pncounter:new()
+         end,
+    {ok, C1} = riak_dt_pncounter:update({increment, V}, ID, C0),
+    O#{resources := maps:put(R, C1, Rs)}.
+
+resource_dec({_T, ID}, R, V, O = #{type := ?TYPE, resources := Rs}) ->
+    C0 = case maps:find(R, Rs) of
+             {ok, Cx} ->
+                 Cx;
+             _ ->
+                 riak_dt_pncounter:new()
+         end,
+    {ok, C1} = riak_dt_pncounter:update({increment, V}, ID, C0),
+    O#{resources := maps:put(R, C1, Rs)}.
+
+
+
+?REG_GET(name).
+?REG_SET(name).
+?REG_GET(uuid).
+?REG_SET(uuid).
 
 -spec triggers(Org::org()) -> [{ID::fifo:uuid(), Trigger::term()}].
 
-triggers(Org) ->
-    fifo_map:value(Org#?ORG.triggers).
+?MAP_GET(triggers).
 
-add_trigger({T, ID}, UUID, Trigger, Org) ->
-    {ok, T1} = fifo_map:set(UUID, {reg, Trigger}, ID, T, Org#?ORG.triggers),
-    Org#?ORG{triggers = T1}.
+?MAP_SET(add_trigger, triggers).
 
-remove_trigger({_T, ID}, Trigger, Org) ->
-    {ok, V} = fifo_map:remove(Trigger, ID, Org#?ORG.triggers),
-    Org#?ORG{triggers = V}.
-
-metadata(Org) ->
-    fifo_map:value(Org#?ORG.metadata).
-
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, Org) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, Org);
-
-set_metadata({_T, ID}, Attribute, delete, Org) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, Org#?ORG.metadata),
-    Org#?ORG{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, Org) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Org#?ORG.metadata),
-    Org#?ORG{metadata = M1}.
+?MAP_REM(remove_trigger, triggers).
 
 remove_target(TID, Target, Org) ->
     Triggers = triggers(Org),
@@ -229,3 +285,7 @@ remove_target(TID, Target, Org) ->
     lists:foldl(fun(UUID, Acc) ->
                         remove_trigger(TID, UUID, Acc)
                 end, Org, GrantTriggers ++ JoinTriggers).
+
+?META.
+?SET_META_3.
+?SET_META_4.

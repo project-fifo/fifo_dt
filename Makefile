@@ -16,7 +16,7 @@ clean:
 
 test: 
 	$(REBAR) eunit
-	$(REBAR) as eqc eqc -x
+	$(REBAR) as eqc eqc
 
 ###
 ### Docs

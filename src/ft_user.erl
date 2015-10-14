@@ -8,7 +8,6 @@
 -module(ft_user).
 
 -include("ft_user.hrl").
--define(OBJ, ?USER).
 -include("ft_helper.hrl").
 
 -export([
@@ -48,8 +47,27 @@
               to_json/1
              ]).
 
--type user() :: #?OBJ{}.
--export_type([user/0]).
+
+-type user() ::
+        #{
+           type        => ?TYPE,
+           version     => non_neg_integer(),
+           uuid        => riak_dt_lwwreg:lwwreg(),
+           name        => riak_dt_lwwreg:lwwreg(),
+           password    => riak_dt_lwwreg:lwwreg(),
+           active_org  => riak_dt_lwwreg:lwwreg(),
+           permissions => riak_dt_orswot:orswot(),
+           ptree       => libsnarlmatch_tree:tree(),
+           roles       => riak_dt_orswot:orswot(),
+           ssh_keys    => riak_dt_orswot:orswot(),
+           orgs        => riak_dt_orswot:orswot(),
+           yubikeys    => riak_dt_orswot:orswot(),
+           tokens      => riak_dt_orswot:orswot(),
+           metadata    => riak_dt_map:riak_dt_map()
+         }.
+
+-export_type([user/0, token/0]).
+
 -type token() :: #{
              id => binary(),
              type => access|refresh,
@@ -60,105 +78,85 @@
              comment => binary() | undefined
             }.
 
+-spec is_a(any()) -> true | false.
 ?IS_A.
 
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
 
-new({_T, _ID}) ->
-    #?USER{}.
+-spec new({pos_integer(), atom()}) -> user().
 
+new({_T, _ID}) ->
+    #{
+     type        => ?TYPE,
+     version     => ?VERSION,
+     uuid        => riak_dt_lwwreg:new(),
+     name        => riak_dt_lwwreg:new(),
+     password    => riak_dt_lwwreg:new(),
+     active_org  => riak_dt_lwwreg:new(),
+     permissions => riak_dt_orswot:new(),
+     ptree       => libsnarlmatch_tree:new(),
+     roles       => riak_dt_orswot:new(),
+     ssh_keys    => riak_dt_orswot:new(),
+     orgs        => riak_dt_orswot:new(),
+     yubikeys    => riak_dt_orswot:new(),
+     tokens      => riak_dt_orswot:new(),
+     metadata    => riak_dt_map:new()
+    }.
+
+-spec load(fifo_dt:tid(), term()) -> user().
+
+load(_, #{type := Other}) when Other =/= ?TYPE ->
+    error(bad_arg);
 
 load(TID, User) ->
     clean_tokens(TID, load_(TID, User)).
 
-clean_tokens({_T, ID}, User = #?USER{tokens = Ts}) ->
+-spec clean_tokens(fifo_dt:tid(), user()) -> user().
+
+clean_tokens({_T, ID}, User = #{tokens := Ts}) ->
     Tvs = riak_dt_orswot:value(Ts),
     T0 = erlang:system_time(seconds),
     Expired = [T || T = #{expiery := E} <- Tvs,
                     E =< T0],
     {ok, Ts1} = riak_dt_orswot:update({remove_all, Expired}, ID, Ts),
-    User#?USER{tokens = Ts1}.
+    User#{tokens => Ts1}.
 
--spec token_to_json(token()) -> [{binary(), term()}].
-token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
-                scope := Scope, comment := Comment}) ->
-    J = [{<<"type">>, atom_to_binary(Type, utf8)},
-         {<<"id">>, ID},
-         {<<"scope">>, Scope}],
-    J2 = case Exp of
-             infinity ->
-                 J;
-             _ ->
-                 [{<<"expiery">>, Exp} | J]
-         end,
-    J3 = case Client of
-             undefined ->
-                 J2;
-             _ ->
-                 [{<<"client">>, Client} | J2]
-         end,
-    J4 = case Comment of
-             undefined ->
-                 J3;
-             _ ->
-                 [{<<"comment">>, Comment} | J3]
-         end,
-    lists:sort(J4).
+-spec load_(fifo_dt:tid(), term()) -> user().
 
-add_token({_T, ID}, {TokenID, Type, Token, Expiery, Client, Scope, Comment}, User)
-  when is_binary(TokenID),
-       (Type =:= access orelse Type =:= refresh),
-       is_binary(Token),
-       ((is_integer(Expiery) andalso Expiery) > 0 orelse Expiery =:= infinity),
-       (is_binary(Client) orelse Client =:= undefined),
-       (is_binary(Comment) orelse Comment =:= undefined),
-       is_list(Scope) ->
-    T = #{id => TokenID,
-          type => Type,
-          token => Token,
-          expiery => Expiery,
-          client => Client,
-          scope => Scope,
-          comment => Comment},
-    {ok, Ts1} = riak_dt_orswot:update({add, T}, ID, User#?USER.tokens),
-    User#?USER{tokens = Ts1}.
-
-remove_token({_T, ID}, Token, User) ->
-    case get_token(Token, User) of
-        not_found ->
-            User;
-        T ->
-            {ok, Ts} = riak_dt_orswot:update({remove, T}, ID, User#?USER.tokens),
-            User#?USER{tokens = Ts}
-    end.
-
-get_token(Token, User) ->
-    Ts = tokens(User),
-    case [T || T = #{token := T1} <-  Ts, T1 =:= Token] of
-        [] ->
-            not_found;
-        [T] ->
-            T
-    end.
-
-get_token_by_id(TokenID, User) ->
-    Ts = tokens(User),
-    case [T || T = #{id := T1} <-  Ts, T1 =:= TokenID] of
-        [] ->
-            not_found;
-        [T] ->
-            T
-    end.
-
-tokens(#?USER{tokens = Ts}) ->
-    riak_dt_orswot:value(Ts).
-
-
-%% -spec load_({non_neg_integer(), atom()}, any_user()) -> user().
-
-load_(_, #?USER{} = User) ->
+load_(_, #{type := user, version := 0} = User) ->
     User;
+
+load_(TID, #user_2{
+              uuid = UUID,
+              name = Name,
+              password = Passwd,
+              active_org = ActiveOrg,
+              permissions = Permissions,
+              roles = Roles,
+              ssh_keys = Keys,
+              orgs = Orgs,
+              yubikeys = YubiKeys,
+              tokens = Tokens,
+              metadata = Metadata
+             }) ->
+    load(TID,
+         #{
+           type        => ?TYPE,
+           version     => 0,
+           uuid        => UUID,
+           name        => Name,
+           password    => Passwd,
+           active_org  => ActiveOrg,
+           permissions => Permissions,
+           ptree       => fifo_dt:to_ptree(Permissions),
+           roles       => Roles,
+           ssh_keys    => Keys,
+           orgs        => Orgs,
+           yubikeys    => YubiKeys,
+           tokens      => Tokens,
+           metadata    => Metadata
+          });
 
 load_(TID, #user_1{
               uuid = UUID,
@@ -218,17 +216,17 @@ load_(TID, #user_0{
     load_(TID, U);
 
 load_(TID, #user_0_1_5{
-             uuid = UUID,
-             name = Name,
-             password = Passwd,
-             active_org = ActiveOrg,
-             permissions = Permissions,
-             roles = Roles,
-             ssh_keys = Keys,
-             orgs = Orgs,
-             yubikeys = YubiKeys,
-             metadata = Metadata
-            }) ->
+              uuid = UUID,
+              name = Name,
+              password = Passwd,
+              active_org = ActiveOrg,
+              permissions = Permissions,
+              roles = Roles,
+              ssh_keys = Keys,
+              orgs = Orgs,
+              yubikeys = YubiKeys,
+              metadata = Metadata
+             }) ->
     U = #user_0{
            uuid = UUID,
            name = Name,
@@ -244,17 +242,19 @@ load_(TID, #user_0_1_5{
           },
     load_(TID, U).
 
-to_json(#?USER{
-            uuid = UUID,
-            name = Name,
-            roles = Roles,
-            ssh_keys = Keys,
-            permissions = Permissions,
-            active_org = Org,
-            orgs = Orgs,
-            yubikeys = YubiKeys,
-            tokens = Tokens,
-            metadata = Metadata
+-spec to_json(user()) -> [{binary(), term()}].
+
+to_json(#{
+            uuid        := UUID,
+            name        := Name,
+            roles       := Roles,
+            ssh_keys    := Keys,
+            permissions := Permissions,
+            active_org  := Org,
+            orgs        := Orgs,
+            yubikeys    := YubiKeys,
+            tokens      := Tokens,
+            metadata    := Metadata
            }) ->
     jsxd:from_list(
       [
@@ -270,58 +270,151 @@ to_json(#?USER{
        {<<"metadata">>, fifo_map:value(Metadata)}
       ]).
 
-merge(#?USER{
-          uuid = UUID1,
-          name = Name1,
-          password = Password1,
-          roles = Roles1,
-          permissions = Permissions1,
-          ssh_keys = Keys1,
-          active_org = Org1,
-          orgs = Orgs1,
-          tokens = Tokens1,
-          yubikeys = YubiKeys1,
-          metadata = Metadata1
-         },
-      #?USER{
-          uuid = UUID2,
-          name = Name2,
-          password = Password2,
-          roles = Roles2,
-          permissions = Permissions2,
-          ssh_keys = Keys2,
-          active_org = Org2,
-          orgs = Orgs2,
-          tokens = Tokens2,
-          yubikeys = YubiKeys2,
-          metadata = Metadata2
-         }) ->
+-spec merge(user(), user()) -> user().
+merge(U = #{
+        type := user,
+        uuid := UUID1,
+        name := Name1,
+        password := Password1,
+        roles := Roles1,
+        permissions := Permissions1,
+        ssh_keys := Keys1,
+        active_org := Org1,
+        orgs := Orgs1,
+        tokens := Tokens1,
+        yubikeys := YubiKeys1,
+        metadata := Metadata1
+       },
+      #{
+         type := user,
+         uuid := UUID2,
+         name := Name2,
+         password := Password2,
+         roles := Roles2,
+         permissions := Permissions2,
+         ssh_keys := Keys2,
+         active_org := Org2,
+         orgs := Orgs2,
+         tokens := Tokens2,
+         yubikeys := YubiKeys2,
+         metadata := Metadata2
+       }) ->
     Permissions = riak_dt_orswot:merge(Permissions1, Permissions2),
-    #?USER{
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
-        name = riak_dt_lwwreg:merge(Name1, Name2),
-        password = riak_dt_lwwreg:merge(Password1, Password2),
-        active_org = riak_dt_lwwreg:merge(Org1, Org2),
-        roles = riak_dt_orswot:merge(Roles1, Roles2),
-        ssh_keys = riak_dt_orswot:merge(Keys1, Keys2),
-        yubikeys = riak_dt_orswot:merge(YubiKeys1, YubiKeys2),
-        permissions = Permissions,
-        ptree = fifo_dt:to_ptree(Permissions),
-        orgs = riak_dt_orswot:merge(Orgs1, Orgs2),
-        tokens = riak_dt_orswot:merge(Tokens1, Tokens2),
-        metadata = fifo_map:merge(Metadata1, Metadata2)
-       }.
+    U#{
+      uuid := riak_dt_lwwreg:merge(UUID1, UUID2),
+      name := riak_dt_lwwreg:merge(Name1, Name2),
+      password := riak_dt_lwwreg:merge(Password1, Password2),
+      active_org := riak_dt_lwwreg:merge(Org1, Org2),
+      roles := riak_dt_orswot:merge(Roles1, Roles2),
+      ssh_keys := riak_dt_orswot:merge(Keys1, Keys2),
+      yubikeys := riak_dt_orswot:merge(YubiKeys1, YubiKeys2),
+      permissions := Permissions,
+      ptree := fifo_dt:to_ptree(Permissions),
+      orgs := riak_dt_orswot:merge(Orgs1, Orgs2),
+      tokens := riak_dt_orswot:merge(Tokens1, Tokens2),
+      metadata := fifo_map:merge(Metadata1, Metadata2)
+     }.
 
-join_org({_T, ID}, Org, User) ->
-    {ok, O1} = riak_dt_orswot:update({add, Org}, ID, User#?USER.orgs),
-    User#?USER{orgs = O1}.
+-spec token_to_json(token()) -> [{binary(), term()}].
+token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
+                scope := Scope, comment := Comment}) ->
+    J = [{<<"type">>, atom_to_binary(Type, utf8)},
+         {<<"id">>, ID},
+         {<<"scope">>, Scope}],
+    J2 = case Exp of
+             infinity ->
+                 J;
+             _ ->
+                 [{<<"expiery">>, Exp} | J]
+         end,
+    J3 = case Client of
+             undefined ->
+                 J2;
+             _ ->
+                 [{<<"client">>, Client} | J2]
+         end,
+    J4 = case Comment of
+             undefined ->
+                 J3;
+             _ ->
+                 [{<<"comment">>, Comment} | J3]
+         end,
+    lists:sort(J4).
 
-leave_org(TID={_T, ID}, Org, User) ->
-    case riak_dt_orswot:update({remove, Org}, ID, User#?USER.orgs) of
+-spec add_token(fifo_dt:tid(),
+                {TokenID :: binary(),
+                 Type :: access | refresh,
+                 Token :: binary(),
+                 Expiery :: pos_integer() | infinity,
+                 Client :: binary() | undefined,
+                 Scope :: [binary()] | undefined,
+                 Comment :: binary() | undefined},
+                user()) ->
+                       user().
+
+add_token({_T, ID}, {TokenID, Type, Token, Expiery, Client, Scope, Comment},
+          User = #{tokens := Tokens})
+  when is_binary(TokenID),
+       (Type =:= access orelse Type =:= refresh),
+       is_binary(Token),
+       ((is_integer(Expiery) andalso Expiery) > 0 orelse Expiery =:= infinity),
+       (is_binary(Client) orelse Client =:= undefined),
+       (is_binary(Comment) orelse Comment =:= undefined),
+       is_list(Scope) ->
+    T = #{id => TokenID,
+          type => Type,
+          token => Token,
+          expiery => Expiery,
+          client => Client,
+          scope => Scope,
+          comment => Comment},
+    {ok, Ts1} = riak_dt_orswot:update({add, T}, ID, Tokens),
+    User#{tokens := Ts1}.
+
+-spec remove_token(fifo_dt:tid(), binary(), user()) -> user().
+remove_token({_T, ID}, Token, User = #{tokens := Tokens}) ->
+    case get_token(Token, User) of
+        not_found ->
+            User;
+        T ->
+            {ok, Ts} = riak_dt_orswot:update({remove, T}, ID, Tokens),
+            User#{tokens := Ts}
+    end.
+
+-spec get_token(binary(), user()) -> token() | not_found.
+get_token(Token, User) ->
+    Ts = tokens(User),
+    case [T || T = #{token := T1} <-  Ts, T1 =:= Token] of
+        [] ->
+            not_found;
+        [T] ->
+            T
+    end.
+
+-spec get_token_by_id(binary(), user()) -> token().
+get_token_by_id(TokenID, User) ->
+    Ts = tokens(User),
+    case [T || T = #{id := T1} <-  Ts, T1 =:= TokenID] of
+        [] ->
+            not_found;
+        [T] ->
+            T
+    end.
+
+-spec tokens(user()) -> [token()].
+?SET_GET(tokens).
+
+-spec orgs(user()) -> [fifo:org_id()].
+?SET_GET(orgs).
+-spec join_org(fifo_dt:tid(), fifo:org_id(), user()) -> user().
+?SET_ADD(join_org, orgs).
+-spec leave_org(fifo_dt:tid(), fifo:org_id(), user()) -> user().
+leave_org(TID={_T, ID}, Org, User = #{orgs := Orgs}) ->
+    case riak_dt_orswot:update({remove, Org}, ID, Orgs) of
         {error,{precondition,{not_present, Org}}} ->
             User;
         {ok, O1} ->
-            User1 = User#?USER{orgs = O1},
+            User1 = User#{orgs := O1},
             case active_org(User1) of
                 _O when _O =:= Org ->
                     select_org(TID, <<>>, User1);
@@ -330,141 +423,96 @@ leave_org(TID={_T, ID}, Org, User) ->
             end
     end.
 
-select_org({T, _ID}, Org, User) ->
-    {ok, O1} = riak_dt_lwwreg:update({assign, Org, T}, none, User#?USER.active_org),
-    User#?USER{active_org = O1}.
+-spec select_org(fifo_dt:tid(), fifo:org_id(), user()) -> user().
+select_org({T, _ID}, Org, User = #{active_org := Active}) ->
+    {ok, O1} = riak_dt_lwwreg:update({assign, Org, T}, none, Active),
+    User#{active_org := O1}.
 
-orgs(User) ->
-    riak_dt_orswot:value(User#?USER.orgs).
+-spec active_org(user()) -> fifo:org_id().
+?REG_GET(active_org).
 
-active_org(User) ->
-    riak_dt_lwwreg:value(User#?USER.active_org).
+-spec keys(user()) -> [{binary(), binary()}].
+?SET_GET(keys, ssh_keys).
 
-add_key({_T, ID}, KeyID, Key, User) ->
-    {ok, S1} = riak_dt_orswot:update({add, {KeyID, Key}}, ID, User#?USER.ssh_keys),
-    User#?USER{ssh_keys = S1}.
+-spec add_key(fifo_dt:tid(), binary(), binary(), user()) -> user().
+add_key({_T, ID}, KeyID, Key, User = #{ssh_keys := Keys}) ->
+    {ok, S1} = riak_dt_orswot:update({add, {KeyID, Key}}, ID, Keys),
+    User#{ssh_keys := S1}.
 
-revoke_key({_T, ID}, KeyID, User) ->
+-spec revoke_key(fifo_dt:tid(), binary(), user()) -> user().
+revoke_key({_T, ID}, KeyID, User = #{ssh_keys := Keys}) ->
     case lists:keyfind(KeyID, 1, keys(User)) of
         false ->
             User;
         Tpl ->
-            case riak_dt_orswot:update({remove, Tpl}, ID, User#?USER.ssh_keys) of
+            case riak_dt_orswot:update({remove, Tpl}, ID, Keys) of
                 {error,{precondition,{not_present, Tpl}}} ->
                     User;
                 {ok, S1} ->
-                    User#?USER{ssh_keys = S1}
+                    User#{ssh_keys := S1}
             end
     end.
 
-keys(User) ->
-    riak_dt_orswot:value(User#?USER.ssh_keys).
+-spec yubikeys(user()) -> [binary()].
+?SET_GET(yubikeys).
 
-add_yubikey({_T, ID}, KeyID, User) ->
-    {ok, S1} = riak_dt_orswot:update({add, KeyID}, ID, User#?USER.yubikeys),
-    User#?USER{yubikeys = S1}.
+-spec add_yubikey(fifo_dt:tid(), binary(), user()) -> user().
+?SET_ADD(add_yubikey, yubikeys).
 
-remove_yubikey({_T, ID}, KeyID, User) ->
-    case riak_dt_orswot:update({remove, KeyID}, ID, User#?USER.yubikeys) of
-        {error,{precondition,{not_present, KeyID}}} ->
-            User;
-        {ok, S1} ->
-            User#?USER{yubikeys = S1}
-    end.
+-spec remove_yubikey(fifo_dt:tid(), binary(), user()) -> user().
+?SET_REM(remove_yubikey, yubikeys).
 
-yubikeys(User) ->
-    riak_dt_orswot:value(User#?USER.yubikeys).
+-spec name(user()) -> binary().
+?REG_GET(name).
+-spec name(fifo_dt:tid(), binary(), user()) -> user().
+?REG_SET(name).
 
-name(User) ->
-    riak_dt_lwwreg:value(User#?USER.name).
+-spec uuid(user()) -> binary().
+?REG_GET(uuid).
+-spec uuid(fifo_dt:tid(), binary(), user()) -> user().
+?REG_SET(uuid).
 
-name({T, _ID}, Name, User) ->
-    {ok, Name1} = riak_dt_lwwreg:update({assign, Name, T}, none, User#?USER.name),
-    User#?USER{name = Name1}.
+-spec password(user()) -> binary().
+?REG_GET(password).
+-spec password(fifo_dt:tid(), binary(), user()) -> user().
+?REG_SET(password).
 
-uuid(User) ->
-    riak_dt_lwwreg:value(User#?USER.uuid).
-
-uuid({T, _ID}, UUID, User) ->
-    {ok, UUID1} = riak_dt_lwwreg:update({assign, UUID, T}, none, User#?USER.uuid),
-    User#?USER{uuid = UUID1}.
-
-password(User) ->
-    riak_dt_lwwreg:value(User#?USER.password).
-
-password({T, _ID}, Hash, User) ->
-    {ok, PWD1} = riak_dt_lwwreg:update({assign, Hash, T}, none, User#?USER.password),
-    User#?USER{password = PWD1}.
-
-ptree(#?USER{ptree = PTree}) ->
+ptree(#{ptree := PTree}) ->
     PTree.
 
-permissions(User) ->
-    riak_dt_orswot:value(User#?USER.permissions).
+?SET_GET(permissions).
 
-grant({_T, ID}, P, User) ->
-    {ok, P1} = riak_dt_orswot:update({add, P}, ID, User#?USER.permissions),
-    User#?USER{permissions = P1, ptree = fifo_dt:to_ptree(P1)}.
+grant({_T, ID}, P, User = #{permissions := Ps0}) ->
+    {ok, Ps1} = riak_dt_orswot:update({add, P}, ID, Ps0),
+    User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
 
-revoke({_T, ID}, P, User) ->
-    case riak_dt_orswot:update({remove, P}, ID, User#?USER.permissions) of
+revoke({_T, ID}, P, User = #{permissions := Ps0}) ->
+    case riak_dt_orswot:update({remove, P}, ID, Ps0) of
         {error,{precondition,{not_present, P}}} ->
             User;
-        {ok, P1} ->
-            User#?USER{permissions = P1, ptree = fifo_dt:to_ptree(P1)}
+        {ok, Ps1} ->
+            User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}
     end.
 
-revoke_prefix({_T, ID}, Prefix, User) ->
-    P0 = User#?USER.permissions,
-    Ps = permissions(User),
-    P1 = lists:foldl(fun (P, PAcc) ->
-                             case lists:prefix(Prefix, P) of
-                                 true ->
-                                     {ok, R} = riak_dt_orswot:update(
-                                                 {remove, P}, ID, PAcc),
-                                     R;
-                                 _ ->
-                                     PAcc
-                             end
-                     end, P0, Ps),
-    User#?USER{
-            permissions = P1,
-            ptree = fifo_dt:to_ptree(P1)
-           }.
+revoke_prefix({_T, ID}, Prefix, User = #{permissions := Ps0}) ->
+    PVs = permissions(User),
+    Ps1 = lists:foldl(fun (P, PAcc) ->
+                              case lists:prefix(Prefix, P) of
+                                  true ->
+                                      {ok, R} = riak_dt_orswot:update(
+                                                  {remove, P}, ID, PAcc),
+                                      R;
+                                  _ ->
+                                      PAcc
+                              end
+                      end, Ps0, PVs),
+    User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
-roles(User) ->
-    riak_dt_orswot:value(User#?USER.roles).
+?SET_GET(roles).
+?SET_ADD(join, roles).
+?SET_REM(leave, roles).
 
-
-join({_T, ID}, Role, User) ->
-    {ok, G} = riak_dt_orswot:update({add, Role}, ID, User#?USER.roles),
-    User#?USER{roles = G}.
-
-leave({_T, ID}, Role, User) ->
-    case riak_dt_orswot:update({remove, Role}, ID, User#?USER.roles) of
-        {error,{precondition,{not_present, Role}}} ->
-            User;
-        {ok, G} ->
-            User#?USER{roles = G}
-    end.
-
-metadata(User) ->
-    fifo_map:value(User#?USER.metadata).
-
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
-
-set_metadata({_T, ID}, Attribute, delete, User) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, User#?USER.metadata),
-    User#?USER{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, User) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, User#?USER.metadata),
-    User#?USER{metadata = M1}.
+?META.
+?SET_META_3.
+?SET_META_4.

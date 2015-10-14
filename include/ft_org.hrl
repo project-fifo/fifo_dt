@@ -62,4 +62,5 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
--define(ORG, organisation_1).
+-define(TYPE, org).
+-define(VERSION, 0).

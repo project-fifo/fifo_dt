@@ -110,5 +110,5 @@
           metadata    = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
-
--define(USER, user_2).
+-define(TYPE, user).
+-define(VERSION, 0).

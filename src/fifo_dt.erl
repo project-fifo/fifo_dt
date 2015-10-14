@@ -2,6 +2,9 @@
 
 -export([type/1, js2req/1, req2js/1, update_set/1, update_map/1, to_ptree/1]).
 
+-type tid() :: {pos_integer(), atom()}.
+-export_type([tid/0]).
+
 -spec type(any()) ->
                   ft_dataset | ft_dtrace | ft_grouping | ft_hypervisor |
                   ft_iprange | ft_network | ft_org | ft_package | ft_role |
