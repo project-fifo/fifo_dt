@@ -38,12 +38,31 @@ org(Size) ->
                                {call, ?O, load, [id(Size), O]},
                                {call, ?O, uuid, [id(Size), non_blank_string(), O]},
                                {call, ?O, name, [id(Size), non_blank_string(), O]},
-                               {call, ?O, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
-                               {call, ?O, set_metadata, [id(Size), maybe_oneof(calc_metadata(O)), delete, O]},
-                               {call, ?O, add_trigger, [id(Size), non_blank_string(), trigger(), O]},
-                               {call, ?O, remove_trigger, [id(Size), maybe_oneof(calc_triggers(O)), O]}
+                               {call, ?O, set_metadata,
+                                [id(Size), non_blank_string(), non_blank_string(), O]},
+                               {call, ?O, set_metadata,
+                                [id(Size), maybe_oneof(calc_metadata(O)), delete, O]},
+                               {call, ?O, add_trigger,
+                                [id(Size), non_blank_string(), trigger(), O]},
+                               {call, ?O, remove_trigger,
+                                [id(Size), maybe_oneof(calc_triggers(O)), O]},
+                               {call, ?O, resource_inc,
+                                [id(Size), maybe_oneof(calc_resources(O)), int(), O]},
+                               {call, ?O, resource_dec,
+                                [id(Size), maybe_oneof(calc_resources(O)), int(), O]}
                               ]))
                      || Size > 0])).
+
+calc_resources({call, _, resource_remove, [_, delete, K, U]}) ->
+    lists:delete(K, lists:usort(calc_resources(U)));
+calc_resources({call, _, resource_inc, [_, I, _K, U]}) ->
+    [I | calc_resources(U)];
+calc_resources({call, _, resource_dec, [_, I, _K, U]}) ->
+    [I | calc_resources(U)];
+calc_resources({call, _, _, P}) ->
+    calc_resources(lists:last(P));
+calc_resources(_) ->
+    [].
 
 calc_metadata({call, _, set_metadata, [_, delete, K, U]}) ->
     lists:delete(K, lists:usort(calc_metadata(U)));
@@ -89,12 +108,42 @@ model_add_trigger(UUID, T, U) ->
 model_remove_trigger(I, U) ->
     r(<<"triggers">>, lists:keydelete(I, 1, triggers(U)), U).
 
+model_remove_resource(I, U) ->
+    r(<<"resources">>, lists:keydelete(I, 1, resources(U)), U).
+
+model_inc_resource(K, I, U) ->
+    Rs = resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V + I} | Rs1]),
+    r(<<"resources">>, Rs2, U).
+
+model_dec_resource(K, I, U) ->
+    Rs = resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V - I} | Rs1]),
+    r(<<"resources">>, Rs2, U).
 
 model(R) ->
     ?O:to_json(R).
 
 metadata(U) ->
     {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
+    M.
+
+resources(U) ->
+    {<<"resources">>, M} = lists:keyfind(<<"resources">>, 1, U),
     M.
 
 triggers(U) ->
@@ -153,6 +202,40 @@ prop_add_trigger() ->
                                     "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
                           model(O1) == M1)
             end).
+
+prop_remove_res() ->
+    ?FORALL({Res, O}, {non_blank_string(), org()},
+            begin
+                Org = eval(O),
+                O1 = ?O:resource_remove(id(?BIG_TIME), Res, Org),
+                M1 = model_remove_resource(Res, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_inc_res() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), org()},
+            begin
+                Org = eval(O),
+                O1 = ?O:resource_inc(id(?BIG_TIME), Res, I, Org),
+                M1 = model_inc_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_dec_res() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), org()},
+            begin
+                Org = eval(O),
+                O1 = ?O:resource_dec(id(?BIG_TIME), Res, I, Org),
+                M1 = model_dec_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
 prop_remove_trigger() ->
     ?FORALL({O, T}, ?LET(O, org(), {O, maybe_oneof(calc_triggers(O))}),
             begin

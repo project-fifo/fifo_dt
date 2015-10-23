@@ -122,4 +122,3 @@ update_map(Old) ->
 
 to_ptree(Perms) ->
     libsnarlmatch_tree:from_list(riak_dt_orswot:value(Perms)).
-

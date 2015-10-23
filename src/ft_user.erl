@@ -124,7 +124,7 @@ clean_tokens({_T, ID}, User = #{tokens := Ts}) ->
 
 -spec load_(fifo_dt:tid(), term()) -> user().
 
-load_(_, #{type := user, version := 0} = User) ->
+load_(_, #{type := ?TYPE, version := ?VERSION} = User) ->
     User;
 
 load_(TID, #user_2{

@@ -57,5 +57,6 @@
           metadata        = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
         }).
 
--define(PACKAGE, package_1).
 
+-define(TYPE, package).
+-define(VERSION, 0).

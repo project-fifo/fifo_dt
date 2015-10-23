@@ -27,6 +27,7 @@
          to_json/1,
          getter/2,
          resources/1, resource/2, resource_inc/4, resource_dec/4,
+         resource_remove/3,
          is_a/1
         ]).
 
@@ -42,20 +43,17 @@
               to_json/1,
               getter/2,
               resources/1, resource/2, resource_inc/4, resource_dec/4,
+              resource_remove/3,
               is_a/1
              ]).
 
--type resources() :: #{
-                binary() => riak_dt_pncounter:pncounter()
-               }.
-
 -type org() :: #{
-           type        => ?TYPE,
-           version    => non_neg_integer(),
+           type           => ?TYPE,
+           version        => non_neg_integer(),
            uuid           => riak_dt_lwwreg:lwwreg(),
            name           => riak_dt_lwwreg:lwwreg(),
            triggers       => riak_dt_map:riak_dt_map(),
-           resources      => resources(),
+           resources      => riak_dt_map:map(),
            metadata       => riak_dt_map:riak_dt_map()
           }.
 -export_type([org/0]).
@@ -73,7 +71,7 @@ new(_) ->
      uuid        => riak_dt_lwwreg:new(),
      name        => riak_dt_lwwreg:new(),
      triggers    => riak_dt_map:new(),
-     resources   => #{},
+     resources   => ft_cmap:new(),
      metadata    => riak_dt_map:new()
     }.
 
@@ -85,12 +83,15 @@ load(_, #{type := Type})  when Type =/= ?TYPE ->
 load(_, #{version := ?VERSION} = Org) ->
     Org;
 
+load(TID, #{version := 0} = Org) ->
+    load(TID, Org#{resources => ft_cmap:new(), version => 1});
+
 load(TID, #organisation_1{
-           uuid = UUID,
-           name = Name,
-           triggers = Triggers,
-           metadata = Metadata
-          }) ->
+             uuid = UUID,
+             name = Name,
+             triggers = Triggers,
+             metadata = Metadata
+            }) ->
     load(TID,
          #{
            type      => ?TYPE,
@@ -191,8 +192,8 @@ jsonify_permission(Permission) ->
     lists:map(fun (placeholder) ->
                       <<"$">>;
                   (E) ->
-                              E
-                      end, Permission).
+                      E
+              end, Permission).
 
 -spec to_json(Org::org()) -> fifo:attr_list().
 to_json(Org) ->
@@ -201,67 +202,51 @@ to_json(Org) ->
        {<<"uuid">>, uuid(Org)},
        {<<"name">>, name(Org)},
        {<<"triggers">>, [{U, jsonify_trigger(T)} || {U, T} <- triggers(Org)]},
-       {<<"resources">>, maps:to_list(resources(Org))},
+       {<<"resources">>, resources(Org)},
        {<<"metadata">>, metadata(Org)}
       ]).
 
 merge(O = #{
-        type     := ?TYPE,
-        uuid     := UUID1,
-        name     := Name1,
-        triggers := Triggers1,
-        metadata := Metadata1
+        type      := ?TYPE,
+        uuid      := UUID1,
+        name      := Name1,
+        triggers  := Triggers1,
+        resources := Resources1,
+        metadata  := Metadata1
        },
       #{
-         type     := ?TYPE,
-         uuid     := UUID2,
-         name     := Name2,
-         triggers := Triggers2,
-         metadata := Metadata2
+         type      := ?TYPE,
+         uuid      := UUID2,
+         name      := Name2,
+         triggers  := Triggers2,
+         resources := Resources2,
+         metadata  := Metadata2
        }) ->
     O#{
-       uuid     := riak_dt_lwwreg:merge(UUID1, UUID2),
-       name     := riak_dt_lwwreg:merge(Name1, Name2),
-       triggers := fifo_map:merge(Triggers1, Triggers2),
-       metadata := fifo_map:merge(Metadata1, Metadata2)
-       }.
+      uuid      := riak_dt_lwwreg:merge(UUID1, UUID2),
+      name      := riak_dt_lwwreg:merge(Name1, Name2),
+      triggers  := fifo_map:merge(Triggers1, Triggers2),
+      resources := ft_cmap:merge(Resources1, Resources2),
+      metadata  := fifo_map:merge(Metadata1, Metadata2)
+     }.
 
-resources(#{type := ?TYPE, resources := R}) ->
-    maps:map(
-      fun (_K, V) ->
-              riak_dt_pncounter:value(V)
-      end, R).
+resources(#{type := ?TYPE, resources := Rs}) ->
+    ft_cmap:value(Rs).
 
 resource(#{type := ?TYPE, resources := Rs}, K) ->
-    case maps:find(K, Rs) of
-        {ok, Cx} ->
-            riak_dt_pncounter:value(Cx);
-        _ ->
-            not_found
-    end.
+    ft_cmap:get(K, Rs).
 
+resource_inc({_T, ID}, K, V, O = #{type := ?TYPE, resources := Rs}) ->
+    {ok, Rs1} = ft_cmap:inc(ID, K, V, Rs),
+    O#{resources := Rs1}.
 
-resource_inc({_T, ID}, R, V, O = #{type := ?TYPE, resources := Rs}) ->
-    C0 = case maps:find(R, Rs) of
-             {ok, Cx} ->
-                 Cx;
-             _ ->
-                 riak_dt_pncounter:new()
-         end,
-    {ok, C1} = riak_dt_pncounter:update({increment, V}, ID, C0),
-    O#{resources := maps:put(R, C1, Rs)}.
+resource_remove({_T, ID}, K, O = #{type := ?TYPE, resources := Rs}) ->
+    {ok, Rs1} = ft_cmap:remove(ID, K, Rs),
+    O#{resources := Rs1}.
 
-resource_dec({_T, ID}, R, V, O = #{type := ?TYPE, resources := Rs}) ->
-    C0 = case maps:find(R, Rs) of
-             {ok, Cx} ->
-                 Cx;
-             _ ->
-                 riak_dt_pncounter:new()
-         end,
-    {ok, C1} = riak_dt_pncounter:update({increment, V}, ID, C0),
-    O#{resources := maps:put(R, C1, Rs)}.
-
-
+resource_dec({_T, ID}, K, V, O = #{type := ?TYPE, resources := Rs}) ->
+    {ok, Rs1} = ft_cmap:dec(ID, K, V, Rs),
+    O#{resources := Rs1}.
 
 ?REG_GET(name).
 ?REG_SET(name).

@@ -48,13 +48,42 @@ package(Size) ->
                                {call, ?P, remove_requirement, [id(Size), maybe_oneof(calc_requirements(O), requirement()), O]},
 
                                {call, ?P, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
-                               {call, ?P, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
-
+                               {call, ?P, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]},
+                               {call, ?P, org_resource_inc,
+                                [id(Size), maybe_oneof(calc_org_resources(O)), int(), O]},
+                               {call, ?P, org_resource_dec,
+                                [id(Size), maybe_oneof(calc_org_resources(O)), int(), O]},
+                               {call, ?P, hv_resource_inc,
+                                [id(Size), maybe_oneof(calc_hv_resources(O)), int(), O]},
+                               {call, ?P, hv_resource_dec,
+                                [id(Size), maybe_oneof(calc_hv_resources(O)), int(), O]}
                               ]))
                      || Size > 1])).
 
 type() ->
     oneof([none, cluster, stack]).
+
+calc_org_resources({call, _, org_resource_remove, [_, delete, K, U]}) ->
+    lists:delete(K, lists:usort(calc_org_resources(U)));
+calc_org_resources({call, _, org_resource_inc, [_, I, _K, U]}) ->
+    [I | calc_org_resources(U)];
+calc_org_resources({call, _, org_resource_dec, [_, I, _K, U]}) ->
+    [I | calc_org_resources(U)];
+calc_org_resources({call, _, _, P}) ->
+    calc_org_resources(lists:last(P));
+calc_org_resources(_) ->
+    [].
+
+calc_hv_resources({call, _, hv_resource_remove, [_, delete, K, U]}) ->
+    lists:delete(K, lists:usort(calc_hv_resources(U)));
+calc_hv_resources({call, _, hv_resource_inc, [_, I, _K, U]}) ->
+    [I | calc_hv_resources(U)];
+calc_hv_resources({call, _, hv_resource_dec, [_, I, _K, U]}) ->
+    [I | calc_hv_resources(U)];
+calc_hv_resources({call, _, _, P}) ->
+    calc_hv_resources(lists:last(P));
+calc_hv_resources(_) ->
+    [].
 
 calc_map(M, {call, _, M, [_, delete, K, U]}) ->
     lists:delete(K, lists:usort(calc_map(M, U)));
@@ -76,6 +105,69 @@ calc_requirements(_) ->
 
 r(K, V, U) ->
     lists:usort(lists:keystore(K, 1, U, {K, V})).
+
+model_remove_org_resource(I, U) ->
+    r(<<"org_resources">>, lists:keydelete(I, 1, org_resources(U)), U).
+
+model_inc_org_resource(K, I, U) ->
+    Rs = org_resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V + I} | Rs1]),
+    r(<<"org_resources">>, Rs2, U).
+
+model_dec_org_resource(K, I, U) ->
+    Rs = org_resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V - I} | Rs1]),
+    r(<<"org_resources">>, Rs2, U).
+
+org_resources(U) ->
+    {<<"org_resources">>, M} = lists:keyfind(<<"org_resources">>, 1, U),
+    M.
+
+
+model_remove_hv_resource(I, U) ->
+    r(<<"hv_resources">>, lists:keydelete(I, 1, hv_resources(U)), U).
+
+model_inc_hv_resource(K, I, U) ->
+    Rs = hv_resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V + I} | Rs1]),
+    r(<<"hv_resources">>, Rs2, U).
+
+model_dec_hv_resource(K, I, U) ->
+    Rs = hv_resources(U),
+    Rs1 = lists:keydelete(K, 1, Rs),
+    V = case lists:keyfind(K, 1, Rs) of
+            false ->
+                0;
+            {K, Vx} ->
+                Vx
+        end,
+    Rs2 = lists:sort([{K, V - I} | Rs1]),
+    r(<<"hv_resources">>, Rs2, U).
+
+hv_resources(U) ->
+    {<<"hv_resources">>, M} = lists:keyfind(<<"hv_resources">>, 1, U),
+    M.
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
@@ -179,7 +271,7 @@ prop_blocksize() ->
                 Exp = model_blocksize(N, model(Hv)),
                 Act = model(?P:blocksize(id(?BIG_TIME), N, Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n"
-                                   "Expected: ~p~nActual: ~p~n",
+                                    "Expected: ~p~nActual: ~p~n",
                                     [R,Hv, Exp, Act]),
                           Exp == Act)
             end).
@@ -295,6 +387,72 @@ prop_remove_metadata() ->
                 M1 = model_delete_metadata(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_res_org() ->
+    ?FORALL({Res, O}, {non_blank_string(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:org_resource_remove(id(?BIG_TIME), Res, Org),
+                M1 = model_remove_org_resource(Res, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_inc_res_org() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:org_resource_inc(id(?BIG_TIME), Res, I, Org),
+                M1 = model_inc_org_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_dec_res_org() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:org_resource_dec(id(?BIG_TIME), Res, I, Org),
+                M1 = model_dec_org_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_res_hv() ->
+    ?FORALL({Res, O}, {non_blank_string(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:hv_resource_remove(id(?BIG_TIME), Res, Org),
+                M1 = model_remove_hv_resource(Res, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_inc_res_hv() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:hv_resource_inc(id(?BIG_TIME), Res, I, Org),
+                M1 = model_inc_hv_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_dec_res_hv() ->
+    ?FORALL({Res, I, O}, {non_blank_string(), int(), package()},
+            begin
+                Org = eval(O),
+                O1 = ?P:hv_resource_dec(id(?BIG_TIME), Res, I, Org),
+                M1 = model_dec_hv_resource(Res, I, model(Org)),
+                ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
+                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
                           model(O1) == M1)
             end).
 
