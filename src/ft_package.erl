@@ -377,7 +377,6 @@ load({T, ID}, #package_0_1_0{
            },
     load({T, ID}, D1).
 
-
 merge(O = #{
         type            := ?TYPE,
         version         := ?VERSION,
