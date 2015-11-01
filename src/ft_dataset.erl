@@ -256,7 +256,9 @@ add([{<<"zone_type">> = N, F} | R], In, D) ->
         lipkg ->
             add(R, In, jsxd:set(N, <<"lipkg">>, D));
         lx ->
-            add(R, In, jsxd:set(N, <<"lx">>, D))
+            add(R, In, jsxd:set(N, <<"lx">>, D));
+        docker ->
+            add(R, In, jsxd:set(N, <<"docker">>, D))
     end;
 add([{N, F} | R], In, D) ->
     case F(In) of

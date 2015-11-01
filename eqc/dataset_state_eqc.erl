@@ -16,7 +16,7 @@ dataset_type() ->
     oneof([kvm, zone]).
 
 zone_type() ->
-    oneof([lx]).
+    oneof([lx, docker, lipkg, ipkg]).
 
 dataset() ->
     ?SIZED(Size, dataset(Size+1)).
