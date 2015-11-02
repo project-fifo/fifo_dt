@@ -113,22 +113,26 @@
             {ok, Map1} = fifo_map:remove(K, ID, Map),
             O#{Field := Map1}).
 
+-define(MAP_SET_3(Name),
+        Name(ID, [{K, V} | R] , Obj) ->
+               Name(ID, R, Name(ID, K, V, Obj));
+        Name(_ID, _, Obj) ->
+               Obj).
+
+-define(MAP_SET_4(Name, Field),
+        Name({T, ID}, P, V, O) when is_binary(P) ->
+            Name({T, ID}, fifo_map:split_path(P), V, O);
+        Name({_T, ID}, Attribute, delete,
+                     O = #{type := ?TYPE, Field := Meta}) ->
+            {ok, M1} = fifo_map:remove(Attribute, ID, Meta),
+            O#{Field := M1};
+        Name({T, ID}, Attribute, Value,
+                     O = #{type := ?TYPE, Field := Meta}) ->
+            {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Meta),
+            O#{Field := M1}).
+
 -define(META, ?MAP_GET(metadata)).
 
--define(SET_META_3,
-        set_metadata(ID, [{K, V} | R] , Obj) ->
-            set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-        set_metadata(_ID, _, Obj) ->
-            Obj).
+-define(SET_META_3, ?MAP_SET_3(set_metadata)).
 
--define(SET_META_4,
-        set_metadata({T, ID}, P, V, O) when is_binary(P) ->
-            set_metadata({T, ID}, fifo_map:split_path(P), V, O);
-        set_metadata({_T, ID}, Attribute, delete,
-                     O = #{type := ?TYPE, metadata := Meta}) ->
-            {ok, M1} = fifo_map:remove(Attribute, ID, Meta),
-            O#{metadata := M1};
-        set_metadata({T, ID}, Attribute, Value,
-                     O = #{type := ?TYPE, metadata := Meta}) ->
-            {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Meta),
-            O#{metadata := M1}).
+-define(SET_META_4, ?MAP_SET_4(set_metadata, metadata)).

@@ -131,4 +131,5 @@
         }).
 
 
--define(VM, vm_002).
+-define(TYPE, org).
+-define(VERSION, 1).
