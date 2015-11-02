@@ -22,6 +22,7 @@
          logs/1, log/4,
          uuid/1, uuid/3,
          created_at/1, created_at/3,
+         vm_type/1, vm_type/3,
          state/1, state/3,
          deleting/1, deleting/3,
          creating/1, creating/3,
@@ -70,10 +71,13 @@
 -ignore_xref([load/2, set/4, getter/2, uuid/1, merge/2]).
 
 -type vm() :: #{
+          type           => vm,
+          version        => pos_integer(),
           uuid           => riak_dt_lwwreg:lwwreg(),
           alias          => riak_dt_lwwreg:lwwreg(),
           owner          => riak_dt_lwwreg:lwwreg(),
           created_at     => riak_dt_lwwreg:lwwreg(),
+          vm_type        => riak_dt_lwwreg:lwwreg(),
 
           dataset        => riak_dt_lwwreg:lwwreg(),
           package        => riak_dt_lwwreg:lwwreg(),
@@ -102,6 +106,7 @@
 new(_) ->
     {ok, False} = ?NEW_LWW(false, 1),
     {ok, CT}    = ?NEW_LWW(0, 1),
+    {ok, Type}  = ?NEW_LWW(zone, 1),
     #{
        type           => ?TYPE,
        version        => ?VERSION,
@@ -110,6 +115,7 @@ new(_) ->
        alias          => riak_dt_lwwreg:new(),
        owner          => riak_dt_lwwreg:new(),
        created_at     => CT,
+       vm_type        => Type,
 
        dataset        => riak_dt_lwwreg:new(),
        package        => riak_dt_lwwreg:new(),
@@ -161,6 +167,8 @@ load(TID, #vm_002{
              metadata       = Metadata
             }) ->
     {ok, CT}    = ?NEW_LWW(0, 1),
+    {ok, Type}  = ?NEW_LWW(zone, 1),
+
     V = #{
       type           => ?TYPE,
       version        => 1,
@@ -168,6 +176,7 @@ load(TID, #vm_002{
       alias          => Alias,
       owner          => Owner,
       created_at     => CT,
+      vm_type        => Type,
 
       dataset        => Dataset,
       package        => Package,
@@ -425,7 +434,8 @@ to_json(V) ->
      {<<"services">>, services(V)},
      {<<"snapshots">>, snapshots(V)},
      {<<"state">>, state(V)},
-     {<<"uuid">>, uuid(V)}
+     {<<"uuid">>, uuid(V)},
+     {<<"vm_type">>, vm_type(V)}
     ].
 
 merge(O = #{
@@ -440,6 +450,7 @@ merge(O = #{
         deleting := Deleting1,
         creating := Creating1,
         created_at := CreatedAt1,
+        vm_type := Type1,
 
         logs := Logs1,
         groupings := Groupings1,
@@ -466,6 +477,8 @@ merge(O = #{
          deleting := Deleting2,
          creating := Creating2,
          created_at := CreatedAt2,
+         vm_type := Type2,
+
 
          logs := Logs2,
          groupings := Groupings2,
@@ -488,6 +501,7 @@ merge(O = #{
       package => riak_dt_lwwreg:merge(Package1, Package2),
       hypervisor => riak_dt_lwwreg:merge(Hypervisor1, Hypervisor2),
       created_at => riak_dt_lwwreg:merge(CreatedAt1, CreatedAt2),
+      vm_type => riak_dt_lwwreg:merge(Type1, Type2),
 
       state => riak_dt_lwwreg:merge(State1, State2),
       deleting => riak_dt_lwwreg:merge(Deleting1, Deleting2),
@@ -521,11 +535,15 @@ merge(O = #{
 ?G(<<"services">>, services);
 ?G(<<"metadata">>, hypervisor);
 ?G(<<"created_at">>, created_at);
+?G(<<"vm_type">>, vm_type);
 ?G_JSX.
 
 
 ?REG_GET(created_at).
 ?REG_SET(created_at).
+
+?REG_GET(vm_type).
+?REG_SET(vm_type).
 
 ?REG_GET(uuid).
 ?REG_SET(uuid).
