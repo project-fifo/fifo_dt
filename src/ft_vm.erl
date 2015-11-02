@@ -21,6 +21,7 @@
 -export([
          logs/1, log/4,
          uuid/1, uuid/3,
+         created_at/1, created_at/3,
          state/1, state/3,
          deleting/1, deleting/3,
          creating/1, creating/3,
@@ -46,6 +47,7 @@
               uuid/1, uuid/3,
               state/1, state/3,
               deleting/1, deleting/3,
+              created_at/1, created_at/3,
               creating/1, creating/3,
               alias/1, alias/3,
               owner/1, owner/3,
@@ -71,6 +73,7 @@
           uuid           => riak_dt_lwwreg:lwwreg(),
           alias          => riak_dt_lwwreg:lwwreg(),
           owner          => riak_dt_lwwreg:lwwreg(),
+          created_at     => riak_dt_lwwreg:lwwreg(),
 
           dataset        => riak_dt_lwwreg:lwwreg(),
           package        => riak_dt_lwwreg:lwwreg(),
@@ -98,6 +101,7 @@
 
 new(_) ->
     {ok, False} = ?NEW_LWW(false, 1),
+    {ok, CT}    = ?NEW_LWW(0, 1),
     #{
        type           => ?TYPE,
        version        => ?VERSION,
@@ -105,6 +109,7 @@ new(_) ->
        uuid           => riak_dt_lwwreg:new(),
        alias          => riak_dt_lwwreg:new(),
        owner          => riak_dt_lwwreg:new(),
+       created_at     => CT,
 
        dataset        => riak_dt_lwwreg:new(),
        package        => riak_dt_lwwreg:new(),
@@ -155,12 +160,14 @@ load(TID, #vm_002{
 
              metadata       = Metadata
             }) ->
+    {ok, CT}    = ?NEW_LWW(0, 1),
     V = #{
       type           => ?TYPE,
       version        => 1,
       uuid           => UUID,
       alias          => Alias,
       owner          => Owner,
+      created_at     => CT,
 
       dataset        => Dataset,
       package        => Package,
@@ -401,6 +408,7 @@ to_json(V) ->
      {<<"alias">>, alias(V)},
      {<<"backups">>, backups(V)},
      {<<"config">>, config(V)},
+     {<<"created_at">>, created_at(V)},
      {<<"creating">>, Creating},
      {<<"dataset">>, dataset(V)},
      {<<"deleting">>, deleting(V)},
@@ -431,6 +439,7 @@ merge(O = #{
         state := State1,
         deleting := Deleting1,
         creating := Creating1,
+        created_at := CreatedAt1,
 
         logs := Logs1,
         groupings := Groupings1,
@@ -456,6 +465,7 @@ merge(O = #{
          state := State2,
          deleting := Deleting2,
          creating := Creating2,
+         created_at := CreatedAt2,
 
          logs := Logs2,
          groupings := Groupings2,
@@ -477,6 +487,8 @@ merge(O = #{
       dataset => riak_dt_lwwreg:merge(Dataset1, Dataset2),
       package => riak_dt_lwwreg:merge(Package1, Package2),
       hypervisor => riak_dt_lwwreg:merge(Hypervisor1, Hypervisor2),
+      created_at => riak_dt_lwwreg:merge(CreatedAt1, CreatedAt2),
+
       state => riak_dt_lwwreg:merge(State1, State2),
       deleting => riak_dt_lwwreg:merge(Deleting1, Deleting2),
       creating => riak_dt_lwwreg:merge(Creating1, Creating2),
@@ -508,8 +520,12 @@ merge(O = #{
 ?G(<<"config">>, config);
 ?G(<<"services">>, services);
 ?G(<<"metadata">>, hypervisor);
+?G(<<"created_at">>, created_at);
 ?G_JSX.
 
+
+?REG_GET(created_at).
+?REG_SET(created_at).
 
 ?REG_GET(uuid).
 ?REG_SET(uuid).
