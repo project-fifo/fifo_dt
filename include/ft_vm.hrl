@@ -131,5 +131,5 @@
         }).
 
 
--define(TYPE, org).
+-define(TYPE, vm).
 -define(VERSION, 1).
