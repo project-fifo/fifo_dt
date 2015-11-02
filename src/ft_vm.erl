@@ -177,6 +177,7 @@ load(TID, #vm_002{
       owner          => Owner,
       created_at     => CT,
       vm_type        => Type,
+      docker         => riak_dt_map:new(),
 
       dataset        => Dataset,
       package        => Package,
