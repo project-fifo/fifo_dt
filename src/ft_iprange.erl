@@ -18,7 +18,7 @@
 -define(IS_IP, is_integer(V), V > 0, V < 16#FFFFFFFF).
 
 -export([
-         is_a/1,
+         is_a/1, new/1,
          new/3, load/2, merge/2, to_json/1,
          release_ip/3, claim_ip/3,
          set/4,
@@ -153,6 +153,10 @@ load(TID, #iprange_0_1_0{
            metadata       = fifo_dt:update_map(Metadata)
           },
     load(TID, I).
+
+new({_T, _ID}) ->
+    Free = riak_dt_orswot:new(),
+    #?IPRANGE{free=Free}.
 
 new({_T, ID}, S, E) when S < E ->
     {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(S, E)}, ID,
