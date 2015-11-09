@@ -114,8 +114,7 @@ new(_) ->
         path            = Ps,
         sysinfo         = Si,
         virtualisation  = Vi
-       }
-        #?HYPERVISOR{}.
+       }.
 
 alias(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.alias).
