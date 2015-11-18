@@ -391,7 +391,7 @@ get_token(Token, User) ->
             T
     end.
 
--spec get_token_by_id(binary(), user()) -> token().
+-spec get_token_by_id(binary(), user()) -> token() | not_found.
 get_token_by_id(TokenID, User) ->
     Ts = tokens(User),
     case [T || T = #{id := T1} <-  Ts, T1 =:= TokenID] of
