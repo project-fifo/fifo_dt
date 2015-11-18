@@ -473,7 +473,7 @@ revoke_key({_T, ID}, KeyID, User = #{ssh_keys := Keys}) ->
 ?REG_GET(uuid).
 -spec uuid(fifo_dt:tid(), binary(), user()) -> user().
 ?REG_SET(uuid).
--spec password(user()) -> password().
+-spec password(user()) -> password() | <<>>.
 ?REG_GET(password).
 -spec password(fifo_dt:tid(), password(), user()) -> user().
 ?REG_SET(password).
