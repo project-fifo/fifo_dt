@@ -4,9 +4,10 @@
 %% TODO Possibly move type/record defs in there and use accessor funs
 %% and opaque types.
 %%
-%% Taken form https://github.com/Licenser/try-try-try/blob/master/2011/riak-core-conflict-resolution/rts/src/rts_obj.erl
-
+%% Taken form https://github.com/Licenser/try-try-try/blob/master/2011/
+%% riak-core-conflict-resolution/rts/src/rts_obj.erl
 -module(ft_obj).
+
 -export([ancestors/1, children/1, equal/1, equal/2, merge/2, unique/1,
          update/3, update/1, is_a/1, new/0, new/2, needs_update/1]).
 -export([val/1, vclock/1]).
@@ -35,6 +36,9 @@
                    #sniffle_obj{} | obj().
 
 -export_type([any_obj/0, obj/0]).
+
+-callback reconcile([term()]) ->
+    term().
 
 -spec new() -> obj().
 new() ->
@@ -81,7 +85,7 @@ equal(A, B) ->
     equal1(update(A), update(B)).
 
 -spec equal1(ObjA::obj(), ObjB::obj()) -> boolean().
-equal1(#ft_obj{vclock=A}, #ft_obj{vclock=B}) -> vclock:equal(A,B);
+equal1(#ft_obj{vclock=A}, #ft_obj{vclock=B}) -> vclock:equal(A, B);
 equal1(not_found, not_found) -> true;
 equal1(_, _) -> false.
 
@@ -89,7 +93,8 @@ equal1(_, _) -> false.
 %%
 %% @doc Closure around `equal/2' for use with HOFs (damn verbose
 %% Erlang).
--spec equal(ObjA::any_obj() | obj()) -> fun((ObjB::any_obj() | obj()) -> boolean()).
+-spec equal(ObjA::any_obj() | obj()) ->
+                   fun((ObjB::any_obj() | obj()) ->boolean()).
 equal(ObjA) ->
     ObjA1 = update(ObjA),
     fun(ObjB) -> equal1(ObjA1, update(ObjB)) end.
@@ -118,7 +123,7 @@ merge1(FSM, [#ft_obj{}|_]=Objs) ->
         Chldrn ->
             Val = FSM:reconcile(lists:map(fun val1/1, Chldrn)),
             MergedVC = vclock:merge(lists:map(fun vclock1/1, Chldrn)),
-            #ft_obj{val=Val, vclock=MergedVC}
+            make(Val, MergedVC)
     end.
 
 %% @pure
@@ -145,9 +150,9 @@ unique(Objs) ->
 update(Val, Updater, O) ->
     update1(Val, Updater, update(O)).
 
-update1(Val, Updater, #ft_obj{vclock=VClock0}=Obj0) ->
+update1(Val, Updater, #ft_obj{vclock=VClock0}) ->
     VClock = vclock:increment(Updater, VClock0),
-    Obj0#ft_obj{val=Val, vclock=VClock}.
+    make(Val, VClock).
 
 
 -spec val(any_obj() | obj()) -> any().
@@ -171,9 +176,9 @@ vclock1(#ft_obj{vclock=VC}) -> VC.
 update(#ft_obj{} = O) ->
     O;
 update(#snarl_obj{val = V, vclock = C}) ->
-    #ft_obj{val = V, vclock = C};
+    make(V, C);
 update(#sniffle_obj{val = V, vclock = C}) ->
-    #ft_obj{val = V, vclock = C};
+    make(V, C);
 update(not_found) ->
     not_found.
 
@@ -196,3 +201,7 @@ needs_update(#snarl_obj{}) ->
     true;
 needs_update(#sniffle_obj{}) ->
     true.
+
+
+make(V, C) ->
+    #ft_obj{val = V, vclock = C}.

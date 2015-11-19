@@ -59,7 +59,7 @@ get(K, M) ->
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
 
-set(Ks, [{_,_}|_] = D, A, T, M) ->
+set(Ks, [{_, _}|_] = D, A, T, M) ->
     lists:foldl(fun({KsI, V}, {ok, MAcc}) ->
                         set(Ks ++ KsI, V, A, T, MAcc)
                 end, {ok, M}, flatten_orddict(D));
@@ -225,8 +225,8 @@ value_(N) when is_number(N) ->
 value_(B) when is_binary(B) ->
     B;
 
-value_([{{_,_}, _} | _] = L) ->
-    orddict:from_list([{K, value_(V)} || {{K,_}, V} <- L]);
+value_([{{_, _}, _} | _] = L) ->
+    orddict:from_list([{K, value_(V)} || {{K, _}, V} <- L]);
 
 value_(L) when is_list(L) ->
     [value_(V) || V <- L];
@@ -236,7 +236,7 @@ value_(V) ->
 
 flatten_orddict(D) ->
     [{lists:reverse(Ks), V} || {Ks, V} <- flatten_orddict([], D, [])].
-flatten_orddict(Prefix, [{K, [{_,_}|_] = V} | R], Acc) ->
+flatten_orddict(Prefix, [{K, [{_, _}|_] = V} | R], Acc) ->
     Acc1 = flatten_orddict([K | Prefix], V, Acc),
     flatten_orddict(Prefix, R, Acc1);
 flatten_orddict(Prefix, [{K, V} | R], Acc) ->
@@ -301,13 +301,13 @@ set_test() ->
     M = fifo_old_map:new(),
     {ok, M1} = fifo_old_map:set(k, {set, 3}, a, 0, M),
     {ok, M2} = fifo_old_map:set(k, {set, 2}, a, 1, M1),
-    {ok, M3} = fifo_old_map:set(k, {set, [1,4]}, a, 2, M2),
+    {ok, M3} = fifo_old_map:set(k, {set, [1, 4]}, a, 2, M2),
     {ok, M4} = fifo_old_map:set(k, {set, {remove, 3}}, a, 3, M3),
 
     ?assertEqual([3], fifo_old_map:get(k, M1)),
-    ?assertEqual([2,3], fifo_old_map:get(k, M2)),
-    ?assertEqual([1,2,3,4], fifo_old_map:get(k, M3)),
-    ?assertEqual([1,2,4], fifo_old_map:get(k, M4)),
+    ?assertEqual([2, 3], fifo_old_map:get(k, M2)),
+    ?assertEqual([1, 2, 3, 4], fifo_old_map:get(k, M3)),
+    ?assertEqual([1, 2, 4], fifo_old_map:get(k, M4)),
     ok.
 
 nested_reg_test() ->

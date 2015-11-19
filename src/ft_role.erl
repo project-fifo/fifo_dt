@@ -4,13 +4,12 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_role).
+-behaviour(fifo_dt).
 
 -include("ft_role.hrl").
 -define(OBJ, ?ROLE).
 -include("ft_helper.hrl").
-
 
 -export([
          new/1,
@@ -150,7 +149,8 @@ grant({_T, ID}, Permission, Role = #?ROLE{}) ->
 
 
 revoke({_T, ID}, Permission, Role) ->
-    case riak_dt_orswot:update({remove, Permission}, ID, Role#?ROLE.permissions) of
+    case riak_dt_orswot:update({remove, Permission}, ID,
+                               Role#?ROLE.permissions) of
         {error, {precondition, {not_present, Permission}}} ->
             Role;
         {ok, V} ->

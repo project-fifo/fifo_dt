@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_grouping).
+-behaviour(fifo_dt).
 
 -include("ft_grouping.hrl").
 -define(OBJ, ?GROUPING).
@@ -82,7 +82,7 @@ add_element({_T, ID}, V, H) ->
 
 remove_element({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?GROUPING.elements) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             H;
         {ok, O1} ->
             H#?GROUPING{elements = O1}
@@ -97,7 +97,7 @@ add_grouping({_T, ID}, V, H) ->
 
 remove_grouping({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?GROUPING.groupings) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             H;
         {ok, O1} ->
             H#?GROUPING{groupings = O1}

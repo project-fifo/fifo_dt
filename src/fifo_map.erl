@@ -1,6 +1,5 @@
 -module(fifo_map).
 
-
 -export([new/0, merge/2, get/2, set/5, remove/3, value/1, split_path/1,
          from_orddict/3]).
 
@@ -63,7 +62,7 @@ get_([K | Ks], M) ->
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
 
-set(Ks, [{_,_}|_] = D, A, T, M) ->
+set(Ks, [{_, _}|_] = D, A, T, M) ->
     lists:foldl(fun({KsI, V}, {ok, MAcc}) ->
                         set(Ks ++ KsI, V, A, T, MAcc)
                 end, {ok, M}, flatten_orddict(D));
@@ -109,13 +108,13 @@ remove(K, A, M) ->
 value(M) ->
     lists:sort([flatten_value(V) || V <- riak_dt_map:value(M)]).
 
-flatten_value({{K,?REG}, V}) ->
+flatten_value({{K, ?REG}, V}) ->
     {K, V};
-flatten_value({{K,?COUNTER}, V}) ->
+flatten_value({{K, ?COUNTER}, V}) ->
     {K, V};
-flatten_value({{K,?SET}, Vs}) ->
+flatten_value({{K, ?SET}, Vs}) ->
     {K, Vs};
-flatten_value({{K,?MAP}, Vs}) ->
+flatten_value({{K, ?MAP}, Vs}) ->
     {K, lists:sort([flatten_value(V) || V <- Vs])}.
 
 -spec from_orddict(D::orddict:orddict(),
@@ -134,8 +133,8 @@ from_orddict(D, Actor, Timestamp) ->
 %%%===================================================================
 
 -spec split_path(Path::[binary()], Map::riak_dt_map:riak_dt_map()) ->
-                        {'error','not_a_map',term(),[binary()]} |
-                        {'ok',{[binary()],[binary()]}}.
+                        {'error', 'not_a_map', term(), [binary()]} |
+                        {'ok', {[binary()], [binary()]}}.
 split_path(Path, Map) ->
     Map1 = riak_dt_map:value(Map),
     split_path(Path, [], Map1).
@@ -259,7 +258,7 @@ update_from_value(V, T) ->
 
 flatten_orddict(D) ->
     [{lists:reverse(Ks), V} || {Ks, V} <- flatten_orddict([], D, [])].
-flatten_orddict(Prefix, [{K, [{_,_}|_] = V} | R], Acc) ->
+flatten_orddict(Prefix, [{K, [{_, _}|_] = V} | R], Acc) ->
     Acc1 = flatten_orddict([K | Prefix], V, Acc),
     flatten_orddict(Prefix, R, Acc1);
 flatten_orddict(Prefix, [{K, V} | R], Acc) ->
@@ -325,13 +324,13 @@ set_test() ->
     M = fifo_map:new(),
     {ok, M1} = fifo_map:set(k, {set, 3}, a, 0, M),
     {ok, M2} = fifo_map:set(k, {set, 2}, a, 1, M1),
-    {ok, M3} = fifo_map:set(k, {set, [1,4]}, a, 2, M2),
+    {ok, M3} = fifo_map:set(k, {set, [1, 4]}, a, 2, M2),
     {ok, M4} = fifo_map:set(k, {set, {remove, 3}}, a, 3, M3),
 
     ?assertEqual([3], fifo_map:get(k, M1)),
-    ?assertEqual([2,3], fifo_map:get(k, M2)),
-    ?assertEqual([1,2,3,4], fifo_map:get(k, M3)),
-    ?assertEqual([1,2,4], fifo_map:get(k, M4)),
+    ?assertEqual([2, 3], fifo_map:get(k, M2)),
+    ?assertEqual([1, 2, 3, 4], fifo_map:get(k, M3)),
+    ?assertEqual([1, 2, 4], fifo_map:get(k, M4)),
     ok.
 
 nested_reg_test() ->

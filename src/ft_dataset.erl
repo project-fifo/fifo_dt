@@ -6,6 +6,7 @@
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
 -module(ft_dataset).
 
+-behaviour(fifo_dt).
 -include("ft_dataset.hrl").
 -define(OBJ, ?DATASET).
 -include("ft_helper.hrl").
@@ -127,7 +128,8 @@ zone_type({T, _ID}, V, H) when V =:= lx;
                                V =:= docker;
                                V =:= ipkg;
                                V =:= lipkg ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.zone_type),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?DATASET.zone_type),
     H#?DATASET{zone_type = V1}.
 
 ?G(status).
@@ -168,7 +170,7 @@ add_requirement({_T, ID}, V, H) ->
 
 remove_requirement({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?DATASET.requirements) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             H;
         {ok, O1} ->
             H#?DATASET{requirements = O1}
@@ -183,7 +185,7 @@ add_network({_T, ID}, V, H) ->
 
 remove_network({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?DATASET.networks) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             H;
         {ok, O1} ->
             H#?DATASET{networks = O1}
@@ -338,7 +340,7 @@ load({T, ID}, #dataset_0{
                  version        = Version
                 }) ->
     Networks1 = [{NetName, NetDesc} ||
-                    [{<<"description">>,NetDesc},
+                    [{<<"description">>, NetDesc},
                      {<<"name">>, NetName}] <- riak_dt_lwwreg:value(Networks)],
     {ok, Networks2} = old_set:update(
                         {add_all, Networks1}, ID,

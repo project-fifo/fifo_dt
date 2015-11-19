@@ -10,6 +10,21 @@
                   ft_iprange | ft_network | ft_org | ft_package | ft_role |
                   ft_user | ft_vm.
 
+-callback is_a(any()) -> true | false.
+
+-callback merge(A, A) ->
+    A.
+
+-callback new(tid()) ->
+    term().
+
+-callback load(tid(), term()) ->
+    term().
+
+-callback getter(ft_obj:any_obj(), term()) ->
+    term().
+
+
 type(O) ->
     Types = [
              ft_dataset,

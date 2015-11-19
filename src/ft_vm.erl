@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_vm).
+-behaviour(fifo_dt).
 
 -include("ft_vm.hrl").
 -include("ft_helper.hrl").

@@ -73,7 +73,8 @@
 -export_type([orswot/0, orswot_op/0, binary_orswot/0]).
 
 -opaque orswot() :: {riak_dt_vclock:vclock(), entries()}.
--type binary_orswot() :: binary(). %% A binary that from_binary/1 will operate on.
+%% A binary that from_binary/1 will operate on.
+-type binary_orswot() :: binary().
 
 -type orswot_op() ::  {add, member()} | {remove, member()} |
                       {add_all, [member()]} | {remove_all, [member()]} |
@@ -93,7 +94,7 @@
 -type dot() :: {actor(), Count::pos_integer()}.
 -type member() :: term().
 
--type precondition_error() :: {error, {precondition ,{not_present, member()}}}.
+-type precondition_error() :: {error, {precondition, {not_present, member()}}}.
 
 -spec new() -> orswot().
 new() ->
@@ -171,8 +172,10 @@ merge({LHSClock, LHSEntries}=LHS, {RHSClock, RHSEntries}=RHS) ->
             RHSUnique = sets:subtract(RHSKeys, CommonKeys),
 
             Entries00 = merge_common_keys(CommonKeys, LHSEntries, RHSEntries),
-            Entries0 = merge_disjoint_keys(LHSUnique, LHSEntries, RHSClock, Entries00),
-            Entries = merge_disjoint_keys(RHSUnique, RHSEntries, LHSClock, Entries0),
+            Entries0 = merge_disjoint_keys(LHSUnique, LHSEntries, RHSClock,
+                                           Entries00),
+            Entries = merge_disjoint_keys(RHSUnique, RHSEntries, LHSClock,
+                                          Entries0),
 
             {Clock, Entries}
     end.
@@ -200,7 +203,8 @@ merge_disjoint_keys(Keys, Entries, SetClock, Accumulator) ->
                           false ->
                               %% Optimise the set of stored dots to
                               %% include only those unseen
-                              NewDots = riak_dt_vclock:subtract_dots(Dots, SetClock),
+                              NewDots = riak_dt_vclock:subtract_dots(Dots,
+                                                                     SetClock),
                               orddict:store(Key, NewDots, Acc);
                           true ->
                               Acc
@@ -264,16 +268,19 @@ remove_elem(_, Elem, _ORSet) ->
 %% @doc the precondition context is a fragment of the CRDT
 %% that operations with pre-conditions can be applied too.
 %% In the case of OR-Sets this is the set of adds observed.
-%% The system can then apply a remove to this context and merge it with a replica.
-%% Especially useful for hybrid op/state systems where the context of an operation is
-%% needed at a replica without sending the entire state to the client.
+%% The system can then apply a remove to this context and merge it with a
+%% replica.
+%% Especially useful for hybrid op/state systems where the context of an
+%% operation is needed at a replica without sending the entire state to the
+%% client.
 -spec precondition_context(orswot()) -> orswot().
 precondition_context(ORSet) ->
     ORSet.
 
 -spec stats(orswot()) -> [{atom(), number()}].
 stats(ORSWOT) ->
-    [ {S, stat(S, ORSWOT)} || S <- [actor_count, element_count, max_dot_length]].
+    [ {S, stat(S, ORSWOT)} ||
+        S <- [actor_count, element_count, max_dot_length]].
 
 -spec stat(atom(), orswot()) -> number() | undefined.
 stat(actor_count, {Clock, _Dict}) ->
@@ -284,7 +291,7 @@ stat(max_dot_length, {_Clock, Dict}) ->
     orddict:fold(fun(_K, Dots, Acc) ->
                          max(length(Dots), Acc)
                  end, 0, Dict);
-stat(_,_) -> undefined.
+stat(_, _) -> undefined.
 
 -define(TAG, ?DT_ORSWOT_TAG).
 -define(V1_VERS, 1).

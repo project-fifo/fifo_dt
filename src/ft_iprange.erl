@@ -4,14 +4,14 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_iprange).
+-behaviour(fifo_dt).
 
 -include("ft_iprange.hrl").
 -define(OBJ, ?IPRANGE).
 -include("ft_helper.hrl").
 
--define(GSub(N, F),
+-define(G_SUB(N, F),
         sub_getter(O, N) ->
                F(O)).
 
@@ -110,13 +110,13 @@ getter(O, E) ->
     sub_getter(S0, E).
 
 -spec sub_getter(iprange(), jsxd:key()) -> jsxd:value().
-?GSub(<<"uuid">>, uuid);
-?GSub(<<"name">>, name);
-?GSub(<<"network">>, network);
-?GSub(<<"netmask">>, netmask);
-?GSub(<<"gateway">>, gateway);
-?GSub(<<"tag">>, tag);
-?GSub(<<"vlan">>, vlan);
+?G_SUB(<<"uuid">>, uuid);
+?G_SUB(<<"name">>, name);
+?G_SUB(<<"network">>, network);
+?G_SUB(<<"netmask">>, netmask);
+?G_SUB(<<"gateway">>, gateway);
+?G_SUB(<<"tag">>, tag);
+?G_SUB(<<"vlan">>, vlan);
 sub_getter(O, K) ->
     lager:warning("[~s] Accessing unsupported getter ~p,"
                   " reverting to jsxd.", [?MODULE, K]),
@@ -166,7 +166,7 @@ new({_T, ID}, S, E) when S < E ->
 claim_ip({_T, ID}, IP, I) when
       is_integer(IP) ->
     case riak_dt_orswot:update({remove, IP}, ID, I#?IPRANGE.free) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             {error, used};
         {ok, Free} ->
             {ok, Used} = riak_dt_orswot:update({add, IP}, ID, I#?IPRANGE.used),
@@ -176,7 +176,7 @@ claim_ip({_T, ID}, IP, I) when
 release_ip({_T, ID}, IP, I) when
       is_integer(IP) ->
     case riak_dt_orswot:update({remove, IP}, ID, I#?IPRANGE.used) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             {ok, I};
         {ok, Used} ->
             {ok, Free} = riak_dt_orswot:update({add, IP}, ID, I#?IPRANGE.free),
@@ -274,7 +274,8 @@ to_bin(IP) ->
     list_to_binary(io_lib:format("~p.~p.~p.~p", [A, B, C, D])).
 
 parse_bin(Bin) ->
-    [A,B,C,D] = [ list_to_integer(binary_to_list(P)) || P <- re:split(Bin, "[.]")],
+    [A, B, C, D] = [list_to_integer(binary_to_list(P))
+                    || P <- re:split(Bin, "[.]")],
     <<IP:32>> = <<A:8, B:8, C:8, D:8>>,
     IP.
 

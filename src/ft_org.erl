@@ -4,9 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
-
 -module(ft_org).
+-behaviour(fifo_dt).
 
 -include("ft_org.hrl").
 -include("ft_helper.hrl").
@@ -170,23 +169,25 @@ jsonify_trigger({Trigger, Action}) ->
              jsonify_action(Action)).
 
 jsonify_action({grant, role, Target, Permission}) ->
-    [{<<"action">>, <<"role_grant">>},
-     {<<"permission">>, jsonify_permission(Permission)},
-     {<<"target">>, Target}];
+    grant(<<"role_grant">>, Target, Permission);
 
 jsonify_action({grant, user, Target, Permission}) ->
-    [{<<"action">>, <<"user_grant">>},
-     {<<"permission">>, jsonify_permission(Permission)},
-     {<<"target">>, Target}];
+    grant(<<"user_grant">>, Target, Permission);
 
 jsonify_action({join, org, Org}) ->
-    [{<<"action">>, <<"join_org">>},
-     {<<"target">>, Org}];
+    join(<<"join_org">>, Org);
 
 jsonify_action({join, role, Role}) ->
-    [{<<"action">>, <<"join_role">>},
+    join(<<"join_role">>, Role).
+
+join(Action, Role) ->
+    [{<<"action">>, Action},
      {<<"target">>, Role}].
 
+grant(Action, Target, Permission) ->
+    [{<<"action">>, Action},
+     {<<"permission">>, jsonify_permission(Permission)},
+     {<<"target">>, Target}].
 
 jsonify_permission(Permission) ->
     lists:map(fun (placeholder) ->

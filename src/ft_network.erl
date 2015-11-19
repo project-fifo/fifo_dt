@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_network).
+-behaviour(fifo_dt).
 
 -include("ft_network.hrl").
 -define(OBJ, ?NETWORK).
@@ -75,7 +75,7 @@ add_iprange({_T, ID}, V, H) ->
 
 remove_iprange({_T, ID}, V, H) ->
     case riak_dt_orswot:update({remove, V}, ID, H#?NETWORK.ipranges) of
-        {error,{precondition,{not_present,_}}} ->
+        {error, {precondition, {not_present, _}}} ->
             H;
         {ok, O1} ->
             H#?NETWORK{ipranges = O1}

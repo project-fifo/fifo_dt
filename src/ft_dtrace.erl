@@ -4,11 +4,11 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_dtrace).
+-behaviour(fifo_dt).
 
 -include("ft_dtrace.hrl").
--define(OBJ,?DTRACE).
+-define(OBJ, ?DTRACE).
 -include("ft_helper.hrl").
 
 -export([

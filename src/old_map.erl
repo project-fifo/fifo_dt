@@ -35,7 +35,8 @@
 
 %% API
 -export([new/0, value/1, value/2, update/3, merge/2,
-         equal/2, to_binary/1, from_binary/1, precondition_context/1, stats/1, stat/2]).
+         equal/2, to_binary/1, from_binary/1, precondition_context/1, stats/1,
+         stat/2]).
 
 -export_type([old_map/0, binary_map/0, map_op/0]).
 
@@ -72,7 +73,8 @@
                    keyset | {contains, field()}.
 
 -type values() :: [value()].
--type value() :: {field(), old_map:values() | integer() | [term()] | boolean() | term()}.
+-type value() :: {field(),
+                  old_map:values() | integer() | [term()] | boolean() | term()}.
 -type precondition_error() :: {error, {precondition, {not_present, field()}}}.
 
 %% @doc Create a new, empty Map.
@@ -156,7 +158,8 @@ keys(Values) ->
 %%
 %% @see riak_dt_orswot for more details.
 
--spec update(map_op(), riak_dt:actor(), old_map()) -> {ok, old_map()} | precondition_error().
+-spec update(map_op(), riak_dt:actor(), old_map()) ->
+                    {ok, old_map()} | precondition_error().
 update({update, Ops}, Actor, {Clock, Values}) ->
     apply_ops(Ops, Actor, Clock, Values).
 
@@ -205,7 +208,8 @@ merge({LHSClock, LHSEntries}, {RHSClock, RHSEntries}) ->
     RHSUnique = sets:subtract(RHSFields, CommonFields),
 
     Entries00 = merge_common_fields(CommonFields, LHSEntries, RHSEntries),
-    Entries0 = merge_disjoint_fields(LHSUnique, LHSEntries, RHSClock, Entries00),
+    Entries0 = merge_disjoint_fields(LHSUnique, LHSEntries, RHSClock,
+                                     Entries00),
     Entries = merge_disjoint_fields(RHSUnique, RHSEntries, LHSClock, Entries0),
 
     {Clock, Entries}.
@@ -219,7 +223,8 @@ merge_disjoint_fields(Fields, Entries, SetClock, Accumulator) ->
                           false ->
                               %% Optimise the set of stored dots to
                               %% include only those unseen
-                              NewDots = riak_dt_vclock:subtract_dots(Dots, SetClock),
+                              NewDots = riak_dt_vclock:subtract_dots(Dots,
+                                                                     SetClock),
                               orddict:store(Field, {NewDots, Value}, Acc);
                           true ->
                               Acc
@@ -267,7 +272,7 @@ pairwise_equals(Values1, Values2) ->
 -spec short_circuit_equals(valuelist(), valuelist()) -> boolean().
 short_circuit_equals([], _Values2) ->
     true;
-short_circuit_equals([{{_Name, Mod}=Field, {Dot1,Val1}} | Rest], Values2) ->
+short_circuit_equals([{{_Name, Mod} = Field, {Dot1, Val1}} | Rest], Values2) ->
     {Dot2, Val2} = orddict:fetch(Field, Values2),
     case {riak_dt_vclock:equal(Dot1, Dot2), Mod:equal(Val1, Val2)} of
         {true, true} ->
@@ -297,7 +302,7 @@ stat(max_dot_length, {_, Fields}) ->
     orddict:fold(fun(_K, {Dots, _}, Acc) ->
                          max(length(Dots), Acc)
                  end, 0, Fields);
-stat(_,_) -> undefined.
+stat(_, _) -> undefined.
 
 -include_lib("riak_dt/include/riak_dt_tags.hrl").
 -define(TAG, ?DT_MAP_TAG).

@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_package).
+-behaviour(fifo_dt).
 
 -include("ft_package.hrl").
 -include("ft_helper.hrl").
@@ -28,8 +28,8 @@
          requirements/1, add_requirement/3, remove_requirement/3,
          metadata/1, set_metadata/3, set_metadata/4,
          zfs_io_priority/1, zfs_io_priority/3,
-         org_resources/1, org_resource/2, org_resource_inc/4, org_resource_dec/4,
-         org_resource_remove/3,
+         org_resources/1, org_resource/2, org_resource_inc/4,
+         org_resource_dec/4, org_resource_remove/3,
          hv_resources/1, hv_resource/2, hv_resource_inc/4, hv_resource_dec/4,
          hv_resource_remove/3,
 

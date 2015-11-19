@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_client).
+-behaviour(fifo_dt).
 
 -include("ft_client.hrl").
 -define(OBJ, ?CLIENT).
@@ -171,12 +171,14 @@ uris(Client) ->
     riak_dt_orswot:value(Client#?CLIENT.redirect_uris).
 
 add_uri({_T, ID}, Uri, Client) ->
-    {ok, O1} = riak_dt_orswot:update({add, Uri}, ID, Client#?CLIENT.redirect_uris),
+    {ok, O1} = riak_dt_orswot:update({add, Uri}, ID,
+                                     Client#?CLIENT.redirect_uris),
     Client#?CLIENT{redirect_uris = O1}.
 
 remove_uri({_T, ID}, Uri, Client) ->
-    case riak_dt_orswot:update({remove, Uri}, ID, Client#?CLIENT.redirect_uris) of
-        {error,{precondition,{not_present, Uri}}} ->
+    case riak_dt_orswot:update({remove, Uri}, ID,
+                               Client#?CLIENT.redirect_uris) of
+        {error, {precondition, {not_present, Uri}}} ->
             Client;
         {ok, O1} ->
             Client#?CLIENT{redirect_uris = O1}
@@ -195,7 +197,7 @@ grant({_T, ID}, P, Client) ->
 
 revoke({_T, ID}, P, Client) ->
     case riak_dt_orswot:update({remove, P}, ID, Client#?CLIENT.permissions) of
-        {error,{precondition,{not_present, P}}} ->
+        {error, {precondition, {not_present, P}}} ->
             Client;
         {ok, P1} ->
             Client#?CLIENT{permissions = P1, ptree = fifo_dt:to_ptree(P1)}
@@ -211,7 +213,7 @@ join({_T, ID}, Role, Client) ->
 
 leave({_T, ID}, Role, Client) ->
     case riak_dt_orswot:update({remove, Role}, ID, Client#?CLIENT.roles) of
-        {error,{precondition,{not_present, Role}}} ->
+        {error, {precondition, {not_present, Role}}} ->
             Client;
         {ok, G} ->
             Client#?CLIENT{roles = G}

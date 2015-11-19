@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_user).
+-behaviour(fifo_dt).
 
 -include("ft_user.hrl").
 -include("ft_helper.hrl").
@@ -268,7 +268,8 @@ to_json(#{
        {<<"keys">>, riak_dt_orswot:value(Keys)},
        {<<"org">>, riak_dt_lwwreg:value(Org)},
        {<<"orgs">>, riak_dt_orswot:value(Orgs)},
-       {<<"tokens">>, lists:usort([token_to_json(T) || T <- riak_dt_orswot:value(Tokens)])},
+       {<<"tokens">>, lists:usort([token_to_json(T)
+                                   || T <- riak_dt_orswot:value(Tokens)])},
        {<<"metadata">>, fifo_map:value(Metadata)}
       ]).
 
@@ -413,7 +414,7 @@ get_token_by_id(TokenID, User) ->
 -spec leave_org(fifo_dt:tid(), fifo:org_id(), user()) -> user().
 leave_org(TID={_T, ID}, Org, User = #{orgs := Orgs}) ->
     case riak_dt_orswot:update({remove, Org}, ID, Orgs) of
-        {error,{precondition,{not_present, Org}}} ->
+        {error, {precondition, {not_present, Org}}} ->
             User;
         {ok, O1} ->
             User1 = User#{orgs := O1},
@@ -448,7 +449,7 @@ revoke_key({_T, ID}, KeyID, User = #{ssh_keys := Keys}) ->
             User;
         Tpl ->
             case riak_dt_orswot:update({remove, Tpl}, ID, Keys) of
-                {error,{precondition,{not_present, Tpl}}} ->
+                {error, {precondition, {not_present, Tpl}}} ->
                     User;
                 {ok, S1} ->
                     User#{ssh_keys := S1}
@@ -490,7 +491,7 @@ grant({_T, ID}, P, User = #{permissions := Ps0}) ->
 
 revoke({_T, ID}, P, User = #{permissions := Ps0}) ->
     case riak_dt_orswot:update({remove, P}, ID, Ps0) of
-        {error,{precondition,{not_present, P}}} ->
+        {error, {precondition, {not_present, P}}} ->
             User;
         {ok, Ps1} ->
             User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}

@@ -4,8 +4,8 @@
 %%%
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
-
 -module(ft_hypervisor).
+-behaviour(fifo_dt).
 
 -include("ft_hypervisor.hrl").
 -define(OBJ, ?HYPERVISOR).
@@ -128,7 +128,8 @@ etherstubs(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.etherstubs).
 
 etherstubs({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.etherstubs),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?HYPERVISOR.etherstubs),
     H#?HYPERVISOR{etherstubs = V1}.
 
 endpoint(H) ->
@@ -145,7 +146,8 @@ networks(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.networks).
 
 networks({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.networks),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?HYPERVISOR.networks),
     H#?HYPERVISOR{networks = V1}.
 
 path(H) ->
@@ -166,7 +168,8 @@ sysinfo(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.sysinfo).
 
 sysinfo({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.sysinfo),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?HYPERVISOR.sysinfo),
     H#?HYPERVISOR{sysinfo = V1}.
 
 uuid(H) ->
@@ -180,14 +183,16 @@ version(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.version).
 
 version({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.version),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?HYPERVISOR.version),
     H#?HYPERVISOR{version = V1}.
 
 virtualisation(H) ->
     riak_dt_lwwreg:value(H#?HYPERVISOR.virtualisation).
 
 virtualisation({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.virtualisation),
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
+                                     H#?HYPERVISOR.virtualisation),
     H#?HYPERVISOR{virtualisation = V1}.
 
 pools(H) ->
@@ -227,7 +232,8 @@ set_characteristic({_T, ID}, Attribute, delete, H) ->
     H#?HYPERVISOR{characteristics = M1};
 
 set_characteristic({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, H#?HYPERVISOR.characteristics),
+    {ok, M1} = fifo_map:set(Attribute, Value, ID, T,
+                            H#?HYPERVISOR.characteristics),
     H#?HYPERVISOR{characteristics = M1}.
 
 metadata(H) ->
