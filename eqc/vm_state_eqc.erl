@@ -34,6 +34,8 @@ udp_tcp() ->
 ports()  ->
     frequency([{20, not_empty(list(pos_int()))},
                {1, all}]).
+pos_int() ->
+    ?SUCHTHAT(I, int(), I > 0).
 
 icmp() ->
     {icmp, not_empty(list(code_and_type()))}.
@@ -41,8 +43,6 @@ icmp() ->
 code_and_type() ->
     oneof([{icmp, pos_int()}, {icmp, pos_int(), pos_int()}]).
 
-pos_int() ->
-    ?SUCHTHAT(I, int(), I > 0).
 
 vm(Size) ->
     ?LAZY(oneof([{call, ?V, new, [id(Size)]} || Size == 1] ++
@@ -60,6 +60,9 @@ vm(Size) ->
                                {call, ?V, dataset, [id(Size), non_blank_string(), O]},
                                {call, ?V, package, [id(Size), non_blank_string(), O]},
                                {call, ?V, hypervisor, [id(Size), non_blank_string(), O]},
+
+                               {call, ?V, created_at, [id(Size), pos_int(), O]},
+                               {call, ?V, created_by, [id(Size), non_blank_string(), O]},
 
                                {call, ?V, set_config, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?V, set_config, [id(Size), maybe_oneof(calc_map(set_config, O)), delete, O]},
@@ -147,6 +150,12 @@ model_package(N, R) ->
 
 model_hypervisor(N, R) ->
     r(<<"hypervisor">>, N, R).
+
+model_created_at(N, R) ->
+    r(<<"created_at">>, N, R).
+
+model_created_by(N, R) ->
+    r(<<"created_by">>, N, R).
 
 model_set_metadata(K, V, U) ->
     r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
@@ -338,6 +347,25 @@ prop_hypervisor() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
                           model(?V:hypervisor(id(?BIG_TIME), N, Hv)) ==
                               model_hypervisor(N, model(Hv)))
+            end).
+
+prop_created_by() ->
+    ?FORALL({N, R},
+            {non_blank_string(), vm()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
+                          model(?V:created_by(id(?BIG_TIME), N, Hv)) ==
+                              model_created_by(N, model(Hv)))
+            end).
+
+prop_created_at() ->
+    ?FORALL({N, R}, {pos_int(), vm()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
+                          model(?V:created_at(id(?BIG_TIME), N, Hv)) ==
+                              model_created_at(N, model(Hv)))
             end).
 
 prop_set_metadata() ->
