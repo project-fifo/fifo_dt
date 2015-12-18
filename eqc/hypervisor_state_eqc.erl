@@ -15,6 +15,15 @@
 hypervisor() ->
     ?SIZED(Size, hypervisor(Size)).
 
+pos_int()->
+    ?SUCHTHAT(P, int(), P > 0).
+
+last_seen() ->
+    pos_int().
+
+port()->
+    pos_int().
+
 hypervisor(Size) ->
     ?LAZY(oneof([{call, ?H, new, [id(Size)]} || Size == 0] ++
                     [?LETSHRINK(
@@ -26,7 +35,8 @@ hypervisor(Size) ->
                                {call, ?H, uuid, [id(Size), non_blank_string(), O]},
                                {call, ?H, alias, [id(Size), non_blank_string(), O]},
                                {call, ?H, host, [id(Size), non_blank_string(), O]},
-                               {call, ?H, port, [id(Size), int(), O]},
+                               {call, ?H, port, [id(Size), port(), O]},
+                               {call, ?H, last_seen, [id(Size), last_seen(), O]},
                                {call, ?H, version, [id(Size), non_blank_string(), O]},
 
                                {call, ?H, etherstubs, [id(Size), list(non_blank_string()), O]},
@@ -81,6 +91,9 @@ model_host(N, R) ->
 
 model_port(N, R) ->
     r(<<"port">>, N, R).
+
+model_last_seen(N, R) ->
+    r(<<"last_seen">>, N, R).
 
 model_version(N, R) ->
     r(<<"version">>, N, R).
@@ -203,12 +216,22 @@ prop_host() ->
 
 prop_port() ->
     ?FORALL({N, R},
-            {int(), hypervisor()},
+            {port(), hypervisor()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
                           model(?H:port(id(?BIG_TIME), N, Hv)) ==
                               model_port(N, model(Hv)))
+            end).
+
+prop_last_seen() ->
+    ?FORALL({N, R},
+            {last_seen(), hypervisor()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
+                          model(?H:last_seen(id(?BIG_TIME), N, Hv)) ==
+                              model_last_seen(N, model(Hv)))
             end).
 
 prop_version() ->

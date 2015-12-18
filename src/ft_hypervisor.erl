@@ -8,24 +8,19 @@
 -behaviour(fifo_dt).
 
 -include("ft_hypervisor.hrl").
--define(OBJ, ?HYPERVISOR).
 -include("ft_helper.hrl").
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
 
 -export([
          is_a/1,
          load/2,
          new/1,
-         set/4,
          getter/2,
          to_json/1,
          merge/2
         ]).
 
 -export([
+         last_seen/3,
          alias/3,
          etherstubs/3,
          host/3,
@@ -65,6 +60,7 @@
 
 -export([
          alias/1,
+         last_seen/1,
          etherstubs/1,
          host/1,
          networks/1,
@@ -96,218 +92,98 @@
 
 -ignore_xref([to_json/1, load/2, set/4, getter/2, uuid/1]).
 
--type hypervisor() :: #?OBJ{}.
+-type hypervisor() :: #{
+                  type            => ?TYPE,
+                  version         => ?VERSION,
+                  last_seen       => riak_dt_lwwreg:lwwreg(),
+                  characteristics => riak_dt_map:riak_dt_map(),
+                  etherstubs      => riak_dt_lwwreg:lwwreg(),
+                  host            => riak_dt_lwwreg:lwwreg(),
+                  metadata        => riak_dt_map:riak_dt_map(),
+                  alias           => riak_dt_lwwreg:lwwreg(),
+                  networks        => riak_dt_lwwreg:lwwreg(),
+                  path            => riak_dt_lwwreg:lwwreg(),
+                  pools           => riak_dt_map:riak_dt_map(),
+                  port            => riak_dt_lwwreg:lwwreg(),
+                  resources       => riak_dt_map:riak_dt_map(),
+                  services        => riak_dt_map:riak_dt_map(),
+                  sysinfo         => riak_dt_lwwreg:lwwreg(),
+                  uuid            => riak_dt_lwwreg:lwwreg(),
+                  chunter_version => riak_dt_lwwreg:lwwreg(),
+                  virtualisation  => riak_dt_lwwreg:lwwreg()
+                 }.
 -export_type([hypervisor/0]).
 
 
+-spec is_a(any()) -> true | false.
 ?IS_A.
 
+-spec new(fifo_dt:tid()) -> hypervisor().
 new(_) ->
-    {ok, Es} = ?NEW_LWW([], 0),
-    {ok, Ns} = ?NEW_LWW([], 0),
-    {ok, Ps} = ?NEW_LWW([], 0),
-    {ok, Si} = ?NEW_LWW([], 0),
-    {ok, Vi} = ?NEW_LWW([], 0),
-    #?HYPERVISOR{
-        etherstubs      = Es,
-        networks        = Ns,
-        path            = Ps,
-        sysinfo         = Si,
-        virtualisation  = Vi
-       }
-        #?HYPERVISOR{}.
+    {ok, Empty} = ?NEW_LWW([], 0),
+    {ok, Zero} = ?NEW_LWW(0, 0),
+    #{
+       type            => ?TYPE,
+       version         => ?VERSION,
+       last_seen       => Zero,
+       characteristics => riak_dt_map:new(),
+       etherstubs      => Empty,
+       host            => riak_dt_lwwreg:new(),
+       metadata        => riak_dt_map:new(),
+       alias           => riak_dt_lwwreg:new(),
+       networks        => Empty,
+       path            => Empty,
+       pools           => riak_dt_map:new(),
+       port            => riak_dt_lwwreg:new(),
+       resources       => riak_dt_map:new(),
+       services        => riak_dt_map:new(),
+       sysinfo         => Empty,
+       uuid            => riak_dt_lwwreg:new(),
+       chunter_version => riak_dt_lwwreg:new(),
+       virtualisation  => Empty
+     }.
 
-alias(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.alias).
-
-alias({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.alias),
-    H#?HYPERVISOR{alias = V1}.
-
-etherstubs(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.etherstubs).
-
-etherstubs({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?HYPERVISOR.etherstubs),
-    H#?HYPERVISOR{etherstubs = V1}.
-
-endpoint(H) ->
-    {binary_to_list(host(H)), port(H)}.
-
-host(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.host).
-
-host({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.host),
-    H#?HYPERVISOR{host = V1}.
-
-networks(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.networks).
-
-networks({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?HYPERVISOR.networks),
-    H#?HYPERVISOR{networks = V1}.
-
-path(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.path).
-
-path({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.path),
-    H#?HYPERVISOR{path = V1}.
-
-port(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.port).
-
-port({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.port),
-    H#?HYPERVISOR{port = V1}.
-
-sysinfo(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.sysinfo).
-
-sysinfo({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?HYPERVISOR.sysinfo),
-    H#?HYPERVISOR{sysinfo = V1}.
-
-uuid(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.uuid).
-
-uuid({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?HYPERVISOR.uuid),
-    H#?HYPERVISOR{uuid = V1}.
-
-version(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.version).
-
-version({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?HYPERVISOR.version),
-    H#?HYPERVISOR{version = V1}.
-
-virtualisation(H) ->
-    riak_dt_lwwreg:value(H#?HYPERVISOR.virtualisation).
-
-virtualisation({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?HYPERVISOR.virtualisation),
-    H#?HYPERVISOR{virtualisation = V1}.
-
-pools(H) ->
-    fifo_map:value(H#?HYPERVISOR.pools).
-
-set_pool(ID, [{K, V} | R] , Vm) ->
-    set_pool(ID, R, set_pool(ID, K, V, Vm));
-
-set_pool(_ID, _, Vm) ->
-    Vm.
-
-set_pool({T, ID}, P, Value, H) when is_binary(P) ->
-    set_pool({T, ID}, fifo_map:split_path(P), Value, H);
-
-set_pool({_T, ID}, Attribute, delete, H) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.pools),
-    H#?HYPERVISOR{pools = M1};
-
-set_pool({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, H#?HYPERVISOR.pools),
-    H#?HYPERVISOR{pools = M1}.
-
-characteristics(H) ->
-    fifo_map:value(H#?HYPERVISOR.characteristics).
-
-set_characteristic(ID, [{K, V} | R] , Vm) ->
-    set_characteristic(ID, R, set_characteristic(ID, K, V, Vm));
-
-set_characteristic(_ID, _, Vm) ->
-    Vm.
-
-set_characteristic({T, ID}, P, Value, H) when is_binary(P) ->
-    set_characteristic({T, ID}, fifo_map:split_path(P), Value, H);
-
-set_characteristic({_T, ID}, Attribute, delete, H) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.characteristics),
-    H#?HYPERVISOR{characteristics = M1};
-
-set_characteristic({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T,
-                            H#?HYPERVISOR.characteristics),
-    H#?HYPERVISOR{characteristics = M1}.
-
-metadata(H) ->
-    fifo_map:value(H#?HYPERVISOR.metadata).
-
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, H) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, H);
-
-set_metadata({_T, ID}, Attribute, delete, H) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.metadata),
-    H#?HYPERVISOR{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, H#?HYPERVISOR.metadata),
-    H#?HYPERVISOR{metadata = M1}.
-
-resources(H) ->
-    fifo_map:value(H#?HYPERVISOR.resources).
-
-set_resource(ID, [{K, V} | R] , Vm) ->
-    set_resource(ID, R, set_resource(ID, K, V, Vm));
-
-set_resource(_ID, _, Vm) ->
-    Vm.
-
-set_resource({_T, ID}, Attribute, delete, H) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.resources),
-    H#?HYPERVISOR{resources = M1};
-
-set_resource({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, H#?HYPERVISOR.resources),
-    H#?HYPERVISOR{resources = M1}.
-
-services(H) ->
-    fifo_map:value(H#?HYPERVISOR.services).
-
-set_service(ID, [{K, V} | R] , Vm) ->
-    set_service(ID, R, set_service(ID, K, V, Vm));
-
-set_service(_ID, _, Vm) ->
-    Vm.
-
-set_service({_T, ID}, Attribute, delete, H) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, H#?HYPERVISOR.services),
-    H#?HYPERVISOR{services = M1};
-
-set_service({T, ID}, Attribute, Value, H) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, H#?HYPERVISOR.services),
-    H#?HYPERVISOR{services = M1}.
-
-?G(<<"path">>, path);
-?G(<<"uuid">>, uuid);
-?G(<<"virtualisation">>, virtualisation);
-?G(<<"etherstubs">>, etherstubs);
-?G(<<"alias">>, alias);
-?G(<<"resources">>, resources);
-getter(O, <<"resources.", K/binary>>) ->
-    V = ft_obj:val(O),
-    Rs = resources(V),
-    jsxd:get(K, <<>>, Rs);
-getter(O, [<<"resources">> | K]) ->
-    V = ft_obj:val(O),
-    Rs = resources(V),
-    jsxd:get(K, <<>>, Rs);
-?G_JSX.
-
-load(_, #?HYPERVISOR{} = H) ->
+load(_, #{type := ?TYPE, version := ?VERSION} = H) ->
     H;
+load(TID, #hypervisor_0{
+             characteristics = Characteristics,
+             etherstubs      = Etherstubs,
+             host            = Host,
+             metadata        = Metadata,
+             alias           = Alias,
+             networks        = Networks,
+             path            = Path,
+             pools           = Pools,
+             port            = Port,
+             resources       = Rsources,
+             services        = Services,
+             sysinfo         = Sysinfo,
+             uuid            = UUID,
+             version         = Version,
+             virtualisation  = Virt
+            }) ->
+    {ok, Zero} = ?NEW_LWW(0, 0),
+    H1 = #{
+      type            => ?TYPE,
+      version         => 0,
+      last_seen       => Zero,
+      characteristics => Characteristics,
+      etherstubs      => Etherstubs,
+      host            => Host,
+      metadata        => Metadata,
+      alias           => Alias,
+      networks        => Networks,
+      path            => Path,
+      pools           => Pools,
+      port            => Port,
+      resources       => Rsources,
+      services        => Services,
+      sysinfo         => Sysinfo,
+      uuid            => UUID,
+      chunter_version => Version,
+      virtualisation  => Virt
+     },
+    load(TID, H1);
 load(TID, #hypervisor_0_1_0{
              characteristics = Characteristics,
              etherstubs      = Etherstubs,
@@ -350,6 +226,7 @@ to_json(H) ->
      {<<"characteristics">>, characteristics(H)},
      {<<"etherstubs">>, etherstubs(H)},
      {<<"host">>, host(H)},
+     {<<"last_seen">>, last_seen(H)},
      {<<"metadata">>, metadata(H)},
      {<<"networks">>, networks(H)},
      {<<"path">>, path_to_json(path(H))},
@@ -363,157 +240,173 @@ to_json(H) ->
      {<<"virtualisation">>, virtualisation(H)}
     ].
 
-path_to_json(<<>>) ->
-    [];
 path_to_json(P) ->
     [[{<<"cost">>, C}, {<<"name">>, N}] || {N, C} <- P].
 
-merge(#?HYPERVISOR{
-          characteristics = Characteristics1,
-          alias = Alias1,
-          etherstubs = Etherstubs1,
-          host = Host1,
-          metadata = Metadata1,
-          networks = Networks1,
-          path = Path1,
-          pools = Pools1,
-          port = Port1,
-          resources = Resources1,
-          services = Services1,
-          sysinfo = Sysinfo1,
-          uuid = UUID1,
-          version = Version1,
-          virtualisation = Virtualisation1
-         },
-      #?HYPERVISOR{
-          characteristics = Characteristics2,
-          alias = Alias2,
-          etherstubs = Etherstubs2,
-          host = Host2,
-          metadata = Metadata2,
-          networks = Networks2,
-          path = Path2,
-          pools = Pools2,
-          port = Port2,
-          resources = Resources2,
-          services = Services2,
-          sysinfo = Sysinfo2,
-          uuid = UUID2,
-          version = Version2,
-          virtualisation = Virtualisation2
-         }
-     ) ->
-    #?HYPERVISOR{
-        characteristics = fifo_map:merge(Characteristics1, Characteristics2),
-        alias = riak_dt_lwwreg:merge(Alias1, Alias2),
-        etherstubs = riak_dt_lwwreg:merge(Etherstubs1, Etherstubs2),
-        host = riak_dt_lwwreg:merge(Host1, Host2),
-        metadata = fifo_map:merge(Metadata1, Metadata2),
-        networks = riak_dt_lwwreg:merge(Networks1, Networks2),
-        path = riak_dt_lwwreg:merge(Path1, Path2),
-        pools = fifo_map:merge(Pools1, Pools2),
-        port = riak_dt_lwwreg:merge(Port1, Port2),
-        resources = fifo_map:merge(Resources1, Resources2),
-        services = fifo_map:merge(Services1, Services2),
-        sysinfo = riak_dt_lwwreg:merge(Sysinfo1, Sysinfo2),
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
-        version = riak_dt_lwwreg:merge(Version1, Version2),
-        virtualisation = riak_dt_lwwreg:merge(Virtualisation1, Virtualisation2)
-       }.
+merge(H=#{
+        type := ?TYPE,
+        last_seen := LastSeen1,
+        characteristics := Characteristics1,
+        alias := Alias1,
+        etherstubs := Etherstubs1,
+        host := Host1,
+        metadata := Metadata1,
+        networks := Networks1,
+        path := Path1,
+        pools := Pools1,
+        port := Port1,
+        resources := Resources1,
+        services := Services1,
+        sysinfo := Sysinfo1,
+        uuid := UUID1,
+        chunter_version := Version1,
+        virtualisation := Virtualisation1
+       },
+      #{
+         last_seen := LastSeen2,
+         characteristics := Characteristics2,
+         alias := Alias2,
+         etherstubs := Etherstubs2,
+         host := Host2,
+         metadata := Metadata2,
+         networks := Networks2,
+         path := Path2,
+         pools := Pools2,
+         port := Port2,
+         resources := Resources2,
+         services := Services2,
+         sysinfo := Sysinfo2,
+         uuid := UUID2,
+         chunter_version := Version2,
+         virtualisation := Virtualisation2
+       }) ->
+    H#{
+      characteristics => fifo_map:merge(Characteristics1, Characteristics2),
+      alias => riak_dt_lwwreg:merge(Alias1, Alias2),
+      last_seen => riak_dt_lwwreg:merge(LastSeen1, LastSeen2),
+      etherstubs => riak_dt_lwwreg:merge(Etherstubs1, Etherstubs2),
+      host => riak_dt_lwwreg:merge(Host1, Host2),
+      metadata => fifo_map:merge(Metadata1, Metadata2),
+      networks => riak_dt_lwwreg:merge(Networks1, Networks2),
+      path => riak_dt_lwwreg:merge(Path1, Path2),
+      pools => fifo_map:merge(Pools1, Pools2),
+      port => riak_dt_lwwreg:merge(Port1, Port2),
+      resources => fifo_map:merge(Resources1, Resources2),
+      services => fifo_map:merge(Services1, Services2),
+      sysinfo => riak_dt_lwwreg:merge(Sysinfo1, Sysinfo2),
+      uuid => riak_dt_lwwreg:merge(UUID1, UUID2),
+      chunter_version => riak_dt_lwwreg:merge(Version1, Version2),
+      virtualisation => riak_dt_lwwreg:merge(Virtualisation1, Virtualisation2)
+     }.
 
-set(ID, [K], V, H) ->
-    set(ID, K, V, H);
 
-set({T, ID}, <<"characteristics">>, V, H) ->
-    H#?HYPERVISOR{characteristics = fifo_map:from_orddict(V, ID, T)};
+-spec uuid(hypervisor()) -> binary().
+?REG_GET(uuid).
+-spec uuid(fifo_dt:tid(), binary(), hypervisor()) -> hypervisor().
+?REG_SET_BIN(uuid).
 
-set(ID, K = <<"characteristics.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
+-spec alias(hypervisor()) -> binary().
+?REG_GET(alias).
+-spec alias(fifo_dt:tid(), binary(), hypervisor()) -> hypervisor().
+?REG_SET_BIN(alias).
 
-set(ID, [<<"characteristics">> | R], V, H) ->
-    set_characteristic(ID, R, V, H);
+-spec version(hypervisor()) -> binary().
+version(#{type := ?TYPE, chunter_version := V}) ->
+    riak_dt_lwwreg:value(V).
+-spec version(fifo_dt:tid(), binary(), hypervisor()) -> hypervisor().
+version({T, _ID}, V, O = #{type := ?TYPE, chunter_version := Reg0})
+  when is_binary(V) ->
+    ?REG_SET_BODY(chunter_version).
 
-set({T, ID}, <<"metadata">>, V, H) ->
-    H#?HYPERVISOR{metadata = fifo_map:from_orddict(V, ID, T)};
+-spec last_seen(hypervisor()) -> pos_integer().
+?REG_GET(last_seen).
+-spec last_seen(fifo_dt:tid(), pos_integer(), hypervisor()) -> hypervisor().
+?REG_SET_PI(last_seen).
 
-set(ID, K = <<"metadata.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
+-spec host(hypervisor()) -> binary().
+?REG_GET(host).
+-spec host(fifo_dt:tid(), binary(), hypervisor()) -> hypervisor().
+?REG_SET_BIN(host).
 
-set(ID, [<<"metadata">> | R], V, H) ->
-    set_metadata(ID, R, V, H);
+-spec port(hypervisor()) -> pos_integer().
+?REG_GET(port).
+-spec port(fifo_dt:tid(), pos_integer(), hypervisor()) -> hypervisor().
+?REG_SET_PI(port).
 
-set({T, ID}, <<"services">>, V, H) ->
-    H#?HYPERVISOR{services = fifo_map:from_orddict(V, ID, T)};
+-spec virtualisation(hypervisor()) -> [binary()].
+?REG_GET(virtualisation).
+-spec virtualisation(fifo_dt:tid(), [binary()], hypervisor()) -> hypervisor().
+?REG_SET(virtualisation).
 
-set(ID, K = <<"services.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
+-spec etherstubs(hypervisor()) -> [binary()].
+?REG_GET(etherstubs).
+-spec etherstubs(fifo_dt:tid(), [binary()], hypervisor()) -> hypervisor().
+?REG_SET(etherstubs).
 
-set(ID, [<<"services">> | R], V, H) ->
-    set_service(ID, R, V, H);
+-spec networks(hypervisor()) -> [binary()].
+?REG_GET(networks).
+-spec networks(fifo_dt:tid(), [{non_neg_integer(), binary()}], hypervisor()) ->
+                      hypervisor().
+?REG_SET(networks).
 
-set({T, ID}, <<"resources">>, V, H) ->
-    H#?HYPERVISOR{resources = fifo_map:from_orddict(V, ID, T)};
+-spec path(hypervisor()) -> [{non_neg_integer(), binary()}].
+%% We need to ensure we get an list
+path(#{type := ?TYPE, path := V}) ->
+    case riak_dt_lwwreg:value(V) of
+        {ok, <<>>} ->
+            {ok, []};
+        R ->
+            R
+    end.
 
-set(ID, K = <<"resources.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
+-spec path(fifo_dt:tid(), [{non_neg_integer(), binary()}], hypervisor()) ->
+                  hypervisor().
+?REG_SET(path).
 
-set(ID, [<<"resources">> | R], V, H) ->
-    set_resource(ID, R, V, H);
+-spec sysinfo(hypervisor()) -> term().
+?REG_GET(sysinfo).
+-spec sysinfo(fifo_dt:tid(), term(), hypervisor()) -> hypervisor().
+?REG_SET(sysinfo).
 
-set({T, ID}, <<"pools">>, V, H) ->
-    H#?HYPERVISOR{pools = fifo_map:from_orddict(V, ID, T)};
 
-set(ID, K = <<"pools.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
+-spec endpoint(hypervisor()) -> {string(), pos_integer()}.
+endpoint(H) ->
+    {binary_to_list(host(H)), port(H)}.
 
-set(ID, [<<"pools">> | R], V, H) ->
-    set_pool(ID, R, V, H);
 
-set(ID, <<"alias">>, Value, Hypervisor) ->
-    alias(ID, Value, Hypervisor);
+?MAP_GET(pools).
+?MAP_SET_3(set_pool).
+?MAP_SET_4(set_pool, pools).
 
-set(ID, <<"etherstubs">>, Value, Hypervisor) ->
-    etherstubs(ID, Value, Hypervisor);
+?MAP_GET(characteristics).
+?MAP_SET_3(set_characteristic).
+?MAP_SET_4(set_characteristic, characteristics).
 
-set(ID, <<"host">>, Value, Hypervisor) ->
-    host(ID, Value, Hypervisor);
+?MAP_GET(resources).
+?MAP_SET_3(set_resource).
+?MAP_SET_4(set_resource, resources).
 
-set(ID, <<"networks">>, Value, Hypervisor) ->
-    networks(ID, Value, Hypervisor);
+?MAP_GET(services).
+?MAP_SET_3(set_service).
+?MAP_SET_4(set_service, services).
 
-set(ID, <<"path">>, Value, Hypervisor) ->
-    path(ID, Value, Hypervisor);
 
-set(ID, <<"port">>, Value, Hypervisor) ->
-    port(ID, Value, Hypervisor);
+?META.
+?SET_META_3.
+?SET_META_4.
 
-set(ID, <<"sysinfo">>, Value, Hypervisor) ->
-    sysinfo(ID, Value, Hypervisor);
-
-set(ID, <<"uuid">>, Value, Hypervisor) ->
-    uuid(ID, Value, Hypervisor);
-
-set(ID, <<"version">>, Value, Hypervisor) ->
-    version(ID, Value, Hypervisor);
-
-set(ID, <<"virtualisation">>, Value, Hypervisor) ->
-    virtualisation(ID, Value, Hypervisor).
-
--ifdef(TEST).
-mkid() ->
-    {MegaSecs, Secs, MicroSecs} = os:timestamp(),
-    {(MegaSecs*1000000 + Secs)*1000000 + MicroSecs, test}.
-
-nested_test() ->
-    H = new(mkid()),
-    H1 = set(mkid(), <<"pools">>, [{<<"a">>, 1}], H),
-    JSON1 = to_json(H1),
-    H2 = set(mkid(), [<<"pools">>, <<"a">>], 1, H),
-    JSON2 = to_json(H2),
-    H3 = set(mkid(), <<"pools.a">>, 1, H),
-    JSON3 = to_json(H3),
-    ?assertEqual({ok, [{<<"a">>, 1}]}, jsxd:get(<<"pools">>, JSON1)),
-    ?assertEqual({ok, [{<<"a">>, 1}]}, jsxd:get(<<"pools">>, JSON2)),
-    ?assertEqual({ok, [{<<"a">>, 1}]}, jsxd:get(<<"pools">>, JSON3)).
-
--endif.
+?G(<<"path">>, path);
+?G(<<"uuid">>, uuid);
+?G(<<"virtualisation">>, virtualisation);
+?G(<<"etherstubs">>, etherstubs);
+?G(<<"alias">>, alias);
+?G(<<"resources">>, resources);
+getter(O, <<"resources.", K/binary>>) ->
+    V = ft_obj:val(O),
+    Rs = resources(V),
+    jsxd:get(K, <<>>, Rs);
+getter(O, [<<"resources">> | K]) ->
+    V = ft_obj:val(O),
+    Rs = resources(V),
+    jsxd:get(K, <<>>, Rs);
+?G_JSX.

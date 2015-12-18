@@ -36,4 +36,5 @@
           virtualisation  = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg()
         }).
 
--define(HYPERVISOR, hypervisor_0).
+-define(TYPE, hypervisor).
+-define(VERSION, 0).
