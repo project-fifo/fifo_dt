@@ -10,8 +10,10 @@ include fifo.mk
 clean:
 	$(REBAR) clean
 
+test: eunit eqc
+
 eqc:
 	$(REBAR) as eqc eqc
-
+	
 eunit:
 	$(REBAR) eunit

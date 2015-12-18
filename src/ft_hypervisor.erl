@@ -94,7 +94,7 @@
 
 -type hypervisor() :: #{
                   type            => ?TYPE,
-                  version         => ?VERSION,
+                  version         => non_neg_integer(),
                   last_seen       => riak_dt_lwwreg:lwwreg(),
                   characteristics => riak_dt_map:riak_dt_map(),
                   etherstubs      => riak_dt_lwwreg:lwwreg(),
@@ -353,8 +353,8 @@ version({T, _ID}, V, O = #{type := ?TYPE, chunter_version := Reg0})
 %% We need to ensure we get an list
 path(#{type := ?TYPE, path := V}) ->
     case riak_dt_lwwreg:value(V) of
-        {ok, <<>>} ->
-            {ok, []};
+        <<>> ->
+            [];
         R ->
             R
     end.
