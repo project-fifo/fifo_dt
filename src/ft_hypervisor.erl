@@ -349,7 +349,7 @@ version({T, _ID}, V, O = #{type := ?TYPE, chunter_version := Reg0})
                       hypervisor().
 ?REG_SET(networks).
 
--spec path(hypervisor()) -> [{non_neg_integer(), binary()}].
+-spec path(hypervisor()) -> [{binary(), non_neg_integer()}].
 %% We need to ensure we get an list
 path(#{type := ?TYPE, path := V}) ->
     case riak_dt_lwwreg:value(V) of
@@ -359,7 +359,7 @@ path(#{type := ?TYPE, path := V}) ->
             R
     end.
 
--spec path(fifo_dt:tid(), [{non_neg_integer(), binary()}], hypervisor()) ->
+-spec path(fifo_dt:tid(), [{binary(), non_neg_integer()}], hypervisor()) ->
                   hypervisor().
 ?REG_SET(path).
 
