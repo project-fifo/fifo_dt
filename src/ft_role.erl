@@ -8,7 +8,6 @@
 -behaviour(fifo_dt).
 
 -include("ft_role.hrl").
--define(OBJ, ?ROLE).
 -include("ft_helper.hrl").
 
 -export([
@@ -37,7 +36,13 @@
               to_json/1
              ]).
 
--type role() :: #?OBJ{}.
+-type role() :: #{
+            uuid        => riak_dt_lwwreg:lwwreg(),
+            name        => riak_dt_lwwreg:lwwreg(),
+            permissions => riak_dt_orswot:orswot(),
+            ptree       => term(),
+            metadata    => riak_dt_map:riak_dt_map()
+         }.
 -export_type([role/0]).
 
 ?IS_A.
@@ -46,12 +51,38 @@
 ?G_JSX.
 
 new({_T, _ID}) ->
-    #?ROLE{}.
+    #{
+     type        => ?TYPE,
+     version     => ?VERSION,
+     uuid        => riak_dt_lwwreg:new(),
+     name        => riak_dt_lwwreg:new(),
+     permissions => riak_dt_orswot:new(),
+     ptree       => libsnarlmatch_tree:new(),
+     metadata    => riak_dt_map:new()
+    }.
 
 %%-spec load({integer(), atom()}, any_role()) -> role().
 
-load(_, #?ROLE{} = Role) ->
+load(_, #{type := ?TYPE, version := ?VERSION} = Role) ->
     Role;
+
+load(TID, #role_1{
+             uuid = UUID,
+           name = Name,
+           permissions = Permissions,
+           metadata = Metadata
+            }) ->
+    Role = #{
+      type        => ?TYPE,
+      version     => 0,
+      uuid        => UUID,
+      name        => Name,
+      permissions => Permissions,
+      ptree       => fifo_dt:to_ptree(Permissions),
+      metadata    => Metadata
+     },
+    load(TID, Role);
+
 load(TID, #role_0{
            uuid = UUID,
            name = Name,
@@ -83,114 +114,82 @@ load(TID, #role_0_1_0{
           },
     load(TID, R).
 
-to_json(#?ROLE{
-            uuid = UUID,
-            name = Name,
-            permissions = Permissions,
-            metadata = Metadata
-           }) ->
+to_json(Role) ->
     jsxd:from_list(
       [
-       {<<"uuid">>, riak_dt_lwwreg:value(UUID)},
-       {<<"name">>, riak_dt_lwwreg:value(Name)},
-       {<<"permissions">>, riak_dt_orswot:value(Permissions)},
-       {<<"metadata">>, fifo_map:value(Metadata)}
+       {<<"uuid">>, uuid(Role)},
+       {<<"name">>, name(Role)},
+       {<<"permissions">>, permissions(Role)},
+       {<<"metadata">>, metadata(Role)}
       ]).
 
 -spec merge(role(), role()) -> role().
 
-merge(#?ROLE{
-          uuid = UUID1,
-          name = Name1,
-          permissions = Permissions1,
-          metadata = Metadata1
-         },
-      #?ROLE{
-          uuid = UUID2,
-          name = Name2,
-          permissions = Permissions2,
-          metadata = Metadata2
-         }) ->
+merge(R = #{
+        type := ?TYPE,
+        uuid := UUID1,
+        name := Name1,
+        permissions := Permissions1,
+        metadata := Metadata1
+       },
+      #{
+         type         := ?TYPE,
+         uuid         := UUID2,
+         name         := Name2,
+         permissions  := Permissions2,
+         metadata     := Metadata2
+       }) ->
     P1 = riak_dt_orswot:merge(Permissions1, Permissions2),
-    #?ROLE{
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2),
-        name = riak_dt_lwwreg:merge(Name1, Name2),
-        permissions = P1,
-        ptree = fifo_dt:to_ptree(P1),
-        metadata = fifo_map:merge(Metadata1, Metadata2)
-       }.
+    R#{
+      uuid        => riak_dt_lwwreg:merge(UUID1, UUID2),
+      name        => riak_dt_lwwreg:merge(Name1, Name2),
+      permissions => P1,
+      ptree       => fifo_dt:to_ptree(P1),
+      metadata    => fifo_map:merge(Metadata1, Metadata2)
+     }.
 
-name(Role) ->
-    riak_dt_lwwreg:value(Role#?ROLE.name).
+-spec name(role()) -> binary().
+?REG_GET(name).
+-spec name(fifo_dt:tid(), binary(), role()) -> role().
+?REG_SET(name).
 
-name({T, _ID}, Name, Role) ->
-    {ok, V} = riak_dt_lwwreg:update({assign, Name, T}, none, Role#?ROLE.name),
-    Role#?ROLE{name = V}.
+-spec uuid(role()) -> binary().
+?REG_GET(uuid).
+-spec uuid(fifo_dt:tid(), binary(), role()) -> role().
+?REG_SET(uuid).
 
-uuid(Role) ->
-    riak_dt_lwwreg:value(Role#?ROLE.uuid).
-
--spec uuid(Actor::term(), UUID::binary(), Role) ->
-                  Role.
-uuid({T, _ID}, UUID, Role = #?ROLE{}) ->
-    {ok, V} = riak_dt_lwwreg:update({assign, UUID, T}, none, Role#?ROLE.uuid),
-    Role#?ROLE{uuid = V}.
-
-ptree(#?ROLE{ptree = PTree}) ->
+ptree(#{type := ?TYPE, ptree := PTree}) ->
     PTree.
 
-permissions(Role) ->
-    riak_dt_orswot:value(Role#?ROLE.permissions).
+?SET_GET(permissions).
 
-grant({_T, ID}, Permission, Role = #?ROLE{}) ->
-    {ok, V} = riak_dt_orswot:update({add, Permission},
-                                    ID, Role#?ROLE.permissions),
-    Role#?ROLE{permissions = V, ptree = fifo_dt:to_ptree(V)}.
+grant({_T, ID}, P, Role = #{type := ?TYPE, permissions := Ps0}) ->
+    {ok, Ps1} = riak_dt_orswot:update({add, P}, ID, Ps0),
+    Role#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
 
-revoke({_T, ID}, Permission, Role) ->
-    case riak_dt_orswot:update({remove, Permission}, ID,
-                               Role#?ROLE.permissions) of
-        {error, {precondition, {not_present, Permission}}} ->
+revoke({_T, ID}, P, Role = #{type := ?TYPE, permissions := Ps0}) ->
+    case riak_dt_orswot:update({remove, P}, ID, Ps0) of
+        {error, {precondition, {not_present, P}}} ->
             Role;
-        {ok, V} ->
-            Role#?ROLE{permissions = V, ptree = fifo_dt:to_ptree(V)}
+        {ok, Ps1} ->
+            Role#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}
     end.
 
-revoke_prefix({_T, ID}, Prefix, Role) ->
-    P0 = Role#?ROLE.permissions,
-    Ps = permissions(Role),
-    P1 = lists:foldl(fun (P, PAcc) ->
-                             case lists:prefix(Prefix, P) of
-                                 true ->
-                                     {ok, V} = riak_dt_orswot:update(
-                                                 {remove, P}, ID, PAcc),
-                                     V;
-                                 _ ->
-                                     PAcc
-                             end
-                     end, P0, Ps),
-    Role#?ROLE{
-            permissions = P1,
-            ptree = fifo_dt:to_ptree(P1)
-           }.
+revoke_prefix({_T, ID}, Prefix, Role = #{type := ?TYPE, permissions := Ps0}) ->
+    PVs = permissions(Role),
+    Ps1 = lists:foldl(fun (P, PAcc) ->
+                              case lists:prefix(Prefix, P) of
+                                  true ->
+                                      {ok, R} = riak_dt_orswot:update(
+                                                  {remove, P}, ID, PAcc),
+                                      R;
+                                  _ ->
+                                      PAcc
+                              end
+                      end, Ps0, PVs),
+    Role#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
-metadata(Role) ->
-    fifo_map:value(Role#?ROLE.metadata).
-
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, Role) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, Role);
-
-set_metadata({_T, ID}, Attribute, delete, Role) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, Role#?ROLE.metadata),
-    Role#?ROLE{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, Role) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Role#?ROLE.metadata),
-    Role#?ROLE{metadata = M1}.
+?META.
+?SET_META_3.
+?SET_META_4.

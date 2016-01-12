@@ -275,7 +275,7 @@ to_json(#{
 
 -spec merge(user(), user()) -> user().
 merge(U = #{
-        type := user,
+        type := ?TYPE,
         uuid := UUID1,
         name := Name1,
         password := Password1,
@@ -289,7 +289,7 @@ merge(U = #{
         metadata := Metadata1
        },
       #{
-         type := user,
+         type := ?TYPE,
          uuid := UUID2,
          name := Name2,
          password := Password2,
@@ -484,12 +484,12 @@ ptree(#{ptree := PTree}) ->
 
 ?SET_GET(permissions).
 
-grant({_T, ID}, P, User = #{permissions := Ps0}) ->
+grant({_T, ID}, P, User = #{type := ?TYPE, permissions := Ps0}) ->
     {ok, Ps1} = riak_dt_orswot:update({add, P}, ID, Ps0),
     User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
 
-revoke({_T, ID}, P, User = #{permissions := Ps0}) ->
+revoke({_T, ID}, P, User = #{type := ?TYPE, permissions := Ps0}) ->
     case riak_dt_orswot:update({remove, P}, ID, Ps0) of
         {error, {precondition, {not_present, P}}} ->
             User;
@@ -497,7 +497,7 @@ revoke({_T, ID}, P, User = #{permissions := Ps0}) ->
             User#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}
     end.
 
-revoke_prefix({_T, ID}, Prefix, User = #{permissions := Ps0}) ->
+revoke_prefix({_T, ID}, Prefix, User = #{type := ?TYPE, permissions := Ps0}) ->
     PVs = permissions(User),
     Ps1 = lists:foldl(fun (P, PAcc) ->
                               case lists:prefix(Prefix, P) of

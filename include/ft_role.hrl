@@ -35,4 +35,5 @@
           metadata    = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
--define(ROLE, role_1).
+-define(TYPE, role).
+-define(VERSION, 0).
