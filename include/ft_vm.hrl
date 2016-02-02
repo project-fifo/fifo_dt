@@ -132,4 +132,4 @@
 
 
 -define(TYPE, vm).
--define(VERSION, 2).
+-define(VERSION, 3).
