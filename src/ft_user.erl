@@ -467,6 +467,7 @@ revoke_key({_T, ID}, KeyID, User = #{ssh_keys := Keys}) ->
 
 -spec name(user()) -> binary().
 ?REG_GET(name).
+
 -spec name(fifo_dt:tid(), binary(), user()) -> user().
 ?REG_SET(name).
 
@@ -479,7 +480,7 @@ revoke_key({_T, ID}, KeyID, User = #{ssh_keys := Keys}) ->
 -spec password(fifo_dt:tid(), password(), user()) -> user().
 ?REG_SET(password).
 
-ptree(#{ptree := PTree}) ->
+ptree(#{type := ?TYPE, ptree := PTree}) ->
     PTree.
 
 ?SET_GET(permissions).

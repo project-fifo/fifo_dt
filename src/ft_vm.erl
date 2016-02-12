@@ -41,6 +41,7 @@
          metadata/1, set_metadata/3, set_metadata/4,
          network_map/1, set_network_map/4,
          iprange_map/1, set_iprange_map/4,
+         hostname_map/1, set_hostname_map/4,
          groupings/1, add_grouping/3, remove_grouping/3,
          fw_rules/1, add_fw_rule/3, remove_fw_rule/3
         ]).
@@ -89,6 +90,7 @@
           hypervisor     => riak_dt_lwwreg:lwwreg(),
           network_map    => riak_dt_map:riak_dt_map(),
           iprange_map    => riak_dt_map:riak_dt_map(),
+          hostname_map   => riak_dt_map:riak_dt_map(),
 
           config         => riak_dt_map:riak_dt_map(),
           info           => riak_dt_map:riak_dt_map(),
@@ -129,6 +131,7 @@ new(_) ->
        hypervisor     => riak_dt_lwwreg:new(),
        network_map    => riak_dt_map:new(),
        iprange_map    => riak_dt_map:new(),
+       hostname_map   => riak_dt_map:new(),
 
        config         => riak_dt_map:new(),
        info           => riak_dt_map:new(),
@@ -149,6 +152,12 @@ new(_) ->
 
 load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
     V;
+load(TID, #{version := 3, type := ?TYPE} = V) ->
+    V1 = V#{
+           version := 4,
+           hostname_map => riak_dt_map:new()
+          },
+    load(TID, V1);
 load(TID, #{version := 2, type := ?TYPE,
             network_map := IPRangeMap} = V) ->
     V1 = V#{
@@ -430,6 +439,9 @@ to_json(V) ->
     I = lists:sort(
           [{ft_iprange:to_bin(IP), Range} ||
               {IP, Range} <- iprange_map(V)]),
+    H = lists:sort(
+          [{ft_iprange:to_bin(IP), Range} ||
+              {IP, Range} <- hostname_map(V)]),
     L = lists:sort(
           [[{<<"date">>, T},
             {<<"log">>, L}] ||
@@ -458,6 +470,7 @@ to_json(V) ->
      {<<"metadata">>, metadata(V)},
      {<<"network_mappings">>, N},
      {<<"iprange_mappings">>, I},
+     {<<"hostname_mappings">>, H},
      {<<"owner">>, owner(V)},
      {<<"package">>, package(V)},
      {<<"services">>, services(V)},
@@ -487,6 +500,7 @@ merge(O = #{
 
         network_map := NetworkMap1,
         iprange_map := IPRangeMap1,
+        hostname_map := HostNameMap1,
         config := Config1,
         info := Info1,
         backups := Backups1,
@@ -517,6 +531,7 @@ merge(O = #{
 
          network_map := NetworkMap2,
          iprange_map := IPRangeMap2,
+         hostname_map := HostNameMap2,
          config := Config2,
          info := Info2,
          backups := Backups2,
@@ -547,6 +562,7 @@ merge(O = #{
 
       network_map => fifo_map:merge(NetworkMap1, NetworkMap2),
       iprange_map => fifo_map:merge(IPRangeMap1, IPRangeMap2),
+      hostname_map => fifo_map:merge(HostNameMap1, HostNameMap2),
       config => fifo_map:merge(Config1, Config2),
       info => fifo_map:merge(Info1, Info2),
       backups => fifo_map:merge(Backups1, Backups2),
@@ -637,6 +653,11 @@ merge(O = #{
 %% Dear dialyzer please kindly go fuck yourself.
 -dialyzer({nowarn_function, set_iprange_map/4}).
 ?MAP_SET_4(set_iprange_map, iprange_map).
+
+?MAP_GET(hostname_map).
+%% Dear dialyzer please kindly go fuck yourself.
+-dialyzer({nowarn_function, set_hostname_map/4}).
+?MAP_SET_4(set_hostname_map, hostname_map).
 
 ?MAP_GET(backups).
 ?MAP_SET_3(set_backup).

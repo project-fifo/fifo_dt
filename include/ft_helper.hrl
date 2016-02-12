@@ -58,16 +58,20 @@
 -endif.
 
 %% Registers
+-define(REG_GET(Name, Field),
+        Name(#{type := ?TYPE, Field := V}) -> riak_dt_lwwreg:value(V)).
 -define(REG_GET(Field),
-        Field(#{type := ?TYPE, Field := V}) -> riak_dt_lwwreg:value(V)).
+        ?REG_GET(Field, Field)).
 
 -define(REG_SET_BODY(Field),
         {ok, Reg1} = riak_dt_lwwreg:update({assign, V, T}, none, Reg0),
         O#{Field := Reg1}).
 
--define(REG_SET(Field),
-        Field({T, _ID}, V, O = #{type := ?TYPE, Field := Reg0}) ->
+-define(REG_SET(Name, Field),
+        Name({T, _ID}, V, O = #{type := ?TYPE, Field := Reg0}) ->
                ?REG_SET_BODY(Field)).
+-define(REG_SET(Field),
+        ?REG_SET(Field, Field)).
 
 -define(REG_SET_BIN(Field),
         Field({T, _ID}, V, O = #{type := ?TYPE, Field := Reg0})

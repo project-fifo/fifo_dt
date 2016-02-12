@@ -8,7 +8,6 @@
 -behaviour(fifo_dt).
 
 -include("ft_client.hrl").
--define(OBJ, ?CLIENT).
 -include("ft_helper.hrl").
 
 -export([
@@ -29,23 +28,77 @@
          is_a/1, getter/2
         ]).
 
--type client() :: #?CLIENT{}.
+-type client() ::
+        #{
+           type          => ?TYPE,
+           version       => non_neg_integer(),
+           uuid          => riak_dt_lwwreg:lwwreg(),
+           name          => riak_dt_lwwreg:lwwreg(),
+           client_id     => riak_dt_lwwreg:lwwreg(),
+           secret        => riak_dt_lwwreg:lwwreg(),
+           client_type   => riak_dt_lwwreg:lwwreg(),
+           redirect_uris => riak_dt_orswot:orswot(),
+           permissions   => riak_dt_orswot:orswot(),
+           ptree         => libsnarlmatch_tree:new(),
+           roles         => riak_dt_orswot:orswot(),
+           metadata      => riak_dt_map:riak_dt_map()
+         }.
+
 -export_type([client/0]).
 
 ?IS_A.
 
 new({_T, _ID}) ->
     {ok, Type} = ?NEW_LWW(public, 1),
-    #?CLIENT{
-        type = Type
-       }.
+    #{
+       type          => ?TYPE,
+       version       => ?VERSION,
+       uuid          => riak_dt_lwwreg:new(),
+       name          => riak_dt_lwwreg:new(),
+       client_id     => riak_dt_lwwreg:new(),
+       secret        => riak_dt_lwwreg:new(),
+       client_type   => Type,
+       redirect_uris => riak_dt_orswot:new(),
+       permissions   => riak_dt_orswot:new(),
+       ptree         => libsnarlmatch_tree:new(),
+       roles         => riak_dt_orswot:new(),
+       metadata      => riak_dt_map:new()
+     }.
 
 ?G(<<"uuid">>, uuid);
 ?G_JSX.
 
 
-load(_, #?CLIENT{} = Client) ->
+load(_, #{type := ?TYPE, version := ?VERSION} = Client) ->
     Client;
+
+load(TID, #client_2{
+             uuid          = UUID1,
+             name          = Name1,
+             client_id     = ClientID1,
+             secret        = Secret1,
+             type          = Type1,
+             redirect_uris = RedirectURIs1,
+             permissions   = Permissions1,
+             ptree         = PTree,
+             roles         = Roles1,
+             metadata      = Metadata1
+            }) ->
+    C = #{
+      version       => 0,
+      type          => ?TYPE,
+      uuid          => UUID1,
+      name          => Name1,
+      client_id     => ClientID1,
+      secret        => Secret1,
+      type          => Type1,
+      redirect_uris => RedirectURIs1,
+      permissions   => Permissions1,
+      ptree         => PTree,
+      roles         => Roles1,
+      metadata      => Metadata1
+     },
+    load(TID, C);
 
 load(TID, #client_1{
              uuid          = UUID1,
@@ -100,7 +153,7 @@ load(TID, #client_0{
 
 
 
-to_json(#?CLIENT{} = C) ->
+to_json(C) ->
     jsxd:from_list(
       [
        {<<"uuid">>, uuid(C)},
@@ -120,122 +173,79 @@ type_to_json(public) ->
     <<"public">>.
 
 
-merge(#?CLIENT{
-          uuid          = UUID1,
-          name          = Name1,
-          client_id     = ClientID1,
-          secret        = Secret1,
-          type          = Type1,
-          redirect_uris = RedirectURIs1,
-          permissions   = Permissions1,
-          roles         = Roles1,
-          metadata      = Metadata1
-         },
-      #?CLIENT{
-          uuid          = UUID2,
-          name          = Name2,
-          client_id     = ClientID2,
-          secret        = Secret2,
-          type          = Type2,
-          redirect_uris = RedirectURIs2,
-          permissions   = Permissions2,
-          roles         = Roles2,
-          metadata      = Metadata2
-         }) ->
+merge(C = #{
+        uuid          := UUID1,
+        name          := Name1,
+        client_id     := ClientID1,
+        secret        := Secret1,
+        client_type   := Type1,
+        redirect_uris := RedirectURIs1,
+        permissions   := Permissions1,
+        roles         := Roles1,
+        metadata      := Metadata1
+       },
+      #{
+         uuid          := UUID2,
+         name          := Name2,
+         client_id     := ClientID2,
+         secret        := Secret2,
+         client_type   := Type2,
+         redirect_uris := RedirectURIs2,
+         permissions   := Permissions2,
+         roles         := Roles2,
+         metadata      := Metadata2
+       }) ->
     P1 = riak_dt_orswot:merge(Permissions1, Permissions2),
-    #?CLIENT{
-        uuid          = riak_dt_lwwreg:merge(UUID1, UUID2),
-        name          = riak_dt_lwwreg:merge(Name1, Name2),
-        client_id     = riak_dt_lwwreg:merge(ClientID1, ClientID2),
-        secret        = riak_dt_lwwreg:merge(Secret1, Secret2),
-        type          = riak_dt_lwwreg:merge(Type1, Type2),
-        redirect_uris = riak_dt_orswot:merge(RedirectURIs1, RedirectURIs2),
-        permissions   = P1,
-        ptree         = fifo_dt:to_ptree(P1),
-        roles         = riak_dt_orswot:merge(Roles1, Roles2),
-        metadata      = fifo_map:merge(Metadata1, Metadata2)
-       }.
+    C#{
+      uuid          => riak_dt_lwwreg:merge(UUID1, UUID2),
+      name          => riak_dt_lwwreg:merge(Name1, Name2),
+      client_id     => riak_dt_lwwreg:merge(ClientID1, ClientID2),
+      secret        => riak_dt_lwwreg:merge(Secret1, Secret2),
+      type          => riak_dt_lwwreg:merge(Type1, Type2),
+      redirect_uris => riak_dt_orswot:merge(RedirectURIs1, RedirectURIs2),
+      permissions   => P1,
+      ptree         => fifo_dt:to_ptree(P1),
+      roles         => riak_dt_orswot:merge(Roles1, Roles2),
+      metadata      => fifo_map:merge(Metadata1, Metadata2)
+     }.
 
-?G(uuid).
-?S(uuid).
-?G(name).
-?S(name).
-?G(client_id).
-?S(client_id).
-?G(secret).
-?S(secret).
-?G(type).
-?S(type).
+?REG_GET(uuid).
+?REG_SET(uuid).
+?REG_GET(name).
+?REG_SET(name).
+?REG_GET(client_id).
+?REG_SET(client_id).
+?REG_GET(secret).
+?REG_SET(secret).
+?REG_GET(type, client_type).
+?REG_SET(type, client_type).
 
-uris(Client) ->
-    riak_dt_orswot:value(Client#?CLIENT.redirect_uris).
+?SET_GET(uris, redirect_uris).
+?SET_ADD(add_uri, redirect_uris).
+?SET_REM(remove_uri, redirect_uris).
 
-add_uri({_T, ID}, Uri, Client) ->
-    {ok, O1} = riak_dt_orswot:update({add, Uri}, ID,
-                                     Client#?CLIENT.redirect_uris),
-    Client#?CLIENT{redirect_uris = O1}.
-
-remove_uri({_T, ID}, Uri, Client) ->
-    case riak_dt_orswot:update({remove, Uri}, ID,
-                               Client#?CLIENT.redirect_uris) of
-        {error, {precondition, {not_present, Uri}}} ->
-            Client;
-        {ok, O1} ->
-            Client#?CLIENT{redirect_uris = O1}
-    end.
-
-ptree(#?CLIENT{ptree = PTree}) ->
+ptree(#{type := ?TYPE, ptree := PTree}) ->
     PTree.
 
-permissions(Client) ->
-    riak_dt_orswot:value(Client#?CLIENT.permissions).
+?SET_GET(permissions).
 
-grant({_T, ID}, P, Client) ->
-    {ok, P1} = riak_dt_orswot:update({add, P}, ID, Client#?CLIENT.permissions),
-    Client#?CLIENT{permissions = P1, ptree = fifo_dt:to_ptree(P1)}.
+grant({_T, ID}, P, Client = #{type := ?TYPE, permissions := Ps0}) ->
+    {ok, Ps1} = riak_dt_orswot:update({add, P}, ID, Ps0),
+    Client#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}.
 
 
-revoke({_T, ID}, P, Client) ->
-    case riak_dt_orswot:update({remove, P}, ID, Client#?CLIENT.permissions) of
+revoke({_T, ID}, P, Client = #{type := ?TYPE, permissions := Ps0}) ->
+    case riak_dt_orswot:update({remove, P}, ID, Ps0) of
         {error, {precondition, {not_present, P}}} ->
             Client;
-        {ok, P1} ->
-            Client#?CLIENT{permissions = P1, ptree = fifo_dt:to_ptree(P1)}
+        {ok, Ps1} ->
+            Client#{permissions := Ps1, ptree := fifo_dt:to_ptree(Ps1)}
     end.
 
-roles(Client) ->
-    riak_dt_orswot:value(Client#?CLIENT.roles).
+?SET_GET(roles).
+?SET_ADD(join, roles).
+?SET_REM(leave, roles).
 
-
-join({_T, ID}, Role, Client) ->
-    {ok, G} = riak_dt_orswot:update({add, Role}, ID, Client#?CLIENT.roles),
-    Client#?CLIENT{roles = G}.
-
-leave({_T, ID}, Role, Client) ->
-    case riak_dt_orswot:update({remove, Role}, ID, Client#?CLIENT.roles) of
-        {error, {precondition, {not_present, Role}}} ->
-            Client;
-        {ok, G} ->
-            Client#?CLIENT{roles = G}
-    end.
-
-
-metadata(Client) ->
-    fifo_map:value(Client#?CLIENT.metadata).
-
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, Client) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, Client);
-
-set_metadata({_T, ID}, Attribute, delete, Client) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, Client#?CLIENT.metadata),
-    Client#?CLIENT{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, Client) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Client#?CLIENT.metadata),
-    Client#?CLIENT{metadata = M1}.
+?META.
+?SET_META_3.
+?SET_META_4.
