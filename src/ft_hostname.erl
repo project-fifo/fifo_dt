@@ -12,7 +12,7 @@
 -export([
          new/1,
          load/2,
-              merge/2,
+         merge/2, empty/1,
          a/1, add_a/3, remove_a/3,
          is_a/1
         ]).
@@ -59,6 +59,9 @@ merge(R = #{
       a => riak_dt_orswot:merge(A1, A2)
      }.
 
+empty(H) ->
+    L = a(H),
+    L =:= [].
 
 ?SET_GET(a).
 ?SET_ADD(add_a, a).
