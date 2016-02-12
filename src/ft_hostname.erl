@@ -6,7 +6,7 @@
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
 -module(ft_hostname).
 
--include("ft_role.hrl").
+-include("ft_hostname.hrl").
 -include("ft_helper.hrl").
 
 -export([
@@ -24,12 +24,12 @@
               a/1, add_a/3, remove_a/3
              ]).
 
--type role() :: #{
+-type hostname() :: #{
             type        => ?TYPE,
             version     => ?VERSION,
             a           => riak_dt_orswot:orswot()
          }.
--export_type([role/0]).
+-export_type([hostname/0]).
 
 ?IS_A.
 
@@ -40,12 +40,12 @@ new({_T, _ID}) ->
      a        => riak_dt_orswot:new()
     }.
 
-%%-spec load({integer(), atom()}, any_role()) -> role().
+%%-spec load({integer(), atom()}, any_hostname()) -> hostname().
 
 load(_, #{type := ?TYPE, version := ?VERSION} = Hostname) ->
     Hostname.
 
--spec merge(role(), role()) -> role().
+-spec merge(hostname(), hostname()) -> hostname().
 
 merge(R = #{
         type := ?TYPE,
