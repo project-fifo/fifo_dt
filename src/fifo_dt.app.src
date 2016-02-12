@@ -1,6 +1,6 @@
 {application,fifo_dt,
              [{description,"FiFo datatype collection"},
-              {vsn,"0.1.63"},
+              {vsn,"0.1.64"},
               {registered,[]},
               {applications,[kernel,riak_dt,stdlib,uuid,jsx,jsxd,
                              libsnarlmatch]},
