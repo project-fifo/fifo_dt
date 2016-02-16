@@ -2,8 +2,8 @@
              [{description,"FiFo datatype collection"},
               {vsn,"0.1.65"},
               {registered,[]},
-              {applications,[kernel,riak_dt,stdlib,uuid,jsx,jsxd,
+              {applications,[kernel,riak_dt,stdlib,jsx,jsxd,
                              libsnarlmatch]},
-              {contributors,["Heinz N. Gies"]},
-              {licenses,["CDDL"]},
-              {links,[{"Github","https://github.com/project-fifo/fifo_dt"}]}]}.
+              {maintainers, ["Heinz N. Gies"]},
+              {licenses, ["CDDL"]},
+              {links, [{"Github","https://github.com/project-fifo/fifo_dt"}]}]}.

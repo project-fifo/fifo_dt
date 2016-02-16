@@ -29,7 +29,7 @@ expiery() ->
            infinity]).
 
 uuid() ->
-    uuid:uuid4s().
+    fifo_utils:uuid(user).
 
 prefixed_id(Pfx) ->
     ?LET(Prefix, Pfx, <<Prefix/binary, (uuid())/binary>>).

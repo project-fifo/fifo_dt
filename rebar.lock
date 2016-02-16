@@ -1,13 +1,9 @@
-[{<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.6">>},1},
+[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.20">>},0},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.7">>},1},
  {<<"jsx">>,{pkg,<<"jsx">>,<<"1.4.5">>},0},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.1.10">>},0},
  {<<"lager">>,{pkg,<<"lager">>,<<"2.1.1">>},0},
  {<<"libsnarlmatch">>,{pkg,<<"libsnarlmatch">>,<<"0.1.7">>},0},
- {<<"riak_dt">>,
-  {git,"https://github.com/basho/riak_dt.git",
-       {ref,"a2986bccd1cc42facdfe739495c6d13762ae0f37"}},
-  0},
- {<<"uuid">>,
-  {git,"https://github.com/project-fifo/erlang-uuid.git",
-       {ref,"c28d740d878e91a075ee3d888ba15131d136e0d2"}},
-  0}].
+ {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.5.1">>},2},
+ {<<"riak_dt">>,{pkg,<<"riak_dt">>,<<"2.1.1">>},0},
+ {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.1">>},1}].

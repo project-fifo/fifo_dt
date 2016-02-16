@@ -24,7 +24,6 @@
 -callback getter(ft_obj:any_obj(), term()) ->
     term().
 
-
 type(O) ->
     Types = [
              ft_dataset,
