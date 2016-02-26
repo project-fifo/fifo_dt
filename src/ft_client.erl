@@ -72,6 +72,23 @@ new({_T, _ID}) ->
 load(_, #{type := ?TYPE, version := ?VERSION} = Client) ->
     Client;
 
+
+load(TID, C = #{version := 0, type := {_,_} = T}) ->
+    C1 = C#{
+           version       => 1,
+           type          => ?TYPE,
+           client_type   => T
+     },
+    load(TID, C1);
+
+%% If this was already correct we don't need to fix it.
+load(TID, C = #{version := 0, type := client}) ->
+    C1 = C#{
+           version       => 1
+          },
+    load(TID, C1);
+
+
 load(TID, #client_2{
              uuid          = UUID1,
              name          = Name1,
@@ -91,7 +108,7 @@ load(TID, #client_2{
       name          => Name1,
       client_id     => ClientID1,
       secret        => Secret1,
-      type          => Type1,
+      client_type   => Type1,
       redirect_uris => RedirectURIs1,
       permissions   => Permissions1,
       ptree         => PTree,
@@ -201,7 +218,7 @@ merge(C = #{
       name          => riak_dt_lwwreg:merge(Name1, Name2),
       client_id     => riak_dt_lwwreg:merge(ClientID1, ClientID2),
       secret        => riak_dt_lwwreg:merge(Secret1, Secret2),
-      type          => riak_dt_lwwreg:merge(Type1, Type2),
+      client_type   => riak_dt_lwwreg:merge(Type1, Type2),
       redirect_uris => riak_dt_orswot:merge(RedirectURIs1, RedirectURIs2),
       permissions   => P1,
       ptree         => fifo_dt:to_ptree(P1),

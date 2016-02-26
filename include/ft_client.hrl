@@ -36,5 +36,5 @@
           metadata      = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
          }).
 
--define(TYPE, role).
--define(VERSION, 0).
+-define(TYPE, client).
+-define(VERSION, 1).
