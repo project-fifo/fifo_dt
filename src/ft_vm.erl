@@ -37,7 +37,7 @@
          info/1, set_info/3, set_info/4,
          backups/1, set_backup/3, set_backup/4,
          snapshots/1, set_snapshot/3, set_snapshot/4,
-         services/1, set_service/3, set_service/4,
+         %%services/1, set_service/3, set_service/4,
          metadata/1, set_metadata/3, set_metadata/4,
          network_map/1, set_network_map/4,
          iprange_map/1, set_iprange_map/4,
@@ -68,7 +68,7 @@
               info/1, set_info/3, set_info/4,
               backups/1, set_backup/3, set_backup/4,
               snapshots/1, set_snapshot/3, set_snapshot/4,
-              services/1, set_service/3, set_service/4,
+              %%services/1, set_service/3, set_service/4,
               metadata/1, set_metadata/3, set_metadata/4,
               groupings/1, add_grouping/3, remove_grouping/3
              ]).
@@ -94,7 +94,7 @@
 
           config         => riak_dt_map:riak_dt_map(),
           info           => riak_dt_map:riak_dt_map(),
-          services       => riak_dt_map:riak_dt_map(),
+%%          services       => riak_dt_map:riak_dt_map(),
           backups        => riak_dt_map:riak_dt_map(),
           snapshots      => riak_dt_map:riak_dt_map(),
 
@@ -135,7 +135,7 @@ new(_) ->
 
        config         => riak_dt_map:new(),
        info           => riak_dt_map:new(),
-       services       => riak_dt_map:new(),
+%%       services       => riak_dt_map:new(),
        backups        => riak_dt_map:new(),
        snapshots      => riak_dt_map:new(),
        docker         => riak_dt_map:new(),
@@ -152,6 +152,12 @@ new(_) ->
 
 load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
     V;
+load(TID, #{version := 4, type := ?TYPE} = V) ->
+    V1 = V#{
+           version := 5
+          },
+    V2 = maps:remove(services, V1),
+    load(TID, V2);
 load(TID, #{version := 3, type := ?TYPE} = V) ->
     V1 = V#{
            version := 4,
@@ -473,7 +479,7 @@ to_json(V) ->
      {<<"hostname_mappings">>, H},
      {<<"owner">>, owner(V)},
      {<<"package">>, package(V)},
-     {<<"services">>, services(V)},
+     %%{<<"services">>, services(V)},
      {<<"snapshots">>, snapshots(V)},
      {<<"state">>, state(V)},
      {<<"uuid">>, uuid(V)},
@@ -505,7 +511,7 @@ merge(O = #{
         info := Info1,
         backups := Backups1,
         snapshots := Snapshots1,
-        services := Services1,
+        %%services := Services1,
         docker := Docker1,
         fw_rules := FWRules1,
 
@@ -536,7 +542,7 @@ merge(O = #{
          info := Info2,
          backups := Backups2,
          snapshots := Snapshots2,
-         services := Services2,
+         %%services := Services2,
          fw_rules := FWRules2,
          docker := Docker2,
          metadata := Metadata2
@@ -567,7 +573,7 @@ merge(O = #{
       info => fifo_map:merge(Info1, Info2),
       backups => fifo_map:merge(Backups1, Backups2),
       snapshots => fifo_map:merge(Snapshots1, Snapshots2),
-      services => fifo_map:merge(Services1, Services2),
+      %%services => fifo_map:merge(Services1, Services2),
       docker => fifo_map:merge(Docker1, Docker2),
       metadata => fifo_map:merge(Metadata1, Metadata2)
      }.
@@ -583,7 +589,7 @@ merge(O = #{
 ?G(<<"package">>, package);
 ?G(<<"hypervisor">>, hypervisor);
 ?G(<<"config">>, config);
-?G(<<"services">>, services);
+%%?G(<<"services">>, services);
 ?G(<<"metadata">>, hypervisor);
 ?G(<<"created_at">>, created_at);
 ?G(<<"created_by">>, created_by);
@@ -632,9 +638,9 @@ merge(O = #{
 ?MAP_SET_3(set_info).
 ?MAP_SET_4 (set_info, info).
 
-?MAP_GET(services).
-?MAP_SET_3(set_service).
-?MAP_SET_4 (set_service, services).
+%% ?MAP_GET(services).
+%% ?MAP_SET_3(set_service).
+%% ?MAP_SET_4 (set_service, services).
 
 ?SET_GET(groupings).
 ?SET_ADD(add_grouping, groupings).

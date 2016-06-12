@@ -76,9 +76,6 @@ vm(Size) ->
                                {call, ?V, set_snapshot, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?V, set_snapshot, [id(Size), maybe_oneof(calc_map(set_snapshot, O)), delete, O]},
 
-                               {call, ?V, set_service, [id(Size), non_blank_string(), non_blank_string(), O]},
-                               {call, ?V, set_service, [id(Size), maybe_oneof(calc_map(set_service, O)), delete, O]},
-
                                {call, ?V, set_network_map, [id(Size), ip(), non_blank_string(), O]},
                                {call, ?V, set_network_map, [id(Size), maybe_oneof(calc_map(set_network_map, O), ip()), delete, O]},
 
@@ -193,12 +190,6 @@ model_set_snapshot(K, V, U) ->
 model_delete_snapshot(K, U) ->
     r(<<"snapshots">>, lists:keydelete(K, 1, snapshots(U)), U).
 
-model_set_service(K, V, U) ->
-    r(<<"services">>, lists:usort(r(K, V, services(U))), U).
-
-model_delete_service(K, U) ->
-    r(<<"services">>, lists:keydelete(K, 1, services(U)), U).
-
 model_set_network_map(K, V, U) ->
     r(<<"network_mappings">>, lists:usort(r(ft_iprange:to_bin(K), V, network_map(U))), U).
 
@@ -250,10 +241,6 @@ backups(U) ->
 
 snapshots(U) ->
     {<<"snapshots">>, M} = lists:keyfind(<<"snapshots">>, 1, U),
-    M.
-
-services(U) ->
-    {<<"services">>, M} = lists:keyfind(<<"services">>, 1, U),
     M.
 
 network_map(U) ->
@@ -499,29 +486,6 @@ prop_remove_backup() ->
                 Hv = eval(O),
                 O1 = ?V:set_backup(id(?BIG_TIME), K, delete, Hv),
                 M1 = model_delete_backup(K, model(Hv)),
-                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
-                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
-                          model(O1) == M1)
-            end).
-
-
-prop_set_service() ->
-    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), vm()},
-            begin
-                Hv = eval(O),
-                O1 = ?V:set_service(id(?BIG_TIME), K, V, Hv),
-                M1 = model_set_service(K, V, model(Hv)),
-                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
-                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
-                          model(O1) == M1)
-            end).
-
-prop_remove_service() ->
-    ?FORALL({O, K}, ?LET(O, vm(), {O, maybe_oneof(calc_map(set_service, O))}),
-            begin
-                Hv = eval(O),
-                O1 = ?V:set_service(id(?BIG_TIME), K, delete, Hv),
-                M1 = model_delete_service(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)

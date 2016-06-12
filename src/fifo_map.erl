@@ -190,6 +190,10 @@ remove_path([K | Ks], Path, M) ->
     case find_key(K, M) of
         {ok, ?MAP, M1} ->
             remove_path(Ks, [K | Path], M1);
+        {ok, Type, _M1} ->
+            lager:warnin("[fifodt] Trying to remove ~p is not a map but a ~s",
+                         [K, Type]),
+            {ok, missing};
         the_end ->
             {ok, missing}
     end.

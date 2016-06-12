@@ -1,5 +1,5 @@
-[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.20">>},0},
- {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.7">>},1},
+[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.22">>},0},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
  {<<"jsx">>,{pkg,<<"jsx">>,<<"1.4.5">>},0},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.1.10">>},0},
  {<<"lager">>,{pkg,<<"lager">>,<<"2.1.1">>},0},
