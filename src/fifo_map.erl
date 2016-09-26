@@ -61,7 +61,8 @@ get_([K | Ks], M) ->
 
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
-
+set(Ks, M, A, T, M) when is_map(M) ->
+    set(Ks, maps:to_list(M), A, T, M);
 set(Ks, [{_, _}|_] = D, A, T, M) ->
     lists:foldl(fun({KsI, V}, {ok, MAcc}) ->
                         set(Ks ++ KsI, V, A, T, MAcc)

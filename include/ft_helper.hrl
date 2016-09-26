@@ -50,7 +50,7 @@
 -ifdef(OBJ).
 -define(IS_A,
         is_a(#?OBJ{}) -> true;
-        is_a(_) -> false).
+            is_a(_) -> false).
 -else.
 -define(IS_A,
         is_a(#{type := ?TYPE}) -> true;
@@ -105,35 +105,37 @@
 %% Map
 -define(MAP_GET(Field),
         Field(#{type := ?TYPE, Field := Map}) ->
-          fifo_map:value(Map)).
+               fifo_map:value(Map)).
 
 -define(MAP_SET(Name, Field),
         Name({T, ID}, K, V, O = #{type := ?TYPE , Field := Map}) ->
-            {ok, Map1} = fifo_map:set(K, {reg, V}, ID, T, Map),
-            O#{Field := Map1}).
+               {ok, Map1} = fifo_map:set(K, {reg, V}, ID, T, Map),
+               O#{Field := Map1}).
 
 -define(MAP_REM(Name, Field),
         Name({_T, ID}, K, O = #{type := ?TYPE , Field := Map}) ->
-            {ok, Map1} = fifo_map:remove(K, ID, Map),
-            O#{Field := Map1}).
+               {ok, Map1} = fifo_map:remove(K, ID, Map),
+               O#{Field := Map1}).
 
 -define(MAP_SET_3(Name),
-        Name(ID, [{K, V} | R] , Obj) ->
+        Name(ID, M, Obj) when is_map(M) ->
+               Name(ID, maps:to_list(M), Obj);
+            Name(ID, [{K, V} | R] , Obj) ->
                Name(ID, R, Name(ID, K, V, Obj));
-        Name(_ID, _, Obj) ->
+            Name(_ID, _, Obj) ->
                Obj).
 
 -define(MAP_SET_4(Name, Field),
         Name({T, ID}, P, V, O) when is_binary(P) ->
-            Name({T, ID}, fifo_map:split_path(P), V, O);
-        Name({_T, ID}, Attribute, delete,
-                     O = #{type := ?TYPE, Field := Meta}) ->
-            {ok, M1} = fifo_map:remove(Attribute, ID, Meta),
-            O#{Field := M1};
-        Name({T, ID}, Attribute, Value,
-                     O = #{type := ?TYPE, Field := Meta}) ->
-            {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Meta),
-            O#{Field := M1}).
+               Name({T, ID}, fifo_map:split_path(P), V, O);
+            Name({_T, ID}, Attribute, delete,
+                 O = #{type := ?TYPE, Field := Meta}) ->
+               {ok, M1} = fifo_map:remove(Attribute, ID, Meta),
+               O#{Field := M1};
+            Name({T, ID}, Attribute, Value,
+                 O = #{type := ?TYPE, Field := Meta}) ->
+               {ok, M1} = fifo_map:set(Attribute, Value, ID, T, Meta),
+               O#{Field := M1}).
 
 -define(META, ?MAP_GET(metadata)).
 

@@ -414,6 +414,27 @@ prop_set_config() ->
                           model(O1) == M1)
             end).
 
+prop_set_config_list() ->
+    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), vm()},
+            begin
+                Hv = eval(O),
+                O1 = ?V:set_config(id(?BIG_TIME), [{K, V}], Hv),
+                M1 = model_set_config(K, V, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+prop_set_config_map() ->
+    ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), vm()},
+            begin
+                Hv = eval(O),
+                O1 = ?V:set_config(id(?BIG_TIME), maps:from_list([{K, V}]), Hv),
+                M1 = model_set_config(K, V, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
 prop_remove_config() ->
     ?FORALL({O, K}, ?LET(O, vm(), {O, maybe_oneof(calc_map(set_config, O))}),
             begin

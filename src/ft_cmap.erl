@@ -40,6 +40,8 @@ dec(Actor, Key, Value, Map) ->
     Update = {update, [{update, {Key, ?T}, {decrement, Value}}]},
     riak_dt_map:update(Update, Actor, Map).
 
+
+-dialyzer({nowarn_function, remove/3}).
 remove(Actor, Key, Map) ->
     Update = {update, [{remove, {Key, ?T}}]},
     case riak_dt_map:update(Update, Actor, Map) of
