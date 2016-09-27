@@ -448,10 +448,9 @@ to_json(V) ->
     H = maps:from_list(
           [{ft_iprange:to_bin(IP), Range} ||
               {IP, Range} <- maps:to_list(hostname_map(V))]),
-    L = maps:from_list(
-          [[{<<"date">>, T},
-            {<<"log">>, L}] ||
-              {T, L} <- logs(V)]),
+    L = [#{<<"date">> => T,
+           <<"log">> => L} ||
+            {T, L} <- logs(V)],
     Creating = case creating(V) of
                    false ->
                        false;
