@@ -64,16 +64,22 @@ prop_from_orddict_old() ->
     ?FORALL(O, orddict(),
             begin
                 Dict = eval(O),
-                ?WHENFAIL(io:format(user, "History: ~p~nData: ~p~n", [O, Dict]),
-                          Dict == ?OM:value(?OM:from_orddict(Dict, test, 1)))
+                Expected = ?OM:value(?OM:from_orddict(Dict, test, 1)),
+                ?WHENFAIL(io:format(user, "History: ~p~nExpected: ~p~n"
+                                    "Data: ~p~n", [O, Expected, Dict]),
+                          Dict == Expected)
             end).
 
 prop_from_orddict() ->
     ?FORALL(O, orddict(),
             begin
                 Dict = eval(O),
-                ?WHENFAIL(io:format(user, "History: ~p~nData: ~p~n", [O, Dict]),
-                          Dict == ?NM:value(?NM:from_orddict(Dict, test, 1)))
+                Expected = ?NM:value(?NM:from_orddict(Dict, test, 1)),
+                Map = l2m(Dict),
+                ?WHENFAIL(io:format(user, "History: ~p~nData: ~p~n"
+                                    "Expected: ~p~nMap: ~p~n",
+                                    [O, Dict, Expected, Map]),
+                          Map == Expected)
             end).
 
 prop_convert_map() ->
@@ -81,8 +87,11 @@ prop_convert_map() ->
             begin
                 Dict = eval(O),
                 Old = ?OM:from_orddict(Dict, test, 1),
-                ?WHENFAIL(io:format(user, "History: ~p~nData: ~p~n", [O, Dict]),
-                          Dict == ?NM:value(fifo_dt:update_map(Old)))
+                Expected = ?NM:value(fifo_dt:update_map(Old)),
+                Map = l2m(Dict),
+                ?WHENFAIL(io:format(user, "History: ~p~nExpected: ~p~n"
+                                    "Data: ~p~n", [O, Expected, Map]),
+                          Map == Expected)
             end).
 
 prop_convert_set() ->
@@ -96,3 +105,9 @@ prop_convert_set() ->
                                     [S, OldV, NewV]),
                           OldV == NewV)
             end).
+
+l2m([]) ->
+    #{};
+l2m(L) ->
+    jsxd:from_list(L).
+

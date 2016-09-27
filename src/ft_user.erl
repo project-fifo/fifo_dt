@@ -244,7 +244,7 @@ load_(TID, #user_0_1_5{
           },
     load_(TID, U).
 
--spec to_json(user()) -> [{binary(), term()}].
+-spec to_json(user()) -> maps:map().
 
 to_json(#{
             uuid        := UUID,
@@ -258,20 +258,19 @@ to_json(#{
             tokens      := Tokens,
             metadata    := Metadata
            }) ->
-    jsxd:from_list(
-      [
-       {<<"uuid">>, riak_dt_lwwreg:value(UUID)},
-       {<<"name">>, riak_dt_lwwreg:value(Name)},
-       {<<"roles">>, riak_dt_orswot:value(Roles)},
-       {<<"permissions">>, riak_dt_orswot:value(Permissions)},
-       {<<"yubikeys">>, riak_dt_orswot:value(YubiKeys)},
-       {<<"keys">>, riak_dt_orswot:value(Keys)},
-       {<<"org">>, riak_dt_lwwreg:value(Org)},
-       {<<"orgs">>, riak_dt_orswot:value(Orgs)},
-       {<<"tokens">>, lists:usort([token_to_json(T)
-                                   || T <- riak_dt_orswot:value(Tokens)])},
-       {<<"metadata">>, fifo_map:value(Metadata)}
-      ]).
+    #{
+       <<"uuid">> => riak_dt_lwwreg:value(UUID),
+       <<"name">> => riak_dt_lwwreg:value(Name),
+       <<"roles">> => riak_dt_orswot:value(Roles),
+       <<"permissions">> => riak_dt_orswot:value(Permissions),
+       <<"yubikeys">> => riak_dt_orswot:value(YubiKeys),
+       <<"keys">> => maps:from_list(riak_dt_orswot:value(Keys)),
+       <<"org">> => riak_dt_lwwreg:value(Org),
+       <<"orgs">> => riak_dt_orswot:value(Orgs),
+       <<"tokens">> => lists:usort([token_to_json(T)
+                                    || T <- riak_dt_orswot:value(Tokens)]),
+       <<"metadata">> => fifo_map:value(Metadata)
+      }.
 
 -spec merge(user(), user()) -> user().
 merge(U = #{
@@ -318,31 +317,33 @@ merge(U = #{
       metadata := fifo_map:merge(Metadata1, Metadata2)
      }.
 
--spec token_to_json(token()) -> [{binary(), term()}].
+-spec token_to_json(token()) -> map().
 token_to_json(#{type := Type, id := ID, expiery := Exp, client := Client,
                 scope := Scope, comment := Comment}) ->
-    J = [{<<"type">>, atom_to_binary(Type, utf8)},
-         {<<"id">>, ID},
-         {<<"scope">>, Scope}],
+    J = #{
+      <<"type">> => atom_to_binary(Type, utf8),
+      <<"id">> => ID,
+      <<"scope">> => Scope
+     },
     J2 = case Exp of
              infinity ->
                  J;
              _ ->
-                 [{<<"expiery">>, Exp} | J]
+                 J#{<<"expiery">> => Exp}
          end,
     J3 = case Client of
              undefined ->
                  J2;
              _ ->
-                 [{<<"client">>, Client} | J2]
+                 J2#{<<"client">> => Client}
          end,
-    J4 = case Comment of
-             undefined ->
-                 J3;
-             _ ->
-                 [{<<"comment">>, Comment} | J3]
-         end,
-    lists:sort(J4).
+    case Comment of
+        undefined ->
+            J3;
+        _ ->
+            J3#{<<"comment">> => Comment}
+    end.
+
 
 -spec add_token(fifo_dt:tid(),
                 {TokenID :: binary(),

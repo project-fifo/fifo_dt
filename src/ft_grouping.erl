@@ -155,6 +155,8 @@ load(TID, #grouping_0_1_0{
 metadata(G) ->
     fifo_map:value(G#?GROUPING.metadata).
 
+set_metadata(ID, M , Vm) when is_map(M) ->
+    set_metadata(ID, maps:to_list(M) , Vm);
 set_metadata(ID, [{K, V} | R] , Vm) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Vm));
 
@@ -175,7 +177,10 @@ set_metadata({T, ID}, Attribute, Value, G) ->
 config(G) ->
     fifo_map:value(G#?GROUPING.config).
 
-set_config(ID, [{K, V} | R] , Vm) ->
+set_config(ID, M , Vm) when is_map(M) ->
+    set_config(ID, maps:to_list(M) , Vm);
+
+set_config(ID, [{K, V} | R], Vm) ->
     set_config(ID, R, set_config(ID, K, V, Vm));
 
 set_config(_ID, _, Vm) ->
@@ -199,15 +204,15 @@ to_json(G) ->
                _ ->
                    <<"none">>
            end,
-    [
-     {<<"config">>, config(G)},
-     {<<"elements">>, elements(G)},
-     {<<"groupings">>, groupings(G)},
-     {<<"metadata">>, metadata(G)},
-     {<<"name">>, name(G)},
-     {<<"type">>, Type},
-     {<<"uuid">>, uuid(G)}
-    ].
+    #{
+       <<"config">> => config(G),
+       <<"elements">> => elements(G),
+       <<"groupings">> => groupings(G),
+       <<"metadata">> => metadata(G),
+       <<"name">> => name(G),
+       <<"type">> => Type,
+       <<"uuid">> => uuid(G)
+     }.
 
 merge(#?GROUPING{
           elements = Elements1,

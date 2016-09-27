@@ -221,27 +221,27 @@ load(TID, #hypervisor_0_1_0{
     load(TID, H1).
 
 to_json(H) ->
-    [
-     {<<"alias">>, alias(H)},
-     {<<"characteristics">>, characteristics(H)},
-     {<<"etherstubs">>, etherstubs(H)},
-     {<<"host">>, host(H)},
-     {<<"last_seen">>, last_seen(H)},
-     {<<"metadata">>, metadata(H)},
-     {<<"networks">>, networks(H)},
-     {<<"path">>, path_to_json(path(H))},
-     {<<"pools">>, pools(H)},
-     {<<"port">>, port(H)},
-     {<<"resources">>, resources(H)},
-     {<<"services">>, services(H)},
-     {<<"sysinfo">>, sysinfo(H)},
-     {<<"uuid">>, uuid(H)},
-     {<<"version">>, version(H)},
-     {<<"virtualisation">>, virtualisation(H)}
-    ].
+    #{
+     <<"alias">> => alias(H),
+     <<"characteristics">> => characteristics(H),
+     <<"etherstubs">> => etherstubs(H),
+     <<"host">> => host(H),
+     <<"last_seen">> => last_seen(H),
+     <<"metadata">> => metadata(H),
+     <<"networks">> => networks(H),
+     <<"path">> => path_to_json(path(H)),
+     <<"pools">> => pools(H),
+     <<"port">> => port(H),
+     <<"resources">> => resources(H),
+     <<"services">> => services(H),
+     <<"sysinfo">> => sysinfo(H),
+     <<"uuid">> => uuid(H),
+     <<"version">> => version(H),
+     <<"virtualisation">> => virtualisation(H)
+     }.
 
 path_to_json(P) ->
-    [[{<<"cost">>, C}, {<<"name">>, N}] || {N, C} <- P].
+    [#{<<"cost">> => C, <<"name">> => N} || {N, C} <- P].
 
 merge(H=#{
         type := ?TYPE,

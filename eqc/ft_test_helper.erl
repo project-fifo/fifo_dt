@@ -4,6 +4,9 @@
 
 -compile(export_all).
 
+r(K, V, U) ->
+    maps:put(K, V, U).
+
 id(I) ->
     {I+1, eqc}.
 
@@ -80,3 +83,12 @@ random_req() ->
     ?SUCHTHAT({_, Low, High},
               {random, choose(-100, 100), choose(-100, 100)},
               Low =< High).
+
+model_set_metadata(K, V, U) ->
+    r(<<"metadata">>, r(K, V, metadata(U)), U).
+
+model_delete_metadata(K, U) ->
+    r(<<"metadata">>, maps:remove(K, metadata(U)), U).
+
+metadata(#{<<"metadata">> := M}) ->
+    M.

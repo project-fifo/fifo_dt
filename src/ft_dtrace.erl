@@ -72,7 +72,9 @@ script({T, _ID}, V, H) ->
 metadata(H) ->
     fifo_map:value(H#?DTRACE.metadata).
 
-set_metadata(ID, [{K, V} | R] , Obj) ->
+set_metadata(ID, M, Obj) when is_map(M) ->
+    set_metadata(ID, maps:to_list(M), Obj);
+set_metadata(ID, [{K, V} | R], Obj) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 
 set_metadata(_ID, _, Obj) ->
@@ -92,6 +94,8 @@ set_metadata({T, ID}, Attribute, Value, G) ->
 config(H) ->
     fifo_map:value(H#?DTRACE.config).
 
+set_config(ID, M, Obj) when is_map(M) ->
+    set_config(ID, maps:to_list(M), Obj);
 set_config(ID, [{K, V} | R] , Obj) ->
     set_config(ID, R, set_config(ID, K, V, Obj));
 
@@ -132,13 +136,13 @@ load(TID, #dtrace_0_1_0{
     load(TID, D1).
 
 to_json(D) ->
-    [
-     {<<"config">>, config(D)},
-     {<<"metadata">>, metadata(D)},
-     {<<"name">>, name(D)},
-     {<<"script">>, script(D)},
-     {<<"uuid">>, uuid(D)}
-    ].
+    #{
+       <<"config">> => config(D),
+       <<"metadata">> => metadata(D),
+       <<"name">> => name(D),
+       <<"script">> => script(D),
+       <<"uuid">> => uuid(D)
+     }.
 
 set(ID, [K], V, H) ->
     set(ID, K, V, H);

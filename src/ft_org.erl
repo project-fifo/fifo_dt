@@ -198,11 +198,12 @@ jsonify_permission(Permission) ->
 
 -spec to_json(Org::org()) -> fifo:attr_list().
 to_json(Org) ->
+    Triggers = maps:map(fun(_, V) -> jsonify_trigger(V) end, triggers(Org)),
     jsxd:from_list(
       [
        {<<"uuid">>, uuid(Org)},
        {<<"name">>, name(Org)},
-       {<<"triggers">>, [{U, jsonify_trigger(T)} || {U, T} <- triggers(Org)]},
+       {<<"triggers">>, Triggers},
        {<<"resources">>, resources(Org)},
        {<<"metadata">>, metadata(Org)}
       ]).
@@ -254,7 +255,7 @@ resource_dec({_T, ID}, K, V, O = #{type := ?TYPE, resources := Rs}) ->
 ?REG_GET(uuid).
 ?REG_SET(uuid).
 
--spec triggers(Org::org()) -> [{ID::fifo:uuid(), Trigger::term()}].
+-spec triggers(Org::org()) -> #{fifo:uuid() => Trigger::term()}.
 
 ?MAP_GET(triggers).
 
@@ -263,7 +264,7 @@ resource_dec({_T, ID}, K, V, O = #{type := ?TYPE, resources := Rs}) ->
 ?MAP_REM(remove_trigger, triggers).
 
 remove_target(TID, Target, Org) ->
-    Triggers = triggers(Org),
+    Triggers = maps:to_list(triggers(Org)),
     GrantTriggers = [UUID || {UUID, {_, {grant, _, T, _}}} <- Triggers,
                              T =:= Target],
     JoinTriggers = [UUID || {UUID, {_, {join, _, T}}} <- Triggers,

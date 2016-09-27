@@ -40,7 +40,7 @@ get(K, M) ->
 get_([], M) ->
     M;
 get_([K | Ks], M) ->
-    case orddict:find(K, M) of
+    case maps:find(K, M) of
         {ok, M1} ->
             get_(Ks, M1);
         E ->
@@ -106,8 +106,11 @@ remove(Ks, A, M) when is_list(Ks) ->
 remove(K, A, M) ->
     remove([K], A, M).
 
+
+-spec value(riak_dt_map:riak_dt_map()) -> maps:map().
+
 value(M) ->
-    lists:sort([flatten_value(V) || V <- riak_dt_map:value(M)]).
+    maps:from_list(lists:sort([flatten_value(V) || V <- riak_dt_map:value(M)])).
 
 flatten_value({{K, ?REG}, V}) ->
     {K, V};
@@ -116,7 +119,7 @@ flatten_value({{K, ?COUNTER}, V}) ->
 flatten_value({{K, ?SET}, Vs}) ->
     {K, Vs};
 flatten_value({{K, ?MAP}, Vs}) ->
-    {K, lists:sort([flatten_value(V) || V <- Vs])}.
+    {K, maps:from_list(lists:sort([flatten_value(V) || V <- Vs]))}.
 
 -spec from_orddict(D::orddict:orddict(),
                    Actor::term(),
@@ -297,15 +300,15 @@ from_orddict_test() ->
     M2 = from_orddict(O2, none, 0),
     O3 = [{k1, [{k11, [{k111, v111}]}]}, {k2, v2}],
     M3 = from_orddict(O3, none, 0),
-    ?assertEqual(O1, value(M1)),
-    ?assertEqual(O2, value(M2)),
-    ?assertEqual(O3, value(M3)),
+    ?assertEqual(jsxd:from_list(O1), value(M1)),
+    ?assertEqual(jsxd:from_list(O2), value(M2)),
+    ?assertEqual(jsxd:from_list(O3), value(M3)),
     ok.
 
 adding_mapo_test() ->
     M = fifo_map:new(),
     {ok, M1} = fifo_map:set(k, [{k1, v1}], a, 0, M),
-    ?assertEqual([{k, [{k1, v1}]}], fifo_map:value(M1)),
+    ?assertEqual(#{k => #{k1 => v1}}, fifo_map:value(M1)),
     ?assertEqual(v1, fifo_map:get([k, k1], M1)),
     ok.
 
@@ -363,13 +366,13 @@ delete_test() ->
     {ok, M5} = fifo_map:remove([o, k], a, M2),
     ?assertEqual(v, fifo_map:get(k, M1)),
     ?assertEqual(v1, fifo_map:get([o, k], M2)),
-    ?assertEqual([{k, v}, {o, [{k, v1}]}],
+    ?assertEqual(#{k => v, o => #{k => v1}},
                  fifo_map:value(M2)),
-    ?assertEqual([{o, [{k, v1}]}],
+    ?assertEqual(#{o => #{k => v1}},
                  fifo_map:value(M3)),
-    ?assertEqual([{k, v}],
+    ?assertEqual(#{k => v},
                  fifo_map:value(M4)),
-    ?assertEqual([{k, v}, {o, []}],
+    ?assertEqual(#{k => v, o => #{}},
                  fifo_map:value(M5)),
     ok.
 

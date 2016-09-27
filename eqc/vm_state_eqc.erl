@@ -1,6 +1,7 @@
 -module(vm_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -127,8 +128,6 @@ calc_fw_rules({call, _, _, P}) ->
 calc_fw_rules(_) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
@@ -160,53 +159,48 @@ model_created_at(N, R) ->
 model_created_by(N, R) ->
     r(<<"created_by">>, N, R).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model_set_config(K, V, U) ->
-    r(<<"config">>, lists:usort(r(K, V, config(U))), U).
+    r(<<"config">>, r(K, V, config(U)), U).
 
 model_delete_config(K, U) ->
-    r(<<"config">>, lists:keydelete(K, 1, config(U)), U).
+    r(<<"config">>, maps:remove(K, config(U)), U).
 
 model_set_info(K, V, U) ->
-    r(<<"info">>, lists:usort(r(K, V, info(U))), U).
+    r(<<"info">>, r(K, V, info(U)), U).
 
 model_delete_info(K, U) ->
-    r(<<"info">>, lists:keydelete(K, 1, info(U)), U).
+    r(<<"info">>, maps:remove(K, info(U)), U).
 
 model_set_backup(K, V, U) ->
-    r(<<"backups">>, lists:usort(r(K, V, backups(U))), U).
+    r(<<"backups">>, r(K, V, backups(U)), U).
 
 model_delete_backup(K, U) ->
-    r(<<"backups">>, lists:keydelete(K, 1, backups(U)), U).
+    r(<<"backups">>, maps:remove(K, backups(U)), U).
 
 model_set_snapshot(K, V, U) ->
-    r(<<"snapshots">>, lists:usort(r(K, V, snapshots(U))), U).
+    r(<<"snapshots">>, r(K, V, snapshots(U)), U).
 
 model_delete_snapshot(K, U) ->
-    r(<<"snapshots">>, lists:keydelete(K, 1, snapshots(U)), U).
+    r(<<"snapshots">>, maps:remove(K, snapshots(U)), U).
 
 model_set_network_map(K, V, U) ->
-    r(<<"network_mappings">>, lists:usort(r(ft_iprange:to_bin(K), V, network_map(U))), U).
+    r(<<"network_mappings">>, r(ft_iprange:to_bin(K), V, network_map(U)), U).
 
 model_delete_network_map(K, U) ->
-    r(<<"network_mappings">>, lists:keydelete(ft_iprange:to_bin(K), 1, network_map(U)), U).
+    r(<<"network_mappings">>, maps:remove(ft_iprange:to_bin(K), network_map(U)), U).
 
 model_set_hostname_map(K, V, U) ->
-    r(<<"hostname_mappings">>, lists:usort(r(ft_iprange:to_bin(K), V, hostname_map(U))), U).
+    r(<<"hostname_mappings">>, r(ft_iprange:to_bin(K), V, hostname_map(U)), U).
 
 model_delete_hostname_map(K, U) ->
-    r(<<"hostname_mappings">>, lists:keydelete(ft_iprange:to_bin(K), 1, hostname_map(U)), U).
+    r(<<"hostname_mappings">>, maps:remove(ft_iprange:to_bin(K), hostname_map(U)), U).
 
 model_set_iprange_map(K, V, U) ->
-    r(<<"iprange_mappings">>, lists:usort(r(ft_iprange:to_bin(K), V, iprange_map(U))), U).
+    r(<<"iprange_mappings">>, r(ft_iprange:to_bin(K), V, iprange_map(U)), U).
 
 model_delete_iprange_map(K, U) ->
-    r(<<"iprange_mappings">>, lists:keydelete(ft_iprange:to_bin(K), 1, iprange_map(U)), U).
+    r(<<"iprange_mappings">>, maps:remove(ft_iprange:to_bin(K), iprange_map(U)), U).
 
 model_add_grouping(E, U) ->
     r(<<"groupings">>, lists:usort([E | get_groupings(U)]), U).
@@ -223,44 +217,31 @@ model_remove_fw_rule(E, U) ->
 model(R) ->
     ?V:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
+config(#{<<"config">> := M}) ->
     M.
 
-config(U) ->
-    {<<"config">>, M} = lists:keyfind(<<"config">>, 1, U),
+info(#{<<"info">> := M}) ->
     M.
 
-info(U) ->
-    {<<"info">>, M} = lists:keyfind(<<"info">>, 1, U),
+backups(#{<<"backups">> := M}) ->
     M.
 
-backups(U) ->
-    {<<"backups">>, M} = lists:keyfind(<<"backups">>, 1, U),
+snapshots(#{<<"snapshots">> := M}) ->
     M.
 
-snapshots(U) ->
-    {<<"snapshots">>, M} = lists:keyfind(<<"snapshots">>, 1, U),
+network_map(#{<<"network_mappings">> := M}) ->
     M.
 
-network_map(U) ->
-    {<<"network_mappings">>, M} = lists:keyfind(<<"network_mappings">>, 1, U),
+hostname_map(#{<<"hostname_mappings">> := M}) ->
     M.
 
-hostname_map(U) ->
-    {<<"hostname_mappings">>, M} = lists:keyfind(<<"hostname_mappings">>, 1, U),
+iprange_map(#{<<"iprange_mappings">> := M}) ->
     M.
 
-iprange_map(U) ->
-    {<<"iprange_mappings">>, M} = lists:keyfind(<<"iprange_mappings">>, 1, U),
+get_groupings(#{<<"groupings">> := M}) ->
     M.
 
-get_groupings(U) ->
-    {<<"groupings">>, M} = lists:keyfind(<<"groupings">>, 1, U),
-    M.
-
-get_fw_rules(U) ->
-    {<<"fw_rules">>, M} = lists:keyfind(<<"fw_rules">>, 1, U),
+get_fw_rules(#{<<"fw_rules">> := M}) ->
     M.
 
 prop_merge() ->
@@ -624,7 +605,7 @@ prop_remove_fw_rule() ->
 
 prop_to_json() ->
     ?FORALL(E, vm(),
-            jsx:encode(?V:to_json(eval(E))) /= []).
+            jsone:encode(?V:to_json(eval(E))) /= #{}).
 
 prop_fw_json() ->
     ?FORALL(R, fw_rule(),

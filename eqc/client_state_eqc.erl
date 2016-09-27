@@ -1,7 +1,9 @@
 -module(client_state_eqc).
 
 
--import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3,
+                         id/1, permission/0, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -78,11 +80,9 @@ calc_uris({call, _, _, P}) ->
 calc_uris(_) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model(U) ->
-    lists:sort([{<<"secret">>, ?U:secret(U)} | ?U:to_json(U)]).
+    U1 = ?U:to_json(U),
+    U1#{<<"secret">> =>?U:secret(U)}.
 
 model_uuid(N, U) ->
     r(<<"uuid">>, N, U).
@@ -108,33 +108,20 @@ model_revoke(P, U) ->
 model_grant(P, U) ->
     r(<<"permissions">>, lists:usort([P | permissions(U)]), U).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 model_leave_role(P, U) ->
     r(<<"roles">>, lists:delete(P, roles(U)), U).
 
 model_add_role(P, U) ->
     r(<<"roles">>, lists:usort([P | roles(U)]), U).
 
-permissions(U) ->
-    {<<"permissions">>, Ps} = lists:keyfind(<<"permissions">>, 1, U),
+permissions(#{<<"permissions">> := Ps}) ->
     Ps.
 
-uris(U) ->
-    {<<"redirect_uris">>, Ps} = lists:keyfind(<<"redirect_uris">>, 1, U),
-    Ps.
+uris(#{<<"redirect_uris">> := Us}) ->
+    Us.
 
-roles(U) ->
-    {<<"roles">>, Ps} = lists:keyfind(<<"roles">>, 1, U),
-    Ps.
-
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
+roles(#{<<"roles">> := Rs}) ->
+    Rs.
 
 has_permissions(U) ->
     ?U:permissions(U) =/= [].
@@ -268,4 +255,4 @@ prop_remove_metadata() ->
 
 prop_to_json() ->
     ?FORALL(E, client(),
-            jsx:encode(?U:to_json(eval(E))) /= []).
+            jsone:encode(?U:to_json(eval(E))) /= #{}).

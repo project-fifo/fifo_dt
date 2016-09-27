@@ -1,6 +1,9 @@
 -module(package_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1, requirement/0]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3,
+                         requirement/0,
+                         id/1, permission/0, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -103,70 +106,38 @@ calc_requirements({call, _, _, P}) ->
 calc_requirements(_) ->
     [].
 
-r(K, V, U) ->
-    lists:usort(lists:keystore(K, 1, U, {K, V})).
 
 model_remove_org_resource(I, U) ->
-    r(<<"org_resources">>, lists:keydelete(I, 1, org_resources(U)), U).
+    r(<<"org_resources">>, maps:remove(I, org_resources(U)), U).
 
 model_inc_org_resource(K, I, U) ->
     Rs = org_resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V + I} | Rs1]),
-    r(<<"org_resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V + I end, I, Rs),
+    r(<<"org_resources">>, Rs1, U).
 
 model_dec_org_resource(K, I, U) ->
     Rs = org_resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V - I} | Rs1]),
-    r(<<"org_resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V - I end, - I, Rs),
+    r(<<"org_resources">>, Rs1, U).
 
-org_resources(U) ->
-    {<<"org_resources">>, M} = lists:keyfind(<<"org_resources">>, 1, U),
+org_resources(#{<<"org_resources">> := M}) ->
     M.
 
 
 model_remove_hv_resource(I, U) ->
-    r(<<"hv_resources">>, lists:keydelete(I, 1, hv_resources(U)), U).
+    r(<<"hv_resources">>, maps:remove(I, hv_resources(U)), U).
 
 model_inc_hv_resource(K, I, U) ->
     Rs = hv_resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V + I} | Rs1]),
-    r(<<"hv_resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V + I end, I, Rs),
+    r(<<"hv_resources">>, Rs1, U).
 
 model_dec_hv_resource(K, I, U) ->
     Rs = hv_resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V - I} | Rs1]),
-    r(<<"hv_resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V - I end,  - I, Rs),
+    r(<<"hv_resources">>, Rs1, U).
 
-hv_resources(U) ->
-    {<<"hv_resources">>, M} = lists:keyfind(<<"hv_resources">>, 1, U),
+hv_resources(#{<<"hv_resources">> := M}) ->
     M.
 
 model_uuid(N, R) ->
@@ -205,22 +176,11 @@ model_add_requirement(E, U) ->
 model_remove_requirement(E, U) ->
     r(<<"requirements">>, lists:delete(fifo_dt:req2js(E), requirements(U)), U).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 model(R) ->
     U = ?P:to_json(R),
     r(<<"requirements">>, lists:sort(requirements(U)), U).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
-
-requirements(U) ->
-    {<<"requirements">>, M} = lists:keyfind(<<"requirements">>, 1, U),
+requirements(#{<<"requirements">> := M}) ->
     M.
 
 prop_merge() ->
@@ -462,8 +422,8 @@ prop_js_req_conversion() ->
 
 prop_js_req_syntax() ->
     ?FORALL(R, requirement(),
-            jsx:encode(fifo_dt:req2js(R)) /= []).
+            jsone:encode(fifo_dt:req2js(R)) /= <<>>).
 
 prop_to_json() ->
     ?FORALL(E, package(),
-            jsx:encode(?P:to_json(eval(E))) /= []).
+            jsone:encode(?P:to_json(eval(E))) /= <<>>).

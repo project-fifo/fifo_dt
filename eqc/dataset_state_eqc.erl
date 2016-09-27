@@ -1,6 +1,9 @@
 -module(dataset_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1, requirement/0]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3,
+                         requirement/0,
+                         id/1, permission/0, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -25,7 +28,7 @@ network() ->
     {non_blank_string(), non_blank_string()}.
 
 net_to_js({Name, Desc}) ->
-    [{<<"description">>, Desc}, {<<"name">>, Name}].
+    #{<<"description">> => Desc, <<"name">> => Name}.
 
 dataset(Size) ->
     ?LAZY(oneof([{call, ?D, new, [id(Size)]} || Size == 1] ++
@@ -92,9 +95,6 @@ calc_networks({call, _, _, P}) ->
 calc_networks(_) ->
     [].
 
-r(K, V, U) ->
-    lists:usort(lists:keystore(K, 1, U, {K, V})).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
@@ -152,27 +152,16 @@ model_add_network(E, U) ->
 model_remove_network(E, U) ->
     r(<<"networks">>, lists:delete(net_to_js(E), networks(U)), U).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 model(R) ->
     U = ?D:to_json(R),
-    r(<<"requirements">>, lists:sort(requirements(U)), U).
+    U#{<<"requirements">> := lists:sort(requirements(U))}.
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
 
-requirements(U) ->
-    {<<"requirements">>, M} = lists:keyfind(<<"requirements">>, 1, U),
-    M.
+requirements(#{<<"requirements">> := Rs}) ->
+    Rs.
 
-networks(U) ->
-    {<<"networks">>, M} = lists:keyfind(<<"networks">>, 1, U),
-    M.
+networks(#{<<"networks">> := Ns}) ->
+    Ns.
 
 prop_merge() ->
     ?FORALL(R,
@@ -407,4 +396,4 @@ prop_remove_metadata() ->
 
 prop_to_json() ->
     ?FORALL(E, dataset(),
-            jsx:encode(?D:to_json(eval(E))) /= []).
+            jsone:encode(?D:to_json(eval(E))) /= #{}).

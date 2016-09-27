@@ -1,6 +1,7 @@
 -module(dtrace_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -48,10 +49,6 @@ calc_map(M, {call, _, _, P}) ->
 calc_map(_M, _) ->
     [].
 
-
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
@@ -61,28 +58,17 @@ model_name(N, R) ->
 model_script(N, R) ->
     r(<<"script">>, N, R).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 model_set_config(K, V, U) ->
-    r(<<"config">>, lists:usort(r(K, V, config(U))), U).
+    r(<<"config">>, r(K, V, config(U)), U).
 
 model_delete_config(K, U) ->
-    r(<<"config">>, lists:keydelete(K, 1, config(U)), U).
+    r(<<"config">>, maps:remove(K, config(U)), U).
 
 model(R) ->
     ?D:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
-
-config(U) ->
-    {<<"config">>, M} = lists:keyfind(<<"config">>, 1, U),
-    M.
+config(#{ <<"config">> := C}) ->
+    C.
 
 prop_merge() ->
     ?FORALL(R,
@@ -179,4 +165,4 @@ prop_remove_config() ->
 
 prop_to_json() ->
     ?FORALL(E, dtrace(),
-            jsx:encode(?D:to_json(eval(E))) /= []).
+            jsone:encode(?D:to_json(eval(E))) /= #{}).

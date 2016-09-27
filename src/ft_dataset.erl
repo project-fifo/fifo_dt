@@ -194,6 +194,9 @@ remove_network({_T, ID}, V, H) ->
 metadata(H) ->
     fifo_map:value(H#?DATASET.metadata).
 
+set_metadata(ID, M , Vm) when is_map(M) ->
+    set_metadata(ID, maps:to_list(M) , Vm);
+
 set_metadata(ID, [{K, V} | R] , Vm) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Vm));
 
@@ -245,7 +248,7 @@ to_json(D) ->
           {<<"zone_type">>, fun zone_type/1},
           {<<"version">>, fun version/1}
          ],
-    add(Vs, D, [{<<"type">>, Type}]).
+    add(Vs, D, #{<<"type">> => Type}).
 
 add([], _, D) ->
     D;
@@ -506,5 +509,5 @@ merge(#?DATASET{
        }.
 
 net_to_json(Nets) ->
-    lists:sort([ [{<<"description">>, Desc}, {<<"name">>, Name}]
+    lists:sort([ #{<<"description">> => Desc, <<"name">> => Name}
                  || {Name, Desc} <- Nets]).

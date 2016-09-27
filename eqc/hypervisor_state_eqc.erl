@@ -1,6 +1,7 @@
 -module(hypervisor_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -77,9 +78,6 @@ calc_map(M, {call, _, _, P}) ->
 calc_map(_M, _) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
@@ -105,65 +103,52 @@ model_networks(N, R) ->
     r(<<"networks">>, N, R).
 
 model_path(N, R) ->
-    r(<<"path">>, [[{<<"cost">>, C}, {<<"name">>, Name}] || {Name, C} <- N], R).
+    r(<<"path">>, [#{<<"cost">> => C, <<"name">> => Name} || {Name, C} <- N], R).
 
 model_virtualisation(N, R) ->
     r(<<"virtualisation">>, N, R).
 
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 
 model_set_pool(K, V, U) ->
-    r(<<"pools">>, lists:usort(r(K, V, pools(U))), U).
+    r(<<"pools">>, r(K, V, pools(U)), U).
 
 model_delete_pool(K, U) ->
-    r(<<"pools">>, lists:keydelete(K, 1, pools(U)), U).
+    r(<<"pools">>, maps:remove(K, pools(U)), U).
 
 model_set_characteristic(K, V, U) ->
-    r(<<"characteristics">>, lists:usort(r(K, V, characteristics(U))), U).
+    r(<<"characteristics">>, r(K, V, characteristics(U)), U).
 
 model_delete_characteristic(K, U) ->
-    r(<<"characteristics">>, lists:keydelete(K, 1, characteristics(U)), U).
+    r(<<"characteristics">>, maps:remove(K, characteristics(U)), U).
 
 model_set_resource(K, V, U) ->
-    r(<<"resources">>, lists:usort(r(K, V, resources(U))), U).
+    r(<<"resources">>, r(K, V, resources(U)), U).
 
 model_delete_resource(K, U) ->
-    r(<<"resources">>, lists:keydelete(K, 1, resources(U)), U).
+    r(<<"resources">>, maps:remove(K, resources(U)), U).
 
 model_set_service(K, V, U) ->
-    r(<<"services">>, lists:usort(r(K, V, services(U))), U).
+    r(<<"services">>, r(K, V, services(U)), U).
 
 model_delete_service(K, U) ->
-    r(<<"services">>, lists:keydelete(K, 1, services(U)), U).
+    r(<<"services">>, maps:remove(K, services(U)), U).
 
 model(R) ->
     ?H:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
 
-pools(U) ->
-    {<<"pools">>, M} = lists:keyfind(<<"pools">>, 1, U),
-    M.
+pools(#{<<"pools">> := Ps}) ->
+    Ps.
 
-characteristics(U) ->
-    {<<"characteristics">>, M} = lists:keyfind(<<"characteristics">>, 1, U),
-    M.
+characteristics(#{<<"characteristics">> := Cs}) ->
+    Cs.
 
-resources(U) ->
-    {<<"resources">>, M} = lists:keyfind(<<"resources">>, 1, U),
-    M.
+resources(#{<<"resources">> := Rs}) ->
+    Rs.
 
-services(U) ->
-    {<<"services">>, M} = lists:keyfind(<<"services">>, 1, U),
-    M.
+services(#{<<"services">> := Ss}) ->
+    Ss.
 
 prop_merge() ->
     ?FORALL(R,
@@ -399,4 +384,4 @@ prop_remove_service() ->
 
 prop_to_json() ->
     ?FORALL(E, hypervisor(),
-            jsx:encode(?H:to_json(eval(E))) /= []).
+            jsone:encode(?H:to_json(eval(E))) /= #{}).

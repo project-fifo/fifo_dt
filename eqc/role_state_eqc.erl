@@ -1,6 +1,7 @@
 -module(role_state_eqc).
 
--import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, permission/0, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -45,9 +46,6 @@ calc_perms({call, _, _, R}) ->
 calc_perms(_) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
@@ -60,22 +58,12 @@ model_revoke(P, R) ->
 model_grant(P, R) ->
     r(<<"permissions">>, lists:usort([P | permissions(R)]), R).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model(R) ->
     ?R:to_json(R).
 
-permissions(U) ->
-    {<<"permissions">>, Ps} = lists:keyfind(<<"permissions">>, 1, U),
+permissions(#{<<"permissions">> := Ps}) ->
     Ps.
-
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
 
 prop_name() ->
     ?FORALL({N, R},
@@ -142,4 +130,4 @@ prop_remove_metadata() ->
 
 prop_to_json() ->
     ?FORALL(E, role(),
-            jsx:encode(?R:to_json(eval(E))) /= []).
+            jsone:encode(?R:to_json(eval(E))) /= <<>>).

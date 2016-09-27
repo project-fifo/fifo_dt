@@ -53,12 +53,12 @@ set(ID, [<<"metadata">> | R], V, H) ->
     set_metadata(ID, R, V, H).
 
 to_json(N) ->
-    [
-     {<<"ipranges">>, ipranges(N)},
-     {<<"metadata">>, metadata(N)},
-     {<<"name">>, name(N)},
-     {<<"uuid">>, uuid(N)}
-    ].
+    #{
+       <<"ipranges">> => ipranges(N),
+       <<"metadata">> => metadata(N),
+       <<"name">> => name(N),
+       <<"uuid">> => uuid(N)
+     }.
 
 ?G(uuid).
 ?G(name).
@@ -106,6 +106,9 @@ load(TID, #network_0_1_0{
 metadata(H) ->
     fifo_map:value(H#?NETWORK.metadata).
 
+
+set_metadata(ID, M, Obj) when is_map(M) ->
+    set_metadata(ID, maps:to_list(M), Obj);
 set_metadata(ID, [{K, V} | R] , Obj) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 

@@ -94,7 +94,7 @@
 
           config         => riak_dt_map:riak_dt_map(),
           info           => riak_dt_map:riak_dt_map(),
-%%          services       => riak_dt_map:riak_dt_map(),
+          %%          services       => riak_dt_map:riak_dt_map(),
           backups        => riak_dt_map:riak_dt_map(),
           snapshots      => riak_dt_map:riak_dt_map(),
 
@@ -135,7 +135,7 @@ new(_) ->
 
        config         => riak_dt_map:new(),
        info           => riak_dt_map:new(),
-%%       services       => riak_dt_map:new(),
+       %%       services       => riak_dt_map:new(),
        backups        => riak_dt_map:new(),
        snapshots      => riak_dt_map:new(),
        docker         => riak_dt_map:new(),
@@ -439,16 +439,16 @@ load(TID, #vm_0_1_0{
 -spec to_json(vm()) -> [{binary(), term()}].
 
 to_json(V) ->
-    N = lists:sort(
+    N = maps:from_list(
           [{ft_iprange:to_bin(IP), Map} ||
-              {IP, Map} <- network_map(V)]),
-    I = lists:sort(
+              {IP, Map} <- maps:to_list(network_map(V))]),
+    I = maps:from_list(
           [{ft_iprange:to_bin(IP), Range} ||
-              {IP, Range} <- iprange_map(V)]),
-    H = lists:sort(
+              {IP, Range} <- maps:to_list(iprange_map(V))]),
+    H = maps:from_list(
           [{ft_iprange:to_bin(IP), Range} ||
-              {IP, Range} <- hostname_map(V)]),
-    L = lists:sort(
+              {IP, Range} <- maps:to_list(hostname_map(V))]),
+    L = maps:from_list(
           [[{<<"date">>, T},
             {<<"log">>, L}] ||
               {T, L} <- logs(V)]),
@@ -458,33 +458,33 @@ to_json(V) ->
                    _ ->
                        true
                end,
-    [
-     {<<"alias">>, alias(V)},
-     {<<"backups">>, backups(V)},
-     {<<"config">>, config(V)},
-     {<<"created_at">>, created_at(V)},
-     {<<"created_by">>, created_by(V)},
-     {<<"creating">>, Creating},
-     {<<"dataset">>, dataset(V)},
-     {<<"deleting">>, deleting(V)},
-     {<<"docker">>, docker(V)},
-     {<<"fw_rules">>, fw_rules_to_json(fw_rules(V))},
-     {<<"groupings">>, groupings(V)},
-     {<<"hypervisor">>, hypervisor(V)},
-     {<<"info">>, info(V)},
-     {<<"log">>, L},
-     {<<"metadata">>, metadata(V)},
-     {<<"network_mappings">>, N},
-     {<<"iprange_mappings">>, I},
-     {<<"hostname_mappings">>, H},
-     {<<"owner">>, owner(V)},
-     {<<"package">>, package(V)},
-     %%{<<"services">>, services(V)},
-     {<<"snapshots">>, snapshots(V)},
-     {<<"state">>, state(V)},
-     {<<"uuid">>, uuid(V)},
-     {<<"vm_type">>, vm_type(V)}
-    ].
+    #{
+       <<"alias">> => alias(V),
+       <<"backups">> => backups(V),
+       <<"config">> => config(V),
+       <<"created_at">> => created_at(V),
+       <<"created_by">> => created_by(V),
+       <<"creating">> => Creating,
+       <<"dataset">> => dataset(V),
+       <<"deleting">> => deleting(V),
+       <<"docker">> => docker(V),
+       <<"fw_rules">> => fw_rules_to_json(fw_rules(V)),
+       <<"groupings">> => groupings(V),
+       <<"hypervisor">> => hypervisor(V),
+       <<"info">> => info(V),
+       <<"log">> => L,
+       <<"metadata">> => metadata(V),
+       <<"network_mappings">> => N,
+       <<"iprange_mappings">> => I,
+       <<"hostname_mappings">> => H,
+       <<"owner">> => owner(V),
+       <<"package">> => package(V),
+       %%<<"services">> => services(V),
+       <<"snapshots">> => snapshots(V),
+       <<"state">> => state(V),
+       <<"uuid">> => uuid(V),
+       <<"vm_type">> => vm_type(V)
+     }.
 
 merge(O = #{
         type := ?TYPE,

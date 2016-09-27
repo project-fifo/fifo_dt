@@ -1,8 +1,9 @@
 -module(org_state_eqc).
 
-%% sync:stop(), c('test/org_state_eqc', [{d, 'TEST'}, {d, 'EQC'}]), sync:start().
-
--import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3,
+                         requirement/0,
+                         id/1, permission/0, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -82,20 +83,11 @@ calc_triggers({call, _, _, P}) ->
 calc_triggers(_) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
 model_name(N, R) ->
     r(<<"name">>, N, R).
-
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 
 a2b(A) ->
@@ -103,51 +95,31 @@ a2b(A) ->
 
 
 model_add_trigger(UUID, T, U) ->
-    r(<<"triggers">>, lists:usort(r(UUID, ?O:jsonify_trigger(T), triggers(U))), U).
+    r(<<"triggers">>, r(UUID, ?O:jsonify_trigger(T), triggers(U)), U).
 
 model_remove_trigger(I, U) ->
-    r(<<"triggers">>, lists:keydelete(I, 1, triggers(U)), U).
+    r(<<"triggers">>, maps:remove(I, triggers(U)), U).
 
 model_remove_resource(I, U) ->
-    r(<<"resources">>, lists:keydelete(I, 1, resources(U)), U).
+    r(<<"resources">>, maps:remove(I, resources(U)), U).
 
 model_inc_resource(K, I, U) ->
     Rs = resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V + I} | Rs1]),
-    r(<<"resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V + I end, I, Rs),
+    r(<<"resources">>, Rs1, U).
 
 model_dec_resource(K, I, U) ->
     Rs = resources(U),
-    Rs1 = lists:keydelete(K, 1, Rs),
-    V = case lists:keyfind(K, 1, Rs) of
-            false ->
-                0;
-            {K, Vx} ->
-                Vx
-        end,
-    Rs2 = lists:sort([{K, V - I} | Rs1]),
-    r(<<"resources">>, Rs2, U).
+    Rs1 = jsxd:update(K, fun(V) -> V - I end, - I, Rs),
+    r(<<"resources">>, Rs1, U).
 
 model(R) ->
     ?O:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
+resources(#{<<"resources">> := M}) ->
     M.
 
-resources(U) ->
-    {<<"resources">>, M} = lists:keyfind(<<"resources">>, 1, U),
-    M.
-
-triggers(U) ->
-    {<<"triggers">>, M} = lists:keyfind(<<"triggers">>, 1, U),
+triggers(#{<<"triggers">> := M}) ->
     M.
 
 prop_name() ->
@@ -231,9 +203,11 @@ prop_dec_res() ->
                 Org = eval(O),
                 O1 = ?O:resource_dec(id(?BIG_TIME), Res, I, Org),
                 M1 = model_dec_resource(Res, I, model(Org)),
+                Expected = model(O1),
                 ?WHENFAIL(io:format(user, "History: ~p~nOrg: ~p~nModel: ~p~n"
-                                    "Org': ~p~nModel': ~p~n", [O, Org, model(Org), O1, M1]),
-                          model(O1) == M1)
+                                    "Org': ~p~nModel': ~p~nExpected: ~p~n",
+                                    [O, Org, model(Org), O1, M1, Expected]),
+                          Expected == M1)
             end).
 
 prop_remove_trigger() ->
@@ -249,4 +223,4 @@ prop_remove_trigger() ->
 
 prop_to_json() ->
     ?FORALL(E, org(),
-            jsx:encode(?O:to_json(eval(E))) /= []).
+            jsone:encode(?O:to_json(eval(E))) /= <<>>).

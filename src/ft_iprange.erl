@@ -195,6 +195,8 @@ set(ID, [<<"metadata">> | R], V, H) ->
 metadata(I) ->
     fifo_map:value(I#?IPRANGE.metadata).
 
+set_metadata(ID, M, Obj) when is_map(M)->
+    set_metadata(ID, maps:to_list(M), Obj);
 set_metadata(ID, [{K, V} | R] , Obj) ->
     set_metadata(ID, R, set_metadata(ID, K, V, Obj));
 
@@ -213,18 +215,18 @@ set_metadata({T, ID}, Attribute, Value, I) ->
     I#?IPRANGE{metadata = M1}.
 
 to_json(I) ->
-    [
-     {<<"free">>, free(I)},
-     {<<"gateway">>, gateway(I)},
-     {<<"metadata">>, metadata(I)},
-     {<<"name">>, name(I)},
-     {<<"netmask">>, netmask(I)},
-     {<<"network">>, network(I)},
-     {<<"tag">>, tag(I)},
-     {<<"used">>, used(I)},
-     {<<"uuid">>, uuid(I)},
-     {<<"vlan">>, vlan(I)}
-    ].
+    #{
+       <<"free">> => free(I),
+       <<"gateway">> => gateway(I),
+       <<"metadata">> => metadata(I),
+       <<"name">> => name(I),
+       <<"netmask">> => netmask(I),
+       <<"network">> => network(I),
+       <<"tag">> => tag(I),
+       <<"used">> => used(I),
+       <<"uuid">> => uuid(I),
+       <<"vlan">> => vlan(I)
+        }.
 
 merge(#?IPRANGE{
           uuid     = UUID1,

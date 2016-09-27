@@ -1,6 +1,6 @@
 -module(user_state_eqc).
-
--import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, permission/0, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -185,12 +185,9 @@ calc_perms({call, _, _, P}) ->
     calc_perms(lists:last(P));
 calc_perms(_) ->
     [].
-
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model(U) ->
-    lists:sort([{<<"password">>, ?U:password(U)} | ?U:to_json(U)]).
+    U1 = ?U:to_json(U),
+    U1#{<<"password">> => ?U:password(U)}.
 
 model_uuid(N, U) ->
     r(<<"uuid">>, N, U).
@@ -207,11 +204,6 @@ model_revoke(P, U) ->
 model_grant(P, U) ->
     r(<<"permissions">>, lists:usort([P | permissions(U)]), U).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model_leave_org(P, U) ->
     r(<<"orgs">>, lists:delete(P, orgs(U)), U).
@@ -226,10 +218,10 @@ model_add_role(P, U) ->
     r(<<"roles">>, lists:usort([P | roles(U)]), U).
 
 model_add_key(I, K, U) ->
-    r(<<"keys">>, lists:usort([{I, K} | keys(U)]), U).
+    r(<<"keys">>, r(I, K, keys(U)), U).
 
 model_revoke_key(I, U) ->
-    r(<<"keys">>, lists:keydelete(I, 1, keys(U)), U).
+    r(<<"keys">>, maps:remove(I, keys(U)), U).
 
 model_add_yubikey(K, U) ->
     r(<<"yubikeys">>, lists:usort([K | yubikeys(U)]), U).
@@ -238,28 +230,29 @@ model_remove_yubikey(P, U) ->
     r(<<"yubikeys">>, lists:delete(P, yubikeys(U)), U).
 
 model_token({ID, Type, _Token, Exp, Client, Scope, Comment}) ->
-    J = [{<<"type">>, atom_to_binary(Type, utf8)},
-         {<<"id">>, ID},
-         {<<"scope">>, Scope}],
+    J = #{
+      <<"type">> => atom_to_binary(Type, utf8),
+      <<"id">> => ID,
+      <<"scope">> => Scope
+     },
     J2 = case Exp of
              infinity ->
                  J;
              _ ->
-                 [{<<"expiery">>, Exp} | J]
+                 J#{<<"expiery">> => Exp}
          end,
     J3 = case Client of
              undefined ->
                  J2;
              _ ->
-                 [{<<"client">>, Client} | J2]
+                 J2#{<<"client">> => Client}
          end,
-    J4 = case Comment of
-             undefined ->
-                 J3;
-             _ ->
-                 [{<<"comment">>, Comment} | J3]
-         end,
-    lists:sort(J4).
+    case Comment of
+        undefined ->
+            J3;
+        _ ->
+            J3#{<<"comment">> => Comment} 
+    end.
 
 model_add_token(T, U) ->
     r(<<"tokens">>, lists:usort([model_token(T) | tokens(U)]), U).
@@ -275,32 +268,23 @@ model_remove_token({TID, _Token}, U) ->
 model_remove_token(_, U) ->
     U.
 
-permissions(U) ->
-    {<<"permissions">>, Ps} = lists:keyfind(<<"permissions">>, 1, U),
+permissions(#{<<"permissions">> :=Ps}) ->
     Ps.
 
-roles(U) ->
-    {<<"roles">>, Ps} = lists:keyfind(<<"roles">>, 1, U),
+roles(#{<<"roles">> := Ps}) ->
     Ps.
 
-orgs(U) ->
-    {<<"orgs">>, Ps} = lists:keyfind(<<"orgs">>, 1, U),
+orgs(#{<<"orgs">> := Ps}) ->
     Ps.
 
-yubikeys(U) ->
-    {<<"yubikeys">>, Ps} = lists:keyfind(<<"yubikeys">>, 1, U),
+yubikeys(#{<<"yubikeys">> := Ps}) ->
     Ps.
 
-keys(U) ->
-    {<<"keys">>, Ps} = lists:keyfind(<<"keys">>, 1, U),
+keys(#{<<"keys">> := Ps}) ->
     Ps.
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
 
-tokens(U) ->
-    {<<"tokens">>, M} = lists:keyfind(<<"tokens">>, 1, U),
+tokens(#{<<"tokens">> := M}) ->
     M.
 
 has_permissions(U) ->
@@ -502,4 +486,4 @@ prop_remove_metadata() ->
 
 prop_to_json() ->
     ?FORALL(E, user(),
-            jsx:encode(?U:to_json(eval(E))) /= []).
+            jsone:encode(?U:to_json(eval(E))) /= #{}).

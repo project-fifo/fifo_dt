@@ -1,6 +1,7 @@
 -module(grouping_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -74,9 +75,6 @@ calc_groupings(_) ->
     [].
 
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
-
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
@@ -86,17 +84,11 @@ model_name(N, R) ->
 model_type(N, R) ->
     r(<<"type">>, list_to_binary(atom_to_list(N)), R).
 
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
-
 model_set_config(K, V, U) ->
-    r(<<"config">>, lists:usort(r(K, V, config(U))), U).
+    r(<<"config">>, r(K, V, config(U)), U).
 
 model_delete_config(K, U) ->
-    r(<<"config">>, lists:keydelete(K, 1, config(U)), U).
+    r(<<"config">>, maps:remove(K, config(U)), U).
 
 model_add_element(E, U) ->
     r(<<"elements">>, lists:usort([E | get_elements(U)]), U).
@@ -113,21 +105,14 @@ model_remove_grouping(E, U) ->
 model(R) ->
     ?G:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
+config(#{ <<"config">> := C}) ->
+    C.
 
-config(U) ->
-    {<<"config">>, M} = lists:keyfind(<<"config">>, 1, U),
-    M.
+get_elements(#{<<"elements">> := Es}) ->
+    Es.
 
-get_elements(U) ->
-    {<<"elements">>, M} = lists:keyfind(<<"elements">>, 1, U),
-    M.
-
-get_groupings(U) ->
-    {<<"groupings">>, M} = lists:keyfind(<<"groupings">>, 1, U),
-    M.
+get_groupings(#{<<"groupings">> := Gs}) ->
+    Gs.
 
 prop_merge() ->
     ?FORALL(R,
@@ -267,4 +252,4 @@ prop_remove_grouping() ->
 
 prop_to_json() ->
     ?FORALL(E, grouping(),
-            jsx:encode(?G:to_json(eval(E))) /= []).
+            jsone:encode(?G:to_json(eval(E))) /= #{}).

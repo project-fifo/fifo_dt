@@ -1,6 +1,9 @@
 -module(network_state_eqc).
 
--import(ft_test_helper, [id/1, maybe_oneof/1]).
+-import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
+                         metadata/1, r/3,
+                         requirement/0,
+                         id/1, permission/0, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("fqc/include/fqci.hrl").
@@ -57,20 +60,12 @@ calc_ipranges({call, _, _, P}) ->
 calc_ipranges(_) ->
     [].
 
-r(K, V, U) ->
-    lists:keystore(K, 1, U, {K, V}).
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
 
 model_name(N, R) ->
     r(<<"name">>, N, R).
-
-model_set_metadata(K, V, U) ->
-    r(<<"metadata">>, lists:usort(r(K, V, metadata(U))), U).
-
-model_delete_metadata(K, U) ->
-    r(<<"metadata">>, lists:keydelete(K, 1, metadata(U)), U).
 
 model_add_iprange(E, U) ->
     r(<<"ipranges">>, lists:usort([E | ipranges(U)]), U).
@@ -81,12 +76,8 @@ model_remove_iprange(E, U) ->
 model(R) ->
     ?N:to_json(R).
 
-metadata(U) ->
-    {<<"metadata">>, M} = lists:keyfind(<<"metadata">>, 1, U),
-    M.
 
-ipranges(U) ->
-    {<<"ipranges">>, M} = lists:keyfind(<<"ipranges">>, 1, U),
+ipranges(#{<<"ipranges">> := M}) ->
     M.
 
 prop_merge() ->
@@ -174,4 +165,4 @@ prop_remove_iprange() ->
 
 prop_to_json() ->
     ?FORALL(E, network(),
-            jsx:encode(?N:to_json(eval(E))) /= []).
+            jsone:encode(?N:to_json(eval(E))) /= <<>>).

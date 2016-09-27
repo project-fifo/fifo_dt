@@ -107,7 +107,7 @@ prop_cmap_remove_len() ->
                 VsB = ft_cmap:value(B),
                 ?WHENFAIL(io:format("~p < ~p~n",
                                     [VsA, VsB]),
-                          length(VsA) >= length(VsB))
+                          maps:size(VsA) >= maps:size(VsB))
             end).
 
 prop_cmap_remove() ->

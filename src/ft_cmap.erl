@@ -13,7 +13,7 @@ merge(A, B) ->
 
 value(Map) ->
     V1 = riak_dt_map:value(Map),
-    [{K, V} || {{K, ?T}, V} <- V1].
+    maps:from_list([{K, V} || {{K, ?T}, V} <- V1]).
 
 get(Key, Map) ->
     V1 = riak_dt_map:value(Map),
