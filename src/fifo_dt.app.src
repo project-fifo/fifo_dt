@@ -1,6 +1,6 @@
 {application,fifo_dt,
              [{description,"FiFo datatype collection"},
-              {vsn,"0.2.0"},
+              {vsn,"0.2.1"},
               {registered,[]},
               {applications,[kernel,riak_dt,stdlib,jsxd,libsnarlmatch]},
               {maintainers,["Heinz N. Gies"]},
