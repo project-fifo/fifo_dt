@@ -61,14 +61,14 @@ get_([K | Ks], M) ->
 
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
-set(Ks, M, A, T, M) when is_map(M) ->
-    set(Ks, maps:to_list(M), A, T, M);
+set(Ks, V, A, T, M) when is_map(V) ->
+    set(Ks, maps:to_list(V), A, T, M);
 set(Ks, [{_, _}|_] = D, A, T, M) ->
     lists:foldl(fun({KsI, V}, {ok, MAcc}) ->
                         set(Ks ++ KsI, V, A, T, MAcc)
                 end, {ok, M}, flatten_orddict(D));
 
-set(Ks, V, A, T, M) ->
+set(Ks, V, A, T, M) when not is_map(V) ->
     case split_path(Ks, M) of
         {ok, {[FirstNew | Missing], []}} ->
             Ops = nested_create([FirstNew | Missing], V, T),
