@@ -1,5 +1,5 @@
 {"1.1.0",
-[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.23">>},0},
+[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.24">>},0},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.2.3">>},0},
  {<<"lager">>,{pkg,<<"lager">>,<<"3.2.1">>},0},
@@ -9,7 +9,7 @@
  {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.3">>},1}]}.
 [
 {pkg_hash,[
- {<<"fifo_utils">>, <<"8E9E42C465F675BD23863E862EECFEF210243A2FE9841EFB675A063392EA2ABF">>},
+ {<<"fifo_utils">>, <<"279CAEF8AADBF54F28B0B4FFF850C09E50B4E13B60F73C6E73176AC45EF42EC0">>},
  {<<"goldrush">>, <<"2024BA375CEEA47E27EA70E14D2C483B2D8610101B4E852EF7F89163CDB6E649">>},
  {<<"jsxd">>, <<"B2DBBB24A91536C50F75372FB8E28CD16691707AB53BE9449C59A8A611A581A2">>},
  {<<"lager">>, <<"EEF4E18B39E4195D37606D9088EA05BF1B745986CF8EC84F01D332456FE88D17">>},
