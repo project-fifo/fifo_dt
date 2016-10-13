@@ -691,21 +691,21 @@ fw_rules_to_json(Rs) ->
     lists:sort([fw_rule_to_json(R) || R <- Rs]).
 
 fw_rule_to_json({Action, Direction, Target, {Proto, Filters}}) ->
-    [
-     {<<"action">>, a2b(Action)},
-     {<<"direction">>, a2b(Direction)},
-     {<<"filters">>, filters_to_json(Filters)},
-     {<<"protocol">>, a2b(Proto)},
-     {<<"target">>, target_to_json(Target)}
-    ].
+    #{
+       <<"action">> => a2b(Action),
+       <<"direction">> => a2b(Direction),
+       <<"filters">> => filters_to_json(Filters),
+       <<"protocol">> => a2b(Proto),
+       <<"target">> => target_to_json(Target)
+     }.
 
-json_to_fw_rule([
-                 {<<"action">>, Action},
-                 {<<"direction">>, Direction},
-                 {<<"filters">>, Filters},
-                 {<<"protocol">>, Proto},
-                 {<<"target">>, Target}
-                ]) ->
+json_to_fw_rule(#{
+                   <<"action">> := Action,
+                   <<"direction">> := Direction,
+                   <<"filters">> := Filters,
+                   <<"protocol">> := Proto,
+                   <<"target">> := Target
+                 }) ->
     {json_to_action(Action),
      json_to_direction(Direction),
      json_to_target(Target),
@@ -725,20 +725,20 @@ json_to_direction(<<"outbound">>) ->
 json_to_target(<<"all">>) ->
     all;
 
-json_to_target([{<<"ip">>, IP}]) ->
+json_to_target(#{<<"ip">> := IP}) ->
     {ip, ft_iprange:parse_bin(IP)};
 
-json_to_target([{<<"mask">>, Mask},
-                {<<"subnet">>, Subnet}]) when is_integer(Mask)->
+json_to_target(#{<<"mask">> := Mask,
+                 <<"subnet">> := Subnet}) when is_integer(Mask)->
     {subnet, ft_iprange:parse_bin(Subnet), Mask}.
 
 target_to_json(all) ->
     <<"all">>;
 target_to_json({ip, IP}) ->
-    [{<<"ip">>, ft_iprange:to_bin(IP)}];
+    #{<<"ip">> => ft_iprange:to_bin(IP)};
 target_to_json({subnet, Subnet, Mask}) ->
-    [{<<"mask">>, Mask},
-     {<<"subnet">>, ft_iprange:to_bin(Subnet)}].
+    #{<<"mask">> => Mask,
+      <<"subnet">> => ft_iprange:to_bin(Subnet)}.
 
 json_to_proto(<<"icmp">>) ->
     icmp;
@@ -766,17 +766,17 @@ json_to_filters(<<"all">>) ->
 
 
 filter_to_json({icmp, Type}) ->
-    [{<<"type">>, Type}];
+    #{<<"type">> => Type};
 filter_to_json({icmp, Type, Code}) ->
-    [{<<"code">>, Code}, {<<"type">>, Type}];
+    #{<<"code">> => Code, <<"type">> => Type};
 filter_to_json(I) when is_integer(I) ->
     I.
 
 json_to_filter(I) when is_integer(I) ->
     I;
-json_to_filter([{<<"code">>, Code}, {<<"type">>, Type}]) ->
+json_to_filter(#{<<"code">> := Code, <<"type">> := Type}) ->
     {icmp, Type, Code};
-json_to_filter([{<<"type">>, Type}]) ->
+json_to_filter(#{<<"type">> := Type}) ->
     {icmp, Type}.
 
 ?META.
