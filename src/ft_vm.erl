@@ -775,8 +775,11 @@ filter_to_json(I) when is_integer(I) ->
 json_to_filter(I) when is_integer(I) ->
     I;
 json_to_filter(#{<<"code">> := Code, <<"type">> := Type})
-  when is_integer(Code) ->
+  when is_integer(Code), is_integer(Type) ->
     {icmp, Type, Code};
+%% code needs to be an integer!
+json_to_filter(#{<<"code">> := _, <<"type">> := _}) ->
+    error(badarg);
 json_to_filter(#{<<"type">> := Type}) ->
     {icmp, Type}.
 
