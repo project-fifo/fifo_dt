@@ -774,7 +774,8 @@ filter_to_json(I) when is_integer(I) ->
 
 json_to_filter(I) when is_integer(I) ->
     I;
-json_to_filter(#{<<"code">> := Code, <<"type">> := Type}) when is_integer(Code) ->
+json_to_filter(#{<<"code">> := Code, <<"type">> := Type})
+  when is_integer(Code) ->
     {icmp, Type, Code};
 json_to_filter(#{<<"type">> := Type}) ->
     {icmp, Type}.
