@@ -36,7 +36,7 @@
 
 -type network() :: #{
                type           => ?TYPE,
-               version        => pos_integer(),
+               version        => non_neg_integer(),
                uuid           => riak_dt_lwwreg:lwwreg(),
                name           => riak_dt_lwwreg:lwwreg(),
                ipranges       => riak_dt_orswot:orswot(),
@@ -48,7 +48,7 @@
 
 ?IS_A.
 
--spec new(any()) -> network().
+-spec new(fifo:tid()) -> network().
 
 new(_) ->
     #{
@@ -62,6 +62,7 @@ new(_) ->
     }.
 
 
+-spec load(fifo:tid(), any()) -> network().
 load(_, #{type := ?TYPE, version := ?VERSION} = N) ->
     N;
 
@@ -103,7 +104,7 @@ to_json(N) ->
        <<"name">>      => name(N),
        <<"uuid">>      => uuid(N)
      }.
-
+-spec merge(network(), network()) -> network().
 merge(R = #{
         type      := ?TYPE,
         ipranges  := IPRanges1,
