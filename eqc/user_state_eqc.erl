@@ -1,9 +1,7 @@
 -module(user_state_eqc).
--import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
-                         metadata/1, r/3, permission/0, id/1, maybe_oneof/1]).
 
 -include_lib("eqc/include/eqc.hrl").
--include_lib("fqc/include/fqci.hrl").
+-include("ft_test_helper.hrl").
 
 -compile(export_all).
 
@@ -185,9 +183,13 @@ calc_perms({call, _, _, P}) ->
     calc_perms(lists:last(P));
 calc_perms(_) ->
     [].
-model(U) ->
+
+model_w_pass(U) ->
     U1 = ?U:to_json(U),
     U1#{<<"password">> => ?U:password(U)}.
+
+model(U) ->
+    ?U:to_json(U).
 
 model_uuid(N, U) ->
     r(<<"uuid">>, N, U).
@@ -328,10 +330,10 @@ prop_password() ->
             begin
                 User = eval(U),
                 U1 = ?U:password(id(?BIG_TIME),N,User),
-                M1 = model_password(N, model(User)),
+                M1 = model_password(N, model_w_pass(User)),
                 ?WHENFAIL(io:format(user, "History: ~p~nUser: ~p~nModel: ~p~n"
                                     "User': ~p~nModel': ~p~n", [U, User, model(User), U1, M1]),
-                          model(U1) == M1)
+                          model_w_pass(U1) == M1)
             end).
 
 prop_grant() ->

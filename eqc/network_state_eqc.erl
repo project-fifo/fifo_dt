@@ -1,12 +1,7 @@
 -module(network_state_eqc).
 
--import(ft_test_helper, [model_set_metadata/3, model_delete_metadata/2,
-                         metadata/1, r/3,
-                         requirement/0,
-                         id/1, permission/0, maybe_oneof/1]).
-
 -include_lib("eqc/include/eqc.hrl").
--include_lib("fqc/include/fqci.hrl").
+-include("ft_test_helper.hrl").
 
 -compile(export_all).
 
@@ -31,6 +26,9 @@ network(Size) ->
 
                                {call, ?N, add_iprange, [id(Size), non_blank_string(), O]},
                                {call, ?N, remove_iprange, [id(Size), maybe_oneof(calc_ipranges(O)), O]},
+
+                               {call, ?N, add_resolver, [id(Size), non_blank_string(), O]},
+                               {call, ?N, remove_resolver, [id(Size), maybe_oneof(calc_resolvers(O)), O]},
 
                                {call, ?N, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?N, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]}
@@ -60,6 +58,15 @@ calc_ipranges({call, _, _, P}) ->
 calc_ipranges(_) ->
     [].
 
+calc_resolvers({call, _, remove_resolver, [_, K, U]}) ->
+    lists:delete(K, lists:usort(calc_resolvers(U)));
+calc_resolvers({call, _, add_resolver, [_, E, U]}) ->
+    [E | calc_resolvers(U)];
+calc_resolvers({call, _, _, P}) ->
+    calc_resolvers(lists:last(P));
+calc_resolvers(_) ->
+    [].
+
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
@@ -73,11 +80,20 @@ model_add_iprange(E, U) ->
 model_remove_iprange(E, U) ->
     r(<<"ipranges">>, lists:delete(E, ipranges(U)), U).
 
+model_add_resolver(E, U) ->
+    r(<<"resolvers">>, lists:usort([E | resolvers(U)]), U).
+
+model_remove_resolver(E, U) ->
+    r(<<"resolvers">>, lists:delete(E, resolvers(U)), U).
+
 model(R) ->
     ?N:to_json(R).
 
 
 ipranges(#{<<"ipranges">> := M}) ->
+    M.
+
+resolvers(#{<<"resolvers">> := M}) ->
     M.
 
 prop_merge() ->
@@ -158,6 +174,28 @@ prop_remove_iprange() ->
                 Hv = eval(O),
                 O1 = ?N:remove_iprange(id(?BIG_TIME), K, Hv),
                 M1 = model_remove_iprange(K, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_add_resolver() ->
+    ?FORALL({E, O}, {non_blank_string(), network()},
+            begin
+                Hv = eval(O),
+                O1 = ?N:add_resolver(id(?BIG_TIME), E, Hv),
+                M1 = model_add_resolver(E, model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
+                                    "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
+                          model(O1) == M1)
+            end).
+
+prop_remove_resolver() ->
+    ?FORALL({O, K}, ?LET(O, network(), {O, maybe_oneof(calc_resolvers(O))}),
+            begin
+                Hv = eval(O),
+                O1 = ?N:remove_resolver(id(?BIG_TIME), K, Hv),
+                M1 = model_remove_resolver(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
                           model(O1) == M1)

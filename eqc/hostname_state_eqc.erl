@@ -1,9 +1,7 @@
 -module(hostname_state_eqc).
 
--import(ft_test_helper, [id/1, permission/0, maybe_oneof/1]).
-
 -include_lib("eqc/include/eqc.hrl").
--include_lib("fqc/include/fqci.hrl").
+-include("ft_test_helper.hrl").
 
 -compile(export_all).
 -define(R, ft_hostname).

@@ -1,6 +1,7 @@
 {"1.1.0",
-[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.25">>},0},
+[{<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.29">>},0},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
+ {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>},1},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.2.3">>},0},
  {<<"lager">>,{pkg,<<"lager">>,<<"3.2.1">>},0},
  {<<"libsnarlmatch">>,{pkg,<<"libsnarlmatch">>,<<"0.1.7">>},0},
@@ -9,8 +10,9 @@
  {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.4">>},1}]}.
 [
 {pkg_hash,[
- {<<"fifo_utils">>, <<"687B8D9E75F43621777579F7A231321D3D6EFAE4289951859DE8A87BD44E8328">>},
+ {<<"fifo_utils">>, <<"9BDFFB8CEA376755FEB91D6A4D7A8DC7CC3C8B180CDD28624F8A6334059D26E3">>},
  {<<"goldrush">>, <<"2024BA375CEEA47E27EA70E14D2C483B2D8610101B4E852EF7F89163CDB6E649">>},
+ {<<"jsone">>, <<"6ECFD2C91E16F48E1535743B57D01A42C65D7DD51A8B43E5723B1F79927169A8">>},
  {<<"jsxd">>, <<"B2DBBB24A91536C50F75372FB8E28CD16691707AB53BE9449C59A8A611A581A2">>},
  {<<"lager">>, <<"EEF4E18B39E4195D37606D9088EA05BF1B745986CF8EC84F01D332456FE88D17">>},
  {<<"libsnarlmatch">>, <<"CB58863E653406EAC5736E1F81EE8AA9BC75D906464D3BE63F22C5929500BA8C">>},

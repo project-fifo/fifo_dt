@@ -14,4 +14,5 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
         }).
 
--define(NETWORK, network_0).
+-define(TYPE, network).
+-define(VERSION, 0).

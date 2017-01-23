@@ -22,10 +22,6 @@
 -define(G(E),
         E(H) -> riak_dt_lwwreg:value(H#?OBJ.E)).
 
-
-
-
-
 -define(S_BODY(E),
         {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, O#?OBJ.E),
         O#?OBJ{E = V1}).

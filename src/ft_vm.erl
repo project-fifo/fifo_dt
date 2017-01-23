@@ -76,7 +76,7 @@
 -ignore_xref([load/2, set/4, getter/2, uuid/1, merge/2]).
 
 -type vm() :: #{
-          type           => vm,
+          type           => ?TYPE,
           version        => pos_integer(),
           uuid           => riak_dt_lwwreg:lwwreg(),
           alias          => riak_dt_lwwreg:lwwreg(),
@@ -97,6 +97,7 @@
           %%          services       => riak_dt_map:riak_dt_map(),
           backups        => riak_dt_map:riak_dt_map(),
           snapshots      => riak_dt_map:riak_dt_map(),
+          docker         => riak_dt_map:riak_dt_map(),
 
           logs           => riak_dt_orswot:orswot(),
           groupings      => riak_dt_orswot:orswot(),

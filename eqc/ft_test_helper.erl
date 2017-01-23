@@ -32,7 +32,11 @@ lower_char() ->
     choose($a, $z).
 
 maybe_oneof(L) ->
-    fqc:maybe_oneof(L, non_blank_string()).
+    T = non_blank_string(),
+    maybe_oneof(L, T).
+
+maybe_oneof(L, T) ->
+    ?LET(E, ?SUCHTHAT(E, T, not lists:member(E, L)), oneof([E | L])).
 
 metadata_value() ->
     oneof([delete, non_blank_string()]).

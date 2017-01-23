@@ -8,7 +8,6 @@
 -behaviour(fifo_dt).
 
 -include("ft_network.hrl").
--define(OBJ, ?NETWORK).
 -include("ft_helper.hrl").
 
 -export([
@@ -16,9 +15,9 @@
          new/1,
          load/2,
          to_json/1,
-         set/4,
          name/1, name/3,
          uuid/1, uuid/3,
+         add_resolver/3, remove_resolver/3, resolvers/1,
          add_iprange/3, remove_iprange/3, ipranges/1,
          metadata/1, set_metadata/3, set_metadata/4,
          getter/2,
@@ -28,65 +27,57 @@
 -ignore_xref([load/2, to_json/1, getter/2, merge/2]).
 
 -ignore_xref([
-              set/4,
+              add_resolver/3, remove_resolver/3, resolvers/1,
               add_iprange/3, remove_iprange/3, ipranges/1,
               name/1, name/3,
               uuid/1, uuid/3,
               metadata/1, set_metadata/3, set_metadata/4
              ]).
 
--type network() :: #?OBJ{}.
+-type network() :: #{
+               type           => ?TYPE,
+               version        => pos_integer(),
+               uuid           => riak_dt_lwwreg:lwwreg(),
+               name           => riak_dt_lwwreg:lwwreg(),
+               ipranges       => riak_dt_orswot:orswot(),
+               resolvers      => riak_dt_orswot:orswot(),
+               metadata       => riak_dt_map:riak_dt_map()
+              }.
+
 -export_type([network/0]).
 
 ?IS_A.
 
 new(_) ->
-    #?NETWORK{}.
-
-set({T, ID}, <<"metadata">>, V, H) ->
-    H#?NETWORK{metadata = fifo_map:from_orddict(V, ID, T)};
-
-set(ID, K = <<"metadata.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
-
-set(ID, [<<"metadata">> | R], V, H) ->
-    set_metadata(ID, R, V, H).
-
-to_json(N) ->
     #{
-       <<"ipranges">> => ipranges(N),
-       <<"metadata">> => metadata(N),
-       <<"name">> => name(N),
-       <<"uuid">> => uuid(N)
-     }.
+     type        => ?TYPE,
+     version     => ?VERSION,
+     uuid        => riak_dt_lwwreg:new(),
+     name        => riak_dt_lwwreg:new(),
+     ipranges    => riak_dt_orswot:new(),
+     resolvers   => riak_dt_orswot:new(),
+     metadata    => riak_dt_map:new()
+    }.
 
-?G(uuid).
-?G(name).
 
-?S(uuid).
-?S(name).
-
-ipranges(H) ->
-    riak_dt_orswot:value(H#?NETWORK.ipranges).
-
-add_iprange({_T, ID}, V, H) ->
-    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?NETWORK.ipranges),
-    H#?NETWORK{ipranges = O1}.
-
-remove_iprange({_T, ID}, V, H) ->
-    case riak_dt_orswot:update({remove, V}, ID, H#?NETWORK.ipranges) of
-        {error, {precondition, {not_present, _}}} ->
-            H;
-        {ok, O1} ->
-            H#?NETWORK{ipranges = O1}
-    end.
-
-?G(<<"name">>, name);
-?G(<<"uuid">>, uuid);
-?G_JSX.
-
-load(_, #?NETWORK{} = N) ->
+load(_, #{type := ?TYPE, version := ?VERSION} = N) ->
     N;
+
+load(_TID, #network_0{
+             uuid           = UUID,
+             name           = Name,
+             ipranges       = IPRanges,
+             metadata       = Metadata
+        }) ->
+    #{
+      type      => ?TYPE,
+      version   => ?VERSION,
+      uuid      => UUID,
+      name      => Name,
+      ipranges  => IPRanges,
+      metadata  => Metadata,
+      resolvers   => riak_dt_orswot:new()
+     };
 
 load(TID, #network_0_1_0{
              uuid           = UUID,
@@ -102,45 +93,72 @@ load(TID, #network_0_1_0{
           },
     load(TID, N).
 
+to_json(N) ->
+    #{
+       <<"resolvers">> => resolvers(N),
+       <<"ipranges">>  => ipranges(N),
+       <<"metadata">>  => metadata(N),
+       <<"name">>      => name(N),
+       <<"uuid">>      => uuid(N)
+     }.
 
-metadata(H) ->
-    fifo_map:value(H#?NETWORK.metadata).
+merge(R = #{
+        type      := ?TYPE,
+        ipranges  := IPRanges1,
+        metadata  := Metadata1,
+        resolvers := Resolvers1,
+        name      := Name1,
+        uuid      := UUID1
+       },
+      #{
+         type      := ?TYPE,
+         ipranges  := IPRanges2,
+         metadata  := Metadata2,
+         resolvers := Resolvers2,
+         name      := Name2,
+         uuid      := UUID2
+       }) ->
+    R#{
+      resolvers => riak_dt_orswot:merge(Resolvers1, Resolvers2),
+      ipranges  => riak_dt_orswot:merge(IPRanges1, IPRanges2),
+      metadata  => fifo_map:merge(Metadata1, Metadata2),
+      name      => riak_dt_lwwreg:merge(Name1, Name2),
+      uuid     => riak_dt_lwwreg:merge(UUID1, UUID2)
+     } .
 
 
-set_metadata(ID, M, Obj) when is_map(M) ->
-    set_metadata(ID, maps:to_list(M), Obj);
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
+?G(<<"name">>, name);
+?G(<<"uuid">>, uuid);
+?G_JSX.
 
-set_metadata(_ID, _, Obj) ->
-    Obj.
+-spec name(network()) -> binary().
+?REG_GET(name).
+-spec name(fifo_dt:tid(), binary(), network()) -> network().
+?REG_SET(name).
 
-set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
+-spec uuid(network()) -> binary().
+?REG_GET(uuid).
+-spec uuid(fifo_dt:tid(), binary(), network()) -> network().
+?REG_SET(uuid).
 
-set_metadata({_T, ID}, Attribute, delete, G) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, G#?NETWORK.metadata),
-    G#?NETWORK{metadata = M1};
+-spec ipranges(network()) -> [binary()].
+?SET_GET(ipranges).
 
-set_metadata({T, ID}, Attribute, Value, G) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, G#?NETWORK.metadata),
-    G#?NETWORK{metadata = M1}.
+-spec add_iprange(fifo_dt:tid(), binary(), network()) -> network().
+?SET_ADD(add_iprange, ipranges).
 
-merge(#?NETWORK{
-          ipranges = IPRanges1,
-          metadata = Metadata1,
-          name = Name1,
-          uuid = UUID1
-         },
-      #?NETWORK{
-          ipranges = IPRanges2,
-          metadata = Metadata2,
-          name = Name2,
-          uuid = UUID2
-         }) ->
-    #?NETWORK{
-        ipranges = riak_dt_orswot:merge(IPRanges1, IPRanges2),
-        metadata = fifo_map:merge(Metadata1, Metadata2),
-        name = riak_dt_lwwreg:merge(Name1, Name2),
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2)
-       }.
+-spec remove_iprange(fifo_dt:tid(), binary(), network()) -> network().
+?SET_REM(remove_iprange, ipranges).
+
+-spec resolvers(network()) -> [binary()].
+?SET_GET(resolvers).
+
+-spec add_resolver(fifo_dt:tid(), binary(), network()) -> network().
+?SET_ADD(add_resolver, resolvers).
+
+-spec remove_resolver(fifo_dt:tid(), binary(), network()) -> network().
+?SET_REM(remove_resolver, resolvers).
+
+?META.
+?SET_META_3.
+?SET_META_4.

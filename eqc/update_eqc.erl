@@ -1,7 +1,7 @@
 -module(update_eqc).
 
 -include_lib("eqc/include/eqc.hrl").
--include_lib("fqc/include/fqci.hrl").
+-include("ft_test_helper.hrl").
 
 -compile(export_all).
 

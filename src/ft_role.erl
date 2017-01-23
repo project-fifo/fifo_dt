@@ -37,6 +37,8 @@
              ]).
 
 -type role() :: #{
+            type        => ?TYPE,
+            version        => pos_integer(),
             uuid        => riak_dt_lwwreg:lwwreg(),
             name        => riak_dt_lwwreg:lwwreg(),
             permissions => riak_dt_orswot:orswot(),
