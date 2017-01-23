@@ -48,6 +48,8 @@
 
 ?IS_A.
 
+-spec new(any()) -> network().
+
 new(_) ->
     #{
      type        => ?TYPE,
