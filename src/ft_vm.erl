@@ -77,7 +77,7 @@
 
 -type vm() :: #{
           type           => ?TYPE,
-          version        => pos_integer(),
+          version        => non_neg_integer(),
           uuid           => riak_dt_lwwreg:lwwreg(),
           alias          => riak_dt_lwwreg:lwwreg(),
           owner          => riak_dt_lwwreg:lwwreg(),

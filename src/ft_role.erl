@@ -38,13 +38,14 @@
 
 -type role() :: #{
             type        => ?TYPE,
-            version        => pos_integer(),
+            version     => non_neg_integer(),
             uuid        => riak_dt_lwwreg:lwwreg(),
             name        => riak_dt_lwwreg:lwwreg(),
             permissions => riak_dt_orswot:orswot(),
             ptree       => term(),
             metadata    => riak_dt_map:riak_dt_map()
-         }.
+           }.
+
 -export_type([role/0]).
 
 ?IS_A.
@@ -70,9 +71,9 @@ load(_, #{type := ?TYPE, version := ?VERSION} = Role) ->
 
 load(TID, #role_1{
              uuid = UUID,
-           name = Name,
-           permissions = Permissions,
-           metadata = Metadata
+             name = Name,
+             permissions = Permissions,
+             metadata = Metadata
             }) ->
     Role = #{
       type        => ?TYPE,
@@ -86,12 +87,12 @@ load(TID, #role_1{
     load(TID, Role);
 
 load(TID, #role_0{
-           uuid = UUID,
-           name = Name,
-           permissions = Permissions,
-           ptree = PTree,
-           metadata = Metadata
-          }) ->
+             uuid = UUID,
+             name = Name,
+             permissions = Permissions,
+             ptree = PTree,
+             metadata = Metadata
+            }) ->
     R = #role_1{
            uuid = UUID,
            name = Name,
@@ -102,11 +103,11 @@ load(TID, #role_0{
     load(TID, R);
 
 load(TID, #role_0_1_0{
-            uuid = UUID,
-            name = Name,
-            permissions = Permissions,
-            metadata = Metadata
-           }) ->
+             uuid = UUID,
+             name = Name,
+             permissions = Permissions,
+             metadata = Metadata
+            }) ->
     R = #role_0{
            uuid = UUID,
            name = Name,
