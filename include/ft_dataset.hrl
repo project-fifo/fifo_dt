@@ -117,4 +117,5 @@
           kernel_version = riak_dt_lwwreg:new() :: riak_dt_lwwreg:lwwreg()
         }).
 
--define(DATASET, dataset_2).
+-define(TYPE, dataset).
+-define(VERSION, 1).

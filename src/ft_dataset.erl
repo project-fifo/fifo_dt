@@ -5,10 +5,9 @@
 %%% @end
 %%% Created : 23 Aug 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
 -module(ft_dataset).
-
 -behaviour(fifo_dt).
+
 -include("ft_dataset.hrl").
--define(OBJ, ?DATASET).
 -include("ft_helper.hrl").
 
 -export([
@@ -70,7 +69,31 @@
 
              ]).
 
--type dataset() :: #?DATASET{}.
+-type dataset() :: #{
+               type            => ?TYPE,
+               version         => non_neg_integer(),
+               uuid            => riak_dt_lwwreg:lwwreg(),
+               dataset_type    => riak_dt_lwwreg:lwwreg(),
+               zone_type       => riak_dt_lwwreg:lwwreg(),
+
+               status          => riak_dt_lwwreg:lwwreg(),
+               imported        => riak_dt_lwwreg:lwwreg(),
+               requirements    => riak_dt_orswot:orswot(),
+               networks        => riak_dt_orswot:orswot(),
+               metadata        => riak_dt_map:riak_dt_map(),
+
+               description     => riak_dt_lwwreg:lwwreg(),
+               disk_driver     => riak_dt_lwwreg:lwwreg(),
+               homepage        => riak_dt_lwwreg:lwwreg(),
+               image_size      => riak_dt_lwwreg:lwwreg(),
+               name            => riak_dt_lwwreg:lwwreg(),
+               nic_driver      => riak_dt_lwwreg:lwwreg(),
+               os              => riak_dt_lwwreg:lwwreg(),
+               users           => riak_dt_lwwreg:lwwreg(),
+               sha1            => riak_dt_lwwreg:lwwreg(),
+               dataset_version => riak_dt_lwwreg:lwwreg(),
+               kernel_version  => riak_dt_lwwreg:lwwreg()
+              }.
 -export_type([dataset/0]).
 
 ?IS_A.
@@ -78,13 +101,34 @@
 new({_T, _ID}) ->
     {ok, Imported} = ?NEW_LWW(0, 1),
     {ok, Status} = ?NEW_LWW(<<"new">>, 1),
-    #?DATASET{
-        imported = Imported,
-        status = Status
-       }.
+    #{
+       type            => ?TYPE,
+       version         => ?VERSION,
+       uuid            => riak_dt_lwwreg:new(),
+       dataset_type    => riak_dt_lwwreg:new(),
+       zone_type       => riak_dt_lwwreg:new(),
+
+       status          => Status,
+       imported        => Imported,
+       requirements    => riak_dt_orswot:new(),
+       networks        => riak_dt_orswot:new(),
+       metadata        => riak_dt_map:new(),
+
+       description     => riak_dt_lwwreg:new(),
+       disk_driver     => riak_dt_lwwreg:new(),
+       homepage        => riak_dt_lwwreg:new(),
+       image_size      => riak_dt_lwwreg:new(),
+       name            => riak_dt_lwwreg:new(),
+       nic_driver      => riak_dt_lwwreg:new(),
+       os              => riak_dt_lwwreg:new(),
+       users           => riak_dt_lwwreg:new(),
+       sha1            => riak_dt_lwwreg:new(),
+       dataset_version => riak_dt_lwwreg:new(),
+       kernel_version  => riak_dt_lwwreg:new()
+     }.
 
 ?G(<<"uuid">>, uuid);
-?G(<<"kernel_version">>, uuid);
+?G(<<"kernel_version">>, kernel_version);
 ?G(<<"type">>, type);
 ?G(<<"zone_type">>, zone_type);
 ?G(<<"status">>, status);
@@ -102,20 +146,31 @@ new({_T, _ID}) ->
 ?G(<<"version">>, version);
 ?G_JSX.
 
-?G(uuid).
-?S(uuid).
+?REG_GET(uuid).
+?REG_SET(uuid).
 
-?G(type).
+-spec type(dataset()) -> kvm | zone | <<>>.
+type(#{type := ?TYPE, dataset_type := T}) ->
+    riak_dt_lwwreg:value(T).
 type(ID, <<"kvm">>, H) ->
     type(ID, kvm, H);
 type(ID, <<"zone">>, H) ->
     type(ID, zone, H);
-type({T, _ID}, V, H) when V =:= kvm;
-                          V =:= zone ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?DATASET.type),
-    H#?DATASET{type = V1}.
+type({T, _ID}, V, H = #{type := ?TYPE, dataset_type := Old})
+  when V =:= kvm;
+       V =:= zone ->
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
+    H#{dataset_type => V1}.
 
-?G(zone_type).
+-spec version(dataset()) -> binary().
+version(#{version := ?VERSION, dataset_version := V}) ->
+    riak_dt_lwwreg:value(V).
+-spec version(fifo:tid(), binary(), dataset()) -> dataset().
+version({T, _ID}, V, H = #{version := ?VERSION, dataset_version := Old}) ->
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
+    H#{dataset_version => V1}.
+
+?REG_GET(zone_type).
 zone_type(ID, <<"docker">>, H) ->
     zone_type(ID, docker, H);
 zone_type(ID, <<"lx">>, H) ->
@@ -124,95 +179,61 @@ zone_type(ID, <<"ipkg">>, H) ->
     zone_type(ID, ipkg, H);
 zone_type(ID, <<"lipkg">>, H) ->
     zone_type(ID, lipkg, H);
-zone_type({T, _ID}, V, H) when V =:= lx;
-                               V =:= docker;
-                               V =:= ipkg;
-                               V =:= lipkg ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none,
-                                     H#?DATASET.zone_type),
-    H#?DATASET{zone_type = V1}.
+zone_type({T, _ID}, V, H = #{type := ?TYPE, zone_type := Old})
+  when V =:= lx;
+       V =:= docker;
+       V =:= ipkg;
+       V =:= lipkg ->
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
+    H#{zone_type => V1}.
 
-?G(status).
-?S(status).
-?G(imported).
-?S(imported).
+?REG_GET(status).
+?REG_SET(status).
+?REG_GET(imported).
+?REG_SET(imported).
 
-?G(description).
-?S(description).
-?G(disk_driver).
-?S(disk_driver).
-?G(homepage).
-?S(homepage).
-?G(image_size).
-?S(image_size).
-?G(name).
-?S(name).
-?G(nic_driver).
-?S(nic_driver).
-?G(os).
-?S(os).
-?G(sha1).
-?S(sha1).
-?G(users).
-?S(users).
-?G(version).
-?S(version).
-?G(kernel_version).
-?S(kernel_version).
+?REG_GET(description).
+?REG_SET(description).
+?REG_GET(disk_driver).
+?REG_SET(disk_driver).
+?REG_GET(homepage).
+?REG_SET(homepage).
+?REG_GET(image_size).
+?REG_SET(image_size).
+?REG_GET(name).
+?REG_SET(name).
+?REG_GET(nic_driver).
+?REG_SET(nic_driver).
+?REG_GET(os).
+?REG_SET(os).
+?REG_GET(sha1).
+?REG_SET(sha1).
+?REG_GET(users).
+?REG_SET(users).
+?REG_GET(kernel_version).
+?REG_SET(kernel_version).
 
+-type requirement() :: term().
 
-requirements(H) ->
-    riak_dt_orswot:value(H#?DATASET.requirements).
+-spec requirements(dataset()) -> [requirement()].
+?SET_GET(requirements).
+-spec add_requirement(fifo_dt:tid(), term(), dataset()) -> dataset().
+?SET_ADD(add_requirement, requirements).
+-spec remove_requirement(fifo_dt:tid(), term(), dataset()) -> dataset().
+?SET_REM(remove_requirement, requirements).
 
-add_requirement({_T, ID}, V, H) ->
-    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?DATASET.requirements),
-    H#?DATASET{requirements = O1}.
+-type network() :: {binary(), binary()}.
+-spec networks(dataset()) -> [network()].
+?SET_GET(networks).
+-spec add_network(fifo_dt:tid(), term(), dataset()) -> dataset().
+?SET_ADD(add_network, networks).
+-spec remove_network(fifo_dt:tid(), term(), dataset()) -> dataset().
+?SET_REM(remove_network, networks).
 
-remove_requirement({_T, ID}, V, H) ->
-    case riak_dt_orswot:update({remove, V}, ID, H#?DATASET.requirements) of
-        {error, {precondition, {not_present, _}}} ->
-            H;
-        {ok, O1} ->
-            H#?DATASET{requirements = O1}
-    end.
+?META.
+?SET_META_3.
+?SET_META_4.
 
-networks(H) ->
-    riak_dt_orswot:value(H#?DATASET.networks).
-
-add_network({_T, ID}, V, H) ->
-    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?DATASET.networks),
-    H#?DATASET{networks = O1}.
-
-remove_network({_T, ID}, V, H) ->
-    case riak_dt_orswot:update({remove, V}, ID, H#?DATASET.networks) of
-        {error, {precondition, {not_present, _}}} ->
-            H;
-        {ok, O1} ->
-            H#?DATASET{networks = O1}
-    end.
-
-metadata(H) ->
-    fifo_map:value(H#?DATASET.metadata).
-
-set_metadata(ID, M , Vm) when is_map(M) ->
-    set_metadata(ID, maps:to_list(M) , Vm);
-
-set_metadata(ID, [{K, V} | R] , Vm) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
-
-set_metadata(_ID, _, Vm) ->
-    Vm.
-
-set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
-
-set_metadata({_T, ID}, Attribute, delete, G) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, G#?DATASET.metadata),
-    G#?DATASET{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, G) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, G#?DATASET.metadata),
-    G#?DATASET{metadata = M1}.
 
 -define(V(R), riak_dt_lwwreg:value(R)).
 
@@ -275,8 +296,56 @@ add([{N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, V, D))
     end.
 
-load(_, #?DATASET{} = H) ->
-    H;
+-spec load(fifo_dt:tid(), term()) -> dataset().
+
+load(_, #{type := ?TYPE, version := ?VERSION} = D) ->
+    D;
+
+load(TID, #dataset_2{
+             description    = Desc,
+             disk_driver    = DiskD,
+             homepage       = Homepage,
+             image_size     = ImageSize,
+             imported       = Imported,
+             metadata       = Metadata,
+             name           = Name,
+             networks       = Networks,
+             nic_driver     = NicD,
+             os             = OS,
+             requirements   = Reqs,
+             status         = Status,
+             type           = Type,
+             users          = Users,
+             uuid           = UUID,
+             version        = Version,
+             zone_type      = ZType,
+             sha1           = SHA1,
+             kernel_version = KVersion
+            }) ->
+    D1 = #{
+      type            => ?TYPE,
+      version         => 1,
+      description     => Desc,
+      disk_driver     => DiskD,
+      homepage        => Homepage,
+      image_size      => ImageSize,
+      imported        => Imported,
+      metadata        => Metadata,
+      name            => Name,
+      networks        => Networks,
+      nic_driver      => NicD,
+      os              => OS,
+      requirements    => Reqs,
+      status          => Status,
+      dataset_type    => Type,
+      users           => Users,
+      uuid            => UUID,
+      dataset_version => Version,
+      zone_type       => ZType,
+      sha1            => SHA1,
+      kernel_version  => KVersion
+     },
+    load(TID, D1);
 
 load({T, ID}, #dataset_1{
                  description    = Desc,
@@ -444,70 +513,75 @@ load(TID, #dataset_0_1_0{
            },
     load(TID, D1).
 
-merge(#?DATASET{
-          description    = Desc1,
-          disk_driver    = DiskD1,
-          homepage       = Homepage1,
-          image_size     = ImageSize1,
-          imported       = Imported1,
-          kernel_version = KernelVersion1,
-          metadata       = Metadata1,
-          name           = Name1,
-          networks       = Networks1,
-          nic_driver     = NicD1,
-          os             = OS1,
-          requirements   = Reqs1,
-          sha1           = SHA11,
-          status         = Status1,
-          type           = Type1,
-          users          = Users1,
-          uuid           = UUID1,
-          version        = Version1,
-          zone_type      = ZoneType1
-         },
-      #?DATASET{
-          description    = Desc2,
-          disk_driver    = DiskD2,
-          homepage       = Homepage2,
-          image_size     = ImageSize2,
-          imported       = Imported2,
-          kernel_version = KernelVersion2,
-          metadata       = Metadata2,
-          name           = Name2,
-          networks       = Networks2,
-          nic_driver     = NicD2,
-          os             = OS2,
-          requirements   = Reqs2,
-          sha1           = SHA12,
-          status         = Status2,
-          type           = Type2,
-          users          = Users2,
-          uuid           = UUID2,
-          version        = Version2,
-          zone_type      = ZoneType2
-         }) ->
-    #?DATASET{
-        description    = riak_dt_lwwreg:merge(Desc1, Desc2),
-        disk_driver    = riak_dt_lwwreg:merge(DiskD1, DiskD2),
-        homepage       = riak_dt_lwwreg:merge(Homepage1, Homepage2),
-        image_size     = riak_dt_lwwreg:merge(ImageSize1, ImageSize2),
-        imported       = riak_dt_lwwreg:merge(Imported1, Imported2),
-        kernel_version = riak_dt_lwwreg:merge(KernelVersion1, KernelVersion2),
-        metadata       = fifo_map:merge(Metadata1, Metadata2),
-        name           = riak_dt_lwwreg:merge(Name1, Name2),
-        networks       = riak_dt_orswot:merge(Networks1, Networks2),
-        nic_driver     = riak_dt_lwwreg:merge(NicD1, NicD2),
-        os             = riak_dt_lwwreg:merge(OS1, OS2),
-        requirements   = riak_dt_orswot:merge(Reqs1, Reqs2),
-        sha1           = riak_dt_lwwreg:merge(SHA11, SHA12),
-        status         = riak_dt_lwwreg:merge(Status1, Status2),
-        type           = riak_dt_lwwreg:merge(Type1, Type2),
-        users          = riak_dt_lwwreg:merge(Users1, Users2),
-        uuid           = riak_dt_lwwreg:merge(UUID1, UUID2),
-        version        = riak_dt_lwwreg:merge(Version1, Version2),
-        zone_type      = riak_dt_lwwreg:merge(ZoneType1, ZoneType2)
-       }.
+merge(#{
+         type            := ?TYPE,
+         version         := ?VERSION,
+         description     := Desc1,
+         disk_driver     := DiskD1,
+         homepage        := Homepage1,
+         image_size      := ImageSize1,
+         imported        := Imported1,
+         kernel_version  := KernelVersion1,
+         metadata        := Metadata1,
+         name            := Name1,
+         networks        := Networks1,
+         nic_driver      := NicD1,
+         os              := OS1,
+         requirements    := Reqs1,
+         sha1            := SHA11,
+         status          := Status1,
+         dataset_type    := Type1,
+         users           := Users1,
+         uuid            := UUID1,
+         dataset_version := Version1,
+         zone_type       := ZoneType1
+       } = D1,
+      #{
+         type            := ?TYPE,
+         description     := Desc2,
+         disk_driver     := DiskD2,
+         homepage        := Homepage2,
+         image_size      := ImageSize2,
+         imported        := Imported2,
+         kernel_version  := KernelVersion2,
+         metadata        := Metadata2,
+         name            := Name2,
+         networks        := Networks2,
+         nic_driver      := NicD2,
+         os              := OS2,
+         requirements    := Reqs2,
+         sha1            := SHA12,
+         status          := Status2,
+         dataset_type    := Type2,
+         users           := Users2,
+         uuid            := UUID2,
+         dataset_version := Version2,
+         zone_type       := ZoneType2
+       }) ->
+    D1#{
+      description     => riak_dt_lwwreg:merge(Desc1, Desc2),
+      disk_driver     => riak_dt_lwwreg:merge(DiskD1, DiskD2),
+      homepage        => riak_dt_lwwreg:merge(Homepage1, Homepage2),
+      image_size      => riak_dt_lwwreg:merge(ImageSize1, ImageSize2),
+      imported        => riak_dt_lwwreg:merge(Imported1, Imported2),
+      kernel_version  => riak_dt_lwwreg:merge(KernelVersion1, KernelVersion2),
+      metadata        => fifo_map:merge(Metadata1, Metadata2),
+      name            => riak_dt_lwwreg:merge(Name1, Name2),
+      networks        => riak_dt_orswot:merge(Networks1, Networks2),
+      nic_driver      => riak_dt_lwwreg:merge(NicD1, NicD2),
+      os              => riak_dt_lwwreg:merge(OS1, OS2),
+      requirements    => riak_dt_orswot:merge(Reqs1, Reqs2),
+      sha1            => riak_dt_lwwreg:merge(SHA11, SHA12),
+      status          => riak_dt_lwwreg:merge(Status1, Status2),
+      dataset_type    => riak_dt_lwwreg:merge(Type1, Type2),
+      users           => riak_dt_lwwreg:merge(Users1, Users2),
+      uuid            => riak_dt_lwwreg:merge(UUID1, UUID2),
+      dataset_version => riak_dt_lwwreg:merge(Version1, Version2),
+      zone_type       => riak_dt_lwwreg:merge(ZoneType1, ZoneType2)
+     }.
 
+-spec net_to_json([network()]) ->
+                         [#{}].
 net_to_json(Nets) ->
     lists:sort([ #{<<"description">> => Desc, <<"name">> => Name}
                  || {Name, Desc} <- Nets]).
