@@ -28,8 +28,8 @@ dtrace(Size) ->
                                {call, ?D, set_metadata, [id(Size), non_blank_string(), non_blank_string(), O]},
                                {call, ?D, set_metadata, [id(Size), maybe_oneof(calc_map(set_metadata, O)), delete, O]},
 
-                               {call, ?D, set_config, [id(Size), non_blank_string(), non_blank_string(), O]},
-                               {call, ?D, set_config, [id(Size), maybe_oneof(calc_map(set_config, O)), delete, O]}
+                               {call, ?D, add_config, [id(Size), non_blank_string(), non_blank_string(), O]},
+                               {call, ?D, remove_config, [id(Size), maybe_oneof(calc_map(set_config, O)), O]}
 
                               ]))
                      || Size > 1])).
@@ -142,7 +142,7 @@ prop_set_config() ->
     ?FORALL({K, V, O}, {non_blank_string(), non_blank_string(), dtrace()},
             begin
                 Hv = eval(O),
-                O1 = ?D:set_config(id(?BIG_TIME), K, V, Hv),
+                O1 = ?D:add_config(id(?BIG_TIME), K, V, Hv),
                 M1 = model_set_config(K, V, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),
@@ -153,7 +153,7 @@ prop_remove_config() ->
     ?FORALL({O, K}, ?LET(O, dtrace(), {O, maybe_oneof(calc_map(set_config, O))}),
             begin
                 Hv = eval(O),
-                O1 = ?D:set_config(id(?BIG_TIME), K, delete, Hv),
+                O1 = ?D:remove_config(id(?BIG_TIME), K, Hv),
                 M1 = model_delete_config(K, model(Hv)),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nModel: ~p~n"
                                     "Hv': ~p~nModel': ~p~n", [O, Hv, model(Hv), O1, M1]),

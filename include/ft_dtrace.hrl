@@ -16,4 +16,5 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
         }).
 
--define(DTRACE, dtrace_0).
+-define(TYPE, dtrace).
+-define(VERSION, 1).

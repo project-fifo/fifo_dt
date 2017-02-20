@@ -258,9 +258,7 @@ resource_dec({_T, ID}, K, V, O = #{type := ?TYPE, resources := Rs}) ->
 -spec triggers(Org::org()) -> #{fifo:uuid() => Trigger::term()}.
 
 ?MAP_GET(triggers).
-
 ?MAP_SET(add_trigger, triggers).
-
 ?MAP_REM(remove_trigger, triggers).
 
 remove_target(TID, Target, Org) ->
