@@ -8,7 +8,6 @@
 -behaviour(fifo_dt).
 
 -include("ft_grouping.hrl").
--define(OBJ, ?GROUPING).
 -include("ft_helper.hrl").
 
 -export([
@@ -44,64 +43,67 @@
               metadata/1, set_metadata/3, set_metadata/4
              ]).
 
--type grouping() :: #?OBJ{}.
+-type grouping() :: #{
+                type           => ?TYPE,
+                version        => non_neg_integer(),
+                uuid           => riak_dt_lwwreg:lwwreg(),
+                name           => riak_dt_lwwreg:lwwreg(),
+                grouping_type  => riak_dt_lwwreg:lwwreg(),
+                groupings      => riak_dt_orswot:orswot(),
+                elements       => riak_dt_orswot:orswot(),
+                config         => riak_dt_map:riak_dt_map(),
+                metadata       => riak_dt_map:riak_dt_map()
+               }.
 -export_type([grouping/0]).
 
 ?IS_A.
 
+-spec new(fifo_dt:tid()) -> grouping().
 new(_) ->
-    #?GROUPING{}.
+    #{
+     type           => ?TYPE,
+     version        => ?VERSION,
+     uuid           => riak_dt_lwwreg:new(),
+     name           => riak_dt_lwwreg:new(),
+     grouping_type  => riak_dt_lwwreg:new(),
+     groupings      => riak_dt_orswot:new(),
+     elements       => riak_dt_orswot:new(),
+     config         => riak_dt_map:new(),
+     metadata       => riak_dt_map:new()
+    }.
 
-uuid(H) ->
-    riak_dt_lwwreg:value(H#?GROUPING.uuid).
 
-uuid({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?GROUPING.uuid),
-    H#?GROUPING{uuid = V1}.
+?REG_GET(uuid).
+?REG_SET(uuid).
 
-name(H) ->
-    riak_dt_lwwreg:value(H#?GROUPING.name).
+?REG_GET(name).
+?REG_SET(name).
 
-name({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?GROUPING.name),
-    H#?GROUPING{name = V1}.
 
-type(H) ->
-    riak_dt_lwwreg:value(H#?GROUPING.type).
+type(#{type := ?TYPE, grouping_type := T}) ->
+    riak_dt_lwwreg:value(T).
 
-type({T, _ID}, V, H) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?GROUPING.type),
-    H#?GROUPING{type = V1}.
+type({T, _ID}, V, G = #{type := ?TYPE, grouping_type := Old}) ->
+    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
+    G#{grouping_type => V1}.
 
-elements(H) ->
-    riak_dt_orswot:value(H#?GROUPING.elements).
+-spec elements(grouping()) -> [binary()].
+?SET_GET(elements).
 
-add_element({_T, ID}, V, H) ->
-    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?GROUPING.elements),
-    H#?GROUPING{elements = O1}.
+-spec add_element(fifo_dt:tid(), binary(), grouping()) -> grouping().
+?SET_ADD(add_element, elements).
 
-remove_element({_T, ID}, V, H) ->
-    case riak_dt_orswot:update({remove, V}, ID, H#?GROUPING.elements) of
-        {error, {precondition, {not_present, _}}} ->
-            H;
-        {ok, O1} ->
-            H#?GROUPING{elements = O1}
-    end.
+-spec remove_element(fifo_dt:tid(), binary(), grouping()) -> grouping().
+?SET_REM(remove_element, elements).
 
-groupings(H) ->
-    riak_dt_orswot:value(H#?GROUPING.groupings).
+-spec groupings(grouping()) -> [binary()].
+?SET_GET(groupings).
 
-add_grouping({_T, ID}, V, H) ->
-    {ok, O1} = riak_dt_orswot:update({add, V}, ID, H#?GROUPING.groupings),
-    H#?GROUPING{groupings = O1}.
+-spec add_grouping(fifo_dt:tid(), binary(), grouping()) -> grouping().
+?SET_ADD(add_grouping, groupings).
 
-remove_grouping({_T, ID}, V, H) ->
-    case riak_dt_orswot:update({remove, V}, ID, H#?GROUPING.groupings) of
-        {error, {precondition, {not_present, _}}} ->
-            H;
-        {ok, O1} ->
-            H#?GROUPING{groupings = O1}
-    end.
+-spec remove_grouping(fifo_dt:tid(), binary(), grouping()) -> grouping().
+?SET_REM(remove_grouping, groupings).
 
 ?G(<<"name">>, name);
 ?G(<<"uuid">>, uuid);
@@ -110,9 +112,33 @@ remove_grouping({_T, ID}, V, H) ->
 ?G(<<"type">>, type);
 ?G_JSX.
 
+-spec load(fifo_dt:tid(), term()) -> grouping().
+load(_, #{type := Other}) when Other =/= ?TYPE ->
+    error(bad_arg);
 
-load(_, #?GROUPING{} = G) ->
+load(_, #{version := ?VERSION} = G) ->
     G;
+load(TID, #grouping_1{
+             uuid = UUID,
+             name = Name,
+             type = Type,
+             groupings = Groupings,
+             elements = Elements,
+             metadata = Metadata,
+             config = Config
+            }) ->
+    G1 = #{
+      version       => ?VERSION,
+      type          => ?TYPE,
+      uuid          => UUID,
+      name          => Name,
+      grouping_type => Type,
+      groupings     => Groupings,
+      elements      => Elements,
+      metadata      => Metadata,
+      config        => Config
+     },
+    load(TID, G1);
 
 load(TID, #grouping_0{
              uuid = UUID,
@@ -135,13 +161,13 @@ load(TID, #grouping_0{
     load(TID, G1);
 
 load(TID, #grouping_0_1_0{
-                  uuid = UUID,
-                  name = Name,
-                  type = Type,
-                  groupings = Groupings,
-                  elements = Elements,
-                  metadata = Metadata
-                 }) ->
+             uuid = UUID,
+             name = Name,
+             type = Type,
+             groupings = Groupings,
+             elements = Elements,
+             metadata = Metadata
+            }) ->
     G1 = #grouping_0{
             uuid = UUID,
             name = Name,
@@ -152,50 +178,13 @@ load(TID, #grouping_0_1_0{
            },
     load(TID, G1).
 
-metadata(G) ->
-    fifo_map:value(G#?GROUPING.metadata).
+?META.
+?SET_META_3.
+?SET_META_4.
 
-set_metadata(ID, M , Vm) when is_map(M) ->
-    set_metadata(ID, maps:to_list(M) , Vm);
-set_metadata(ID, [{K, V} | R] , Vm) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Vm));
-
-set_metadata(_ID, _, Vm) ->
-    Vm.
-
-set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
-
-set_metadata({_T, ID}, Attribute, delete, G) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, G#?GROUPING.metadata),
-    G#?GROUPING{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, G) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, G#?GROUPING.metadata),
-    G#?GROUPING{metadata = M1}.
-
-config(G) ->
-    fifo_map:value(G#?GROUPING.config).
-
-set_config(ID, M , Vm) when is_map(M) ->
-    set_config(ID, maps:to_list(M) , Vm);
-
-set_config(ID, [{K, V} | R], Vm) ->
-    set_config(ID, R, set_config(ID, K, V, Vm));
-
-set_config(_ID, _, Vm) ->
-    Vm.
-
-set_config({T, ID}, P, Value, User) when is_binary(P) ->
-    set_config({T, ID}, fifo_map:split_path(P), Value, User);
-
-set_config({_T, ID}, Attribute, delete, G) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, G#?GROUPING.config),
-    G#?GROUPING{config = M1};
-
-set_config({T, ID}, Attribute, Value, G) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, G#?GROUPING.config),
-    G#?GROUPING{config = M1}.
+?MAP_GET(config).
+?MAP_SET_3(set_config).
+?MAP_SET_4(set_config, config).
 
 to_json(G) ->
     Type = case type(G) of
@@ -214,30 +203,32 @@ to_json(G) ->
        <<"uuid">> => uuid(G)
      }.
 
-merge(#?GROUPING{
-          elements = Elements1,
-          groupings = Groupings1,
-          metadata = Metadata1,
-          config = Config1,
-          name = Name1,
-          type = Type1,
-          uuid = UUID1
-         },
-      #?GROUPING{
-          elements = Elements2,
-          groupings = Groupings2,
-          metadata = Metadata2,
-          config = Config2,
-          name = Name2,
-          type = Type2,
-          uuid = UUID2
-         }) ->
-    #?GROUPING{
-        elements = riak_dt_orswot:merge(Elements1, Elements2),
-        groupings = riak_dt_orswot:merge(Groupings1, Groupings2),
-        metadata = fifo_map:merge(Metadata1, Metadata2),
-        config = fifo_map:merge(Config1, Config2),
-        name = riak_dt_lwwreg:merge(Name1, Name2),
-        type = riak_dt_lwwreg:merge(Type1, Type2),
-        uuid = riak_dt_lwwreg:merge(UUID1, UUID2)
-       }.
+merge(#{
+         type          := ?TYPE,
+         version       := ?VERSION,
+         elements      := Elements1,
+         groupings     := Groupings1,
+         metadata      := Metadata1,
+         config        := Config1,
+         name          := Name1,
+         grouping_type := Type1,
+         uuid          := UUID1
+       } = G,
+      #{
+         elements      := Elements2,
+         groupings     := Groupings2,
+         metadata      := Metadata2,
+         config        := Config2,
+         name          := Name2,
+         grouping_type := Type2,
+         uuid          := UUID2
+       }) ->
+    G#{
+      elements      => riak_dt_orswot:merge(Elements1, Elements2),
+      groupings     => riak_dt_orswot:merge(Groupings1, Groupings2),
+      metadata      => fifo_map:merge(Metadata1, Metadata2),
+      config        => fifo_map:merge(Config1, Config2),
+      name          => riak_dt_lwwreg:merge(Name1, Name2),
+      grouping_type => riak_dt_lwwreg:merge(Type1, Type2),
+      uuid          => riak_dt_lwwreg:merge(UUID1, UUID2)
+     }.

@@ -30,4 +30,5 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
         }).
 
--define(GROUPING, grouping_1).
+-define(TYPE, grouping).
+-define(VERSION, 1).

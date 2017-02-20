@@ -407,7 +407,6 @@ get_token_by_id(TokenID, User) ->
 
 -spec tokens(user()) -> [token()].
 ?SET_GET(tokens).
-
 -spec orgs(user()) -> [fifo:org_id()].
 ?SET_GET(orgs).
 -spec join_org(fifo_dt:tid(), fifo:org_id(), user()) -> user().
