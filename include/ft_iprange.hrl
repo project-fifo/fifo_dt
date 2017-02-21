@@ -30,4 +30,5 @@
           metadata       = riak_dt_map:new()    :: riak_dt_map:riak_dt_map()
         }).
 
--define(IPRANGE, iprange_0).
+-define(TYPE, iprange).
+-define(VERSION, 1).

@@ -215,6 +215,8 @@ merge(#{
          uuid          := UUID1
        } = G,
       #{
+         type          := ?TYPE,
+         version       := ?VERSION,
          elements      := Elements2,
          groupings     := Groupings2,
          metadata      := Metadata2,

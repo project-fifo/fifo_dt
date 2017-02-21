@@ -8,7 +8,6 @@
 -behaviour(fifo_dt).
 
 -include("ft_iprange.hrl").
--define(OBJ, ?IPRANGE).
 -include("ft_helper.hrl").
 
 -define(G_SUB(N, F),
@@ -21,7 +20,6 @@
          is_a/1, new/1,
          new/3, load/2, merge/2, to_json/1,
          release_ip/3, claim_ip/3,
-         set/4,
          to_bin/1,
          parse_bin/1,
          cidr_to_mask/1,
@@ -55,54 +53,62 @@
               merge/2
              ]).
 
--ignore_xref([load/2, name/1, set/4, getter/2, uuid/1]).
+-ignore_xref([load/2, name/1, getter/2, uuid/1]).
 
--type iprange() :: #?OBJ{}.
+-type iprange() :: #{
+               type           => ?TYPE,
+               version        => non_neg_integer(),
+               uuid           => riak_dt_lwwreg:lwwreg(),
+               name           => riak_dt_lwwreg:lwwreg(),
+
+               network        => riak_dt_lwwreg:lwwreg(),
+               netmask        => riak_dt_lwwreg:lwwreg(),
+               gateway        => riak_dt_lwwreg:lwwreg(),
+               tag            => riak_dt_lwwreg:lwwreg(),
+               vlan           => riak_dt_lwwreg:lwwreg(),
+
+               free           => riak_dt_orswot:orswot(),
+               used           => riak_dt_orswot:orswot(),
+               metadata       => riak_dt_map:riak_dt_map()
+              }.
 -export_type([iprange/0]).
 
 ?IS_A.
 
-?G(uuid).
-?S(uuid).
+?REG_GET(uuid).
+?REG_SET(uuid).
 
-?G(name).
-?S(name).
+?REG_GET(name).
+?REG_SET(name).
 
-?G(network).
-network({T, _ID}, V, H) when ?IS_IP ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.network),
-    H#?IPRANGE{network = V1}.
+-define(REG_SET_IP(Field),
+        Field({T, _ID}, V, O = #{type := ?TYPE, Field := Reg0})
+        when ?IS_IP ->
+               ?REG_SET_BODY(Field)).
 
-?G(netmask).
-netmask({T, _ID}, V, H) when ?IS_IP ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.netmask),
-    H#?IPRANGE{netmask = V1}.
+?REG_GET(network).
+?REG_SET_IP(network).
 
-?G(gateway).
-gateway({T, _ID}, V, H) when ?IS_IP ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.gateway),
-    H#?IPRANGE{gateway = V1}.
+?REG_GET(netmask).
+?REG_SET_IP(netmask).
 
-?G(tag).
-tag({T, _ID}, V, H) when is_binary(V) ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.tag),
-    H#?IPRANGE{tag = V1}.
+?REG_GET(gateway).
+?REG_SET_IP(gateway).
 
-?G(vlan).
-vlan({T, _ID}, V, H) when is_integer(V),
-                          V >= 0, V < 4096 ->
-    {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, H#?IPRANGE.vlan),
-    H#?IPRANGE{vlan = V1}.
+?REG_GET(tag).
+?REG_SET(tag).
 
-free(H) ->
-    riak_dt_orswot:value(H#?IPRANGE.free).
+?REG_GET(vlan).
+vlan({T, _ID}, V, O = #{type := ?TYPE, vlan := Reg0})
+  when is_integer(V), V >= 0, V < 4096 ->
+    ?REG_SET_BODY(vlan).
 
-used(H) ->
-    riak_dt_orswot:value(H#?IPRANGE.used).
+?SET_GET(free).
+?SET_GET(used).
 
 -spec getter(ft_obj:obj() | iprange(), jsxd:key()) -> jsxd:value().
 
-getter(#?OBJ{} = O, E) ->
+getter(O = #{type := ?TYPE}, E) ->
     sub_getter(O, E);
 
 getter(O, E) ->
@@ -122,8 +128,43 @@ sub_getter(O, K) ->
                   " reverting to jsxd.", [?MODULE, K]),
     jsxd:get(K, to_json(O)).
 
-load(_, #?IPRANGE{} = I) ->
+-spec load(fifo_dt:tid(), term()) -> iprange().
+load(_, #{type := Other}) when Other =/= ?TYPE ->
+    error(bad_arg);
+
+load(_, #{version := ?VERSION} = I) ->
     I;
+load(TID, #iprange_0{
+             uuid           = UUID,
+             name           = Name,
+
+             network        = Network,
+             netmask        = Netmask,
+             gateway        = Gateway,
+             tag            = Tag,
+             vlan           = VLan,
+
+             free           = Free,
+             used           = Used,
+             metadata       = Metadata
+            }) ->
+    I = #{
+      type           => ?TYPE,
+      version        => 1,
+      uuid           => UUID,
+      name           => Name,
+
+      network        => Network,
+      netmask        => Netmask,
+      gateway        => Gateway,
+      tag            => Tag,
+      vlan           => VLan,
+
+      free           => Free,
+      used           => Used,
+      metadata       => Metadata
+     },
+    load(TID, I);
 load(TID, #iprange_0_1_0{
              uuid           = UUID,
              name           = Name,
@@ -155,121 +196,114 @@ load(TID, #iprange_0_1_0{
     load(TID, I).
 
 new({_T, _ID}) ->
-    Free = riak_dt_orswot:new(),
-    #?IPRANGE{free=Free}.
+    #{
+     type           => ?TYPE,
+     version        => ?VERSION,
+     uuid           => riak_dt_lwwreg:new(),
+     name           => riak_dt_lwwreg:new(),
 
-new({_T, ID}, S, E) when S < E ->
+     network        => riak_dt_lwwreg:new(),
+     netmask        => riak_dt_lwwreg:new(),
+     gateway        => riak_dt_lwwreg:new(),
+     tag            => riak_dt_lwwreg:new(),
+     vlan           => riak_dt_lwwreg:new(),
+
+     free           => riak_dt_orswot:new(),
+     used           => riak_dt_orswot:new(),
+     metadata       => riak_dt_map:new()
+    }.
+
+new(TID = {_T, ID}, S, E) when S < E ->
     {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(S, E)}, ID,
                                        riak_dt_orswot:new()),
-    #?IPRANGE{free=Free}.
+    I0 = new(TID),
+    I0#{free => Free}.
 
-claim_ip({_T, ID}, IP, I) when
+claim_ip({_T, ID}, IP, I = #{type := ?TYPE, free := Free, used := Used}) when
       is_integer(IP) ->
-    case riak_dt_orswot:update({remove, IP}, ID, I#?IPRANGE.free) of
+    case riak_dt_orswot:update({remove, IP}, ID, Free) of
         {error, {precondition, {not_present, _}}} ->
             {error, used};
-        {ok, Free} ->
-            {ok, Used} = riak_dt_orswot:update({add, IP}, ID, I#?IPRANGE.used),
-            {ok, I#?IPRANGE{free=Free, used=Used}}
+        {ok, Free1} ->
+            {ok, Used1} = riak_dt_orswot:update({add, IP}, ID, Used),
+            {ok, I#{free => Free1, used => Used1}}
     end.
 
-release_ip({_T, ID}, IP, I) when
+release_ip({_T, ID}, IP, I = #{type := ?TYPE, free := Free, used := Used}) when
       is_integer(IP) ->
-    case riak_dt_orswot:update({remove, IP}, ID, I#?IPRANGE.used) of
+    case riak_dt_orswot:update({remove, IP}, ID, Used) of
         {error, {precondition, {not_present, _}}} ->
             {ok, I};
-        {ok, Used} ->
-            {ok, Free} = riak_dt_orswot:update({add, IP}, ID, I#?IPRANGE.free),
-            {ok, I#?IPRANGE{free=Free, used=Used}}
+        {ok, Used1} ->
+            {ok, Free1} = riak_dt_orswot:update({add, IP}, ID, Free),
+            {ok, I#{free => Free1, used => Used1}}
     end.
 
-set({T, ID}, <<"metadata">>, V, H) ->
-    H#?IPRANGE{metadata = fifo_map:from_orddict(V, ID, T)};
 
-set(ID, K = <<"metadata.", _/binary>>, V, H) ->
-    set(ID, re:split(K, "\\."), V, H);
-
-set(ID, [<<"metadata">> | R], V, H) ->
-    set_metadata(ID, R, V, H).
-
-metadata(I) ->
-    fifo_map:value(I#?IPRANGE.metadata).
-
-set_metadata(ID, M, Obj) when is_map(M)->
-    set_metadata(ID, maps:to_list(M), Obj);
-set_metadata(ID, [{K, V} | R] , Obj) ->
-    set_metadata(ID, R, set_metadata(ID, K, V, Obj));
-
-set_metadata(_ID, _, Obj) ->
-    Obj.
-
-set_metadata({T, ID}, P, Value, User) when is_binary(P) ->
-    set_metadata({T, ID}, fifo_map:split_path(P), Value, User);
-
-set_metadata({_T, ID}, Attribute, delete, I) ->
-    {ok, M1} = fifo_map:remove(Attribute, ID, I#?IPRANGE.metadata),
-    I#?IPRANGE{metadata = M1};
-
-set_metadata({T, ID}, Attribute, Value, I) ->
-    {ok, M1} = fifo_map:set(Attribute, Value, ID, T, I#?IPRANGE.metadata),
-    I#?IPRANGE{metadata = M1}.
+?META.
+?SET_META_3.
+?SET_META_4.
 
 to_json(I) ->
     #{
-       <<"free">> => free(I),
-       <<"gateway">> => gateway(I),
+       <<"free">>     => free(I),
+       <<"gateway">>  => gateway(I),
        <<"metadata">> => metadata(I),
-       <<"name">> => name(I),
-       <<"netmask">> => netmask(I),
-       <<"network">> => network(I),
-       <<"tag">> => tag(I),
-       <<"used">> => used(I),
-       <<"uuid">> => uuid(I),
-       <<"vlan">> => vlan(I)
-        }.
+       <<"name">>     => name(I),
+       <<"netmask">>  => netmask(I),
+       <<"network">>  => network(I),
+       <<"tag">>      => tag(I),
+       <<"used">>     => used(I),
+       <<"uuid">>     => uuid(I),
+       <<"vlan">>     => vlan(I)
+     }.
 
-merge(#?IPRANGE{
-          uuid     = UUID1,
-          name     = Name1,
+merge(#{
+         type     := ?TYPE,
+         version  := ?VERSION,
+         uuid     := UUID1,
+         name     := Name1,
 
-          network  = Network1,
-          netmask  = Netmask1,
-          gateway  = Gateway1,
-          tag      = Tag1,
-          vlan     = Vlan1,
+         network  := Network1,
+         netmask  := Netmask1,
+         gateway  := Gateway1,
+         tag      := Tag1,
+         vlan     := Vlan1,
 
-          free     = Free1,
-          used     = Used1,
-          metadata = Metadata1
-         },
-      #?IPRANGE{
-          uuid     = UUID2,
-          name     = Name2,
+         free     := Free1,
+         used     := Used1,
+         metadata := Metadata1
+       } = I,
+      #{
+         type     := ?TYPE,
+         version  := ?VERSION,
+         uuid     := UUID2,
+         name     := Name2,
 
-          network  = Network2,
-          netmask  = Netmask2,
-          gateway  = Gateway2,
-          tag      = Tag2,
-          vlan     = Vlan2,
+         network  := Network2,
+         netmask  := Netmask2,
+         gateway  := Gateway2,
+         tag      := Tag2,
+         vlan     := Vlan2,
 
-          free     = Free2,
-          used     = Used2,
-          metadata = Metadata2
-         }) ->
-    #?IPRANGE{
-        uuid     = riak_dt_lwwreg:merge(UUID1, UUID2),
-        name     = riak_dt_lwwreg:merge(Name1, Name2),
+         free     := Free2,
+         used     := Used2,
+         metadata := Metadata2
+       }) ->
+    I#{
+      uuid     => riak_dt_lwwreg:merge(UUID1, UUID2),
+      name     => riak_dt_lwwreg:merge(Name1, Name2),
 
-        network  = riak_dt_lwwreg:merge(Network1, Network2),
-        netmask  = riak_dt_lwwreg:merge(Netmask1, Netmask2),
-        gateway  = riak_dt_lwwreg:merge(Gateway1, Gateway2),
-        tag      = riak_dt_lwwreg:merge(Tag1, Tag2),
-        vlan     = riak_dt_lwwreg:merge(Vlan1, Vlan2),
+      network  => riak_dt_lwwreg:merge(Network1, Network2),
+      netmask  => riak_dt_lwwreg:merge(Netmask1, Netmask2),
+      gateway  => riak_dt_lwwreg:merge(Gateway1, Gateway2),
+      tag      => riak_dt_lwwreg:merge(Tag1, Tag2),
+      vlan     => riak_dt_lwwreg:merge(Vlan1, Vlan2),
 
-        free     = riak_dt_orswot:merge(Free1, Free2),
-        used     = riak_dt_orswot:merge(Used1, Used2),
-        metadata = fifo_map:merge(Metadata1, Metadata2)
-       }.
+      free     => riak_dt_orswot:merge(Free1, Free2),
+      used     => riak_dt_orswot:merge(Used1, Used2),
+      metadata => fifo_map:merge(Metadata1, Metadata2)
+     }.
 
 to_bin(IP) ->
     <<A, B, C, D>> = <<IP:32>>,
