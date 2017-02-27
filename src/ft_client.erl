@@ -73,7 +73,7 @@ load(_, #{type := ?TYPE, version := ?VERSION} = Client) ->
     Client;
 
 
-load(TID, C = #{version := 0, type := {_,_} = T}) ->
+load(TID, C = #{version := 0, type := {_, _} = T}) ->
     C1 = C#{
            version       => 1,
            type          => ?TYPE,

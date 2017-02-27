@@ -7,8 +7,6 @@ all: compile
 
 include fifo.mk
 
-lint:
-	true
 clean:
 	$(REBAR) clean
 
