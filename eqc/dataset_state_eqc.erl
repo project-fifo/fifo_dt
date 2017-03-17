@@ -11,7 +11,7 @@
 -define(BIG_TIME, 1000000000).
 
 dataset_type() ->
-    oneof([kvm, zone]).
+    oneof([kvm, zone, jail]).
 
 zone_type() ->
     oneof([lx, docker, lipkg, ipkg]).
@@ -101,6 +101,9 @@ model_sha1(N, R) ->
 
 model_type(zone, R) ->
     r(<<"type">>, <<"zone">>, R);
+
+model_type(jail, R) ->
+    r(<<"type">>, <<"jail">>, R);
 
 model_type(kvm, R) ->
     r(<<"type">>, <<"kvm">>, R).

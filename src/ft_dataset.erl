@@ -149,16 +149,19 @@ new({_T, _ID}) ->
 ?REG_GET(uuid).
 ?REG_SET(uuid).
 
--spec type(dataset()) -> kvm | zone | <<>>.
+-spec type(dataset()) -> kvm | jail | zone | <<>>.
 type(#{type := ?TYPE, dataset_type := T}) ->
     riak_dt_lwwreg:value(T).
 type(ID, <<"kvm">>, H) ->
     type(ID, kvm, H);
+type(ID, <<"jail">>, H) ->
+    type(ID, jail, H);
 type(ID, <<"zone">>, H) ->
     type(ID, zone, H);
 type({T, _ID}, V, H = #{type := ?TYPE, dataset_type := Old})
   when V =:= kvm;
-       V =:= zone ->
+       V =:= zone;
+       V =:= jail ->
     {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
     H#{dataset_type => V1}.
 
@@ -241,7 +244,8 @@ to_json(D) ->
     Type = case type(D) of
                <<>> -> <<>>;
                kvm -> <<"kvm">>;
-               zone -> <<"zone">>
+               zone -> <<"zone">>;
+               jail -> <<"jail">>
            end,
     Vs = [
           {<<"description">>, fun description/1},
