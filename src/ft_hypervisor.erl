@@ -120,8 +120,8 @@
 
 -spec new(fifo_dt:tid()) -> hypervisor().
 new(_) ->
-    {ok, Empty} = ?NEW_LWW([], 0),
-    {ok, Zero} = ?NEW_LWW(0, 0),
+    {ok, Empty} = ?NEW_LWW([], 1),
+    {ok, Zero} = ?NEW_LWW(0, 1),
     #{
        type            => ?TYPE,
        version         => ?VERSION,
@@ -162,7 +162,7 @@ load(TID, #hypervisor_0{
              version         = Version,
              virtualisation  = Virt
             }) ->
-    {ok, Zero} = ?NEW_LWW(0, 0),
+    {ok, Zero} = ?NEW_LWW(0, 1),
     H1 = #{
       type            => ?TYPE,
       version         => 0,
