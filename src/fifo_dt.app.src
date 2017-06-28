@@ -2,7 +2,7 @@
              [{description,"FiFo datatype collection"},
               {vsn, git},
               {registered,[]},
-              {applications,[kernel,riak_dt,stdlib,jsxd,libsnarlmatch]},
+              {applications,[kernel,riak_dt,stdlib,jsxd,libsnarlmatch, lager]},
               {maintainers,["Heinz N. Gies"]},
               {licenses,["CDDL"]},
               {links,[{"Github","https://github.com/project-fifo/fifo_dt"}]}]}.
