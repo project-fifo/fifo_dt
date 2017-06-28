@@ -8,3 +8,4 @@ TEST-*
 current_counterexample.eqc
 .eqc
 .rebar3
+*~
