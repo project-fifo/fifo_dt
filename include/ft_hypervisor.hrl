@@ -37,4 +37,4 @@
         }).
 
 -define(TYPE, hypervisor).
--define(VERSION, 0).
+-define(VERSION, 1).

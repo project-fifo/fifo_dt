@@ -182,10 +182,13 @@ zone_type(ID, <<"ipkg">>, H) ->
     zone_type(ID, ipkg, H);
 zone_type(ID, <<"lipkg">>, H) ->
     zone_type(ID, lipkg, H);
+zone_type(ID, <<"jail">>, H) ->
+    zone_type(ID, jail, H);
 zone_type({T, _ID}, V, H = #{type := ?TYPE, zone_type := Old})
   when V =:= lx;
        V =:= docker;
        V =:= ipkg;
+       V =:= jail;
        V =:= lipkg ->
     {ok, V1} = riak_dt_lwwreg:update({assign, V, T}, none, Old),
     H#{zone_type => V1}.

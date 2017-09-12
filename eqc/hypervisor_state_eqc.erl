@@ -22,6 +22,9 @@ last_seen() ->
 port()->
     pos_int().
 
+arch() ->
+    oneof([x86, arm64]).
+
 hypervisor(Size) ->
     ?LAZY(oneof([{call, ?H, new, [id(Size)]} || Size == 0] ++
                     [?LETSHRINK(
@@ -30,6 +33,7 @@ hypervisor(Size) ->
                                {call, ?H, load, [id(Size), O]},
                                %% {call, ?H, merge, [O, O]},
 
+                               {call, ?H, architecture, [id(Size), arch(), O]},
                                {call, ?H, uuid, [id(Size), non_blank_string(), O]},
                                {call, ?H, alias, [id(Size), non_blank_string(), O]},
                                {call, ?H, host, [id(Size), non_blank_string(), O]},
@@ -77,6 +81,9 @@ calc_map(_M, _) ->
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
+
+model_arch(N, R) ->
+    r(<<"architecture">>, N, R).
 
 model_alias(N, R) ->
     r(<<"alias">>, N, R).
@@ -175,6 +182,19 @@ prop_uuid() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
                           model(?H:uuid(id(?BIG_TIME), N, Hv)) ==
                               model_uuid(N, model(Hv)))
+            end).
+
+prop_architecture() ->
+    ?FORALL({A, R},
+            {arch(), hypervisor()},
+            begin
+                Hv = eval(R),
+                Hv1 = ?H:architecture(id(?BIG_TIME), A, Hv),
+                Got = model(Hv1),
+                Expected = model_arch(atom_to_binary(A, utf8), model(Hv)),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~nHV1: ~p~nGot: ~p~nExpected: ~p~n",
+                                    [R, Hv, Hv1, Got, Expected]),
+                          Got == Expected)
             end).
 
 prop_alias() ->

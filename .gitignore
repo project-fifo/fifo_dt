@@ -9,3 +9,6 @@ current_counterexample.eqc
 .eqc
 .rebar3
 *~
+erl_crash.dump
+libs/
+rebar3.crashdump

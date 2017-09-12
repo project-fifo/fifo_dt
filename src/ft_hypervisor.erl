@@ -36,7 +36,8 @@
          sysinfo/3,
          uuid/3,
          version/3,
-         virtualisation/3
+         virtualisation/3,
+         architecture/3
         ]).
 
 -ignore_xref([
@@ -69,7 +70,8 @@
          sysinfo/1,
          uuid/1,
          version/1,
-         virtualisation/1
+         virtualisation/1,
+         architecture/1
         ]).
 
 -ignore_xref([
@@ -92,9 +94,13 @@
 
 -ignore_xref([to_json/1, load/2, set/4, getter/2, uuid/1]).
 
+
+-type architecture() :: arm64 | x86.
+
 -type hypervisor() :: #{
                   type            => ?TYPE,
                   version         => non_neg_integer(),
+                  architecture    => riak_dt_lwwreg:lwwreg(),
                   last_seen       => riak_dt_lwwreg:lwwreg(),
                   characteristics => riak_dt_map:riak_dt_map(),
                   etherstubs      => riak_dt_lwwreg:lwwreg(),
@@ -112,7 +118,7 @@
                   chunter_version => riak_dt_lwwreg:lwwreg(),
                   virtualisation  => riak_dt_lwwreg:lwwreg()
                  }.
--export_type([hypervisor/0]).
+-export_type([hypervisor/0, architecture/0]).
 
 
 -spec is_a(any()) -> true | false.
@@ -122,9 +128,11 @@
 new(_) ->
     {ok, Empty} = ?NEW_LWW([], 1),
     {ok, Zero} = ?NEW_LWW(0, 1),
+    {ok, Arch} = ?NEW_LWW(undefined, 1),
     #{
        type            => ?TYPE,
        version         => ?VERSION,
+       architecture    => Arch,
        last_seen       => Zero,
        characteristics => riak_dt_map:new(),
        etherstubs      => Empty,
@@ -145,6 +153,10 @@ new(_) ->
 
 load(_, #{type := ?TYPE, version := ?VERSION} = H) ->
     H;
+load({T, _ID} = TID, #{type := ?TYPE, version := 0} = H) ->
+    {ok, Arch} = ?NEW_LWW(x86, T),
+    H1 = H#{architecture => Arch, version => 1},
+    load(TID, H1);
 load(TID, #hypervisor_0{
              characteristics = Characteristics,
              etherstubs      = Etherstubs,
@@ -221,23 +233,30 @@ load(TID, #hypervisor_0_1_0{
     load(TID, H1).
 
 to_json(H) ->
+    Arch = case architecture(H) of
+               undefined ->
+                   null;
+               O ->
+                   atom_to_binary(O, utf8)
+           end,
     #{
-     <<"alias">> => alias(H),
-     <<"characteristics">> => characteristics(H),
-     <<"etherstubs">> => etherstubs(H),
-     <<"host">> => host(H),
-     <<"last_seen">> => last_seen(H),
-     <<"metadata">> => metadata(H),
-     <<"networks">> => networks(H),
-     <<"path">> => path_to_json(path(H)),
-     <<"pools">> => pools(H),
-     <<"port">> => port(H),
-     <<"resources">> => resources(H),
-     <<"services">> => services(H),
-     <<"sysinfo">> => sysinfo(H),
-     <<"uuid">> => uuid(H),
-     <<"version">> => version(H),
-     <<"virtualisation">> => virtualisation(H)
+       <<"alias">> => alias(H),
+       <<"architecture">> => Arch,
+       <<"characteristics">> => characteristics(H),
+       <<"etherstubs">> => etherstubs(H),
+       <<"host">> => host(H),
+       <<"last_seen">> => last_seen(H),
+       <<"metadata">> => metadata(H),
+       <<"networks">> => networks(H),
+       <<"path">> => path_to_json(path(H)),
+       <<"pools">> => pools(H),
+       <<"port">> => port(H),
+       <<"resources">> => resources(H),
+       <<"services">> => services(H),
+       <<"sysinfo">> => sysinfo(H),
+       <<"uuid">> => uuid(H),
+       <<"version">> => version(H),
+       <<"virtualisation">> => virtualisation(H)
      }.
 
 path_to_json(P) ->
@@ -245,6 +264,7 @@ path_to_json(P) ->
 
 merge(H=#{
         type := ?TYPE,
+        architecture := Arch1,
         last_seen := LastSeen1,
         characteristics := Characteristics1,
         alias := Alias1,
@@ -263,7 +283,9 @@ merge(H=#{
         virtualisation := Virtualisation1
        },
       #{
+         type := ?TYPE,
          last_seen := LastSeen2,
+         architecture := Arch2,
          characteristics := Characteristics2,
          alias := Alias2,
          etherstubs := Etherstubs2,
@@ -281,6 +303,7 @@ merge(H=#{
          virtualisation := Virtualisation2
        }) ->
     H#{
+      architecture => riak_dt_lwwreg:merge(Arch1, Arch2),
       characteristics => fifo_map:merge(Characteristics1, Characteristics2),
       alias => riak_dt_lwwreg:merge(Alias1, Alias2),
       last_seen => riak_dt_lwwreg:merge(LastSeen1, LastSeen2),
@@ -348,6 +371,15 @@ version({T, _ID}, V, O = #{type := ?TYPE, chunter_version := Reg0})
 -spec networks(fifo_dt:tid(), [{non_neg_integer(), binary()}], hypervisor()) ->
                       hypervisor().
 ?REG_SET(networks).
+-spec architecture(hypervisor()) -> undefined | architecture().
+?REG_GET(architecture).
+-spec architecture(fifo_dt:tid(), architecture(), hypervisor()) ->
+                          hypervisor().
+architecture({T, _ID}, V, O = #{type := ?TYPE, architecture := Reg0})
+  when V =:= x86; V =:= arm64 ->
+    {ok, Reg1} = riak_dt_lwwreg:update({assign, V, T}, none, Reg0),
+    O#{architecture => Reg1}.
+
 
 -spec path(hypervisor()) -> [{binary(), non_neg_integer()}].
 %% We need to ensure we get an list
@@ -401,6 +433,8 @@ endpoint(H) ->
 ?G(<<"etherstubs">>, etherstubs);
 ?G(<<"alias">>, alias);
 ?G(<<"resources">>, resources);
+getter(O, <<"architecture">>) ->
+    atom_to_binary(architecture(O), utf8);
 getter(O, <<"resources.", K/binary>>) ->
     V = ft_obj:val(O),
     Rs = resources(V),
