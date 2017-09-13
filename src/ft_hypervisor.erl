@@ -434,7 +434,8 @@ endpoint(H) ->
 ?G(<<"alias">>, alias);
 ?G(<<"resources">>, resources);
 getter(O, <<"architecture">>) ->
-    atom_to_binary(architecture(O), utf8);
+    V = ft_obj:val(O),
+    atom_to_binary(architecture(V), utf8);
 getter(O, <<"resources.", K/binary>>) ->
     V = ft_obj:val(O),
     Rs = resources(V),
