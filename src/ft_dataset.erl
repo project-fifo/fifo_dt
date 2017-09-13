@@ -290,6 +290,8 @@ add([{<<"zone_type">> = N, F} | R], In, D) ->
             add(R, In, jsxd:set(N, <<"lipkg">>, D));
         lx ->
             add(R, In, jsxd:set(N, <<"lx">>, D));
+        jail ->
+            add(R, In, jsxd:set(N, <<"jail">>, D));
         docker ->
             add(R, In, jsxd:set(N, <<"docker">>, D))
     end;
