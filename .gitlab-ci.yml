@@ -13,21 +13,21 @@ lint:
   script:
     - ./rebar3 as lint lint
   tags:
-    - erlagn-19
+    - erlang-19
 
 dialyzer:
   stage: dialyzer
   script:
     - ./rebar3 dialyzer
   tags:
-    - erlagn-19
+    - erlang-19
 
 eunit:
   stage: eunit
   script:
     - ./rebar3 eunit
   tags:
-    - erlagn-19
+    - erlang-19
 
 .eqc_template: &eqc_definition
   stage: eqc
