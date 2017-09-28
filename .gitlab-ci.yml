@@ -27,7 +27,7 @@ eunit:
   tags:
     - erlang-19
 
-.eqc_template: &eqc_definition
+eqc:
   stage: eqc
   script:
     - mkdir libs
@@ -37,25 +37,8 @@ eunit:
     - cd ..
     - epmd &
     - ./rebar3 as eqc eqc
-
-eqc-smartos:
-  <<: *eqc_definition
   tags:
-    - smartos
-
-eqc-bsd:
-  <<: *eqc_definition
-  tags:
-    - bsd
-
-eqc-linux:
-  <<: *eqc_definition
-  image: erlang:20
-  before_script:
-    - apt-get update
-    - apt-get install -y --no-install-recommends unzip
-  tags:
-    - linux
+    - erlang-19
 
 upstream:
   stage: upstream
