@@ -2,28 +2,26 @@ variables:
   ERL_LIBS: "./libs"
 
 stages:
-  - lint
-  - dialyzer
-  - eunit
+  - test
   - eqc
   - upstream
 
 lint:
-  stage: lint
+  stage: test
   script:
     - ./rebar3 as lint lint
   tags:
     - erlang-19
 
 dialyzer:
-  stage: dialyzer
+  stage: test
   script:
     - ./rebar3 dialyzer
   tags:
     - erlang-19
 
 eunit:
-  stage: eunit
+  stage: test
   script:
     - ./rebar3 eunit
   tags:
