@@ -62,5 +62,5 @@ eqc-linux:
 upstream:
   stage: upstream
   script:
-    - curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=fifo_dt" https://gitlab.example.com/api/v4/projects/4216322/trigger/pipeline # snarl
+    - curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=fifo_dt" https://gitlab.com/api/v4/projects/4216322/trigger/pipeline # snarl
 
