@@ -6,7 +6,7 @@ stages:
   - eqc
   - upstream
 
-lint:
+test:
   stage: test
   script:
     - ./rebar3 as lint lint
@@ -44,7 +44,8 @@ upstream:
   stage: upstream
   script:
     - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$SNARL_PID/trigger/pipeline'
-    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$SNIFFLE_PID/trigger/pipeline'
-    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$WIGGLE_PID/trigger/pipeline'
-    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$CHUNTER_PID/trigger/pipeline'
+#    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$SNIFFLE_PID/trigger/pipeline'
+#    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$WIGGLE_PID/trigger/pipeline'
+#    - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=test" --form "variables[DOWNSTREAM_LIBRARY]=$CI_PROJECT_NAME" https://gitlab.com/api/v4/projects/$CHUNTER_PID/trigger/pipeline'
+
 
