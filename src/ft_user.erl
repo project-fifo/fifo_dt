@@ -438,7 +438,18 @@ select_org({T, _ID}, Org, User = #{active_org := Active}) ->
 ?SET_GET(keys, ssh_keys).
 
 -spec add_key(fifo_dt:tid(), binary(), binary(), user()) -> user().
-add_key({_T, ID}, KeyID, Key, User = #{ssh_keys := Keys}) ->
+add_key({_T, ID}, KeyID, Key, User = #{ssh_keys := Keys0}) ->
+    Keys = case lists:keyfind(KeyID, 1, keys(User)) of
+               false ->
+                   Keys0;
+               Tpl ->
+                   case riak_dt_orswot:update({remove, Tpl}, ID, Keys0) of
+                       {error, {precondition, {not_present, Tpl}}} ->
+                           Keys0;
+                       {ok, Keys1} ->
+                           Keys1
+                   end
+           end,
     {ok, S1} = riak_dt_orswot:update({add, {KeyID, Key}}, ID, Keys),
     User#{ssh_keys := S1}.
 
