@@ -213,7 +213,7 @@ new({_T, _ID}) ->
      metadata       => riak_dt_map:new()
     }.
 
-new(TID = {_T, ID}, S, E) when S < E ->
+new(TID = {_T, ID}, S, E) when S =< E ->
     {ok, Free} = riak_dt_orswot:update({add_all, lists:seq(S, E)}, ID,
                                        riak_dt_orswot:new()),
     I0 = new(TID),
