@@ -14,7 +14,7 @@
         sub_getter(O, N) ->
                F(O)).
 
--define(IS_IP, is_integer(V), V > 0, V < 16#FFFFFFFF).
+-define(IS_IP, is_integer(V), V > 0, V =< 16#FFFFFFFF).
 
 -export([
          is_a/1, new/1,
