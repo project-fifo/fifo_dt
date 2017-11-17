@@ -163,7 +163,7 @@ load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
 load(TID, #{version := 5, type := ?TYPE} = V) ->
     V1 = V#{
            version := 6,
-           error   := riak_dt_lwwreg:new()
+           error   => riak_dt_lwwreg:new()
           },
     load(TID, V1);
 load(TID, #{version := 4, type := ?TYPE} = V) ->
