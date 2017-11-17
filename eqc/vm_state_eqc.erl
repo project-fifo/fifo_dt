@@ -51,6 +51,7 @@ vm(Size) ->
                                %%{call, ?V, merge, [O, O]},
 
                                {call, ?V, uuid, [id(Size), non_blank_string(), O]},
+                               {call, ?V, error, [id(Size), non_blank_string(), O]},
                                {call, ?V, alias, [id(Size), non_blank_string(), O]},
                                {call, ?V, state, [id(Size), non_blank_string(), O]},
                                {call, ?V, deleting, [id(Size), bool(), O]},
@@ -134,6 +135,9 @@ model_alias(N, R) ->
 
 model_state(N, R) ->
     r(<<"state">>, N, R).
+
+model_error(N, R) ->
+    r(<<"error">>, N, R).
 
 model_deleting(N, R) ->
     r(<<"deleting">>, N, R).
@@ -288,6 +292,16 @@ prop_state() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
                           model(?V:state(id(?BIG_TIME), N, Hv)) ==
                               model_state(N, model(Hv)))
+            end).
+
+prop_error() ->
+    ?FORALL({N, R},
+            {non_blank_string(), vm()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
+                          model(?V:error(id(?BIG_TIME), N, Hv)) ==
+                              model_error(N, model(Hv)))
             end).
 
 prop_deleting() ->

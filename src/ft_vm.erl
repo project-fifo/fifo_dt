@@ -7,6 +7,8 @@
 -module(ft_vm).
 -behaviour(fifo_dt).
 
+-compile({no_auto_import, [error/1]}).
+
 -include("ft_vm.hrl").
 -include("ft_helper.hrl").
 
@@ -28,6 +30,7 @@
          deleting/1, deleting/3,
          creating/1, creating/3,
          alias/1, alias/3,
+         error/1, error/3,
          owner/1, owner/3,
          dataset/1, dataset/3,
          package/1, package/3,
@@ -84,6 +87,7 @@
           created_at     => riak_dt_lwwreg:lwwreg(),
           created_by     => riak_dt_lwwreg:lwwreg(),
           vm_type        => riak_dt_lwwreg:lwwreg(),
+          error          => riak_dt_lwwreg:lwwreg(),
 
           dataset        => riak_dt_lwwreg:lwwreg(),
           package        => riak_dt_lwwreg:lwwreg(),
@@ -108,6 +112,7 @@
           fw_rules       => riak_dt_orswot:orswot(),
           metadata       => riak_dt_map:riak_dt_map()
          }.
+
 -export_type([vm/0]).
 
 ?IS_A.
@@ -147,12 +152,20 @@ new(_) ->
        deleting       => False,
        creating       => False,
 
+       error          => riak_dt_lwwreg:new(),
+
        fw_rules       => riak_dt_orswot:new(),
        metadata       => riak_dt_map:new()
      }.
 
 load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
     V;
+load(TID, #{version := 5, type := ?TYPE} = V) ->
+    V1 = V#{
+           version := 6,
+           error   := riak_dt_lwwreg:new()
+          },
+    load(TID, V1);
 load(TID, #{version := 4, type := ?TYPE} = V) ->
     V1 = V#{
            version := 5
@@ -482,6 +495,7 @@ to_json(V) ->
        %%<<"services">> => services(V),
        <<"snapshots">> => snapshots(V),
        <<"state">> => state(V),
+       <<"error">> => error(V),
        <<"uuid">> => uuid(V),
        <<"vm_type">> => vm_type(V)
      }.
@@ -500,6 +514,7 @@ merge(O = #{
         created_at := CreatedAt1,
         created_by := CreatedBy1,
         vm_type := Type1,
+        error := Error1,
 
         logs := Logs1,
         groupings := Groupings1,
@@ -530,7 +545,7 @@ merge(O = #{
          created_at := CreatedAt2,
          created_by := CreatedBy2,
          vm_type := Type2,
-
+         error := Error2,
 
          logs := Logs2,
          groupings := Groupings2,
@@ -557,6 +572,7 @@ merge(O = #{
       created_at => riak_dt_lwwreg:merge(CreatedAt1, CreatedAt2),
       created_by => riak_dt_lwwreg:merge(CreatedBy1, CreatedBy2),
       vm_type => riak_dt_lwwreg:merge(Type1, Type2),
+      error => riak_dt_lwwreg:merge(Error1, Error2),
 
       state => riak_dt_lwwreg:merge(State1, State2),
       deleting => riak_dt_lwwreg:merge(Deleting1, Deleting2),
@@ -611,6 +627,8 @@ merge(O = #{
 ?REG_GET(alias).
 ?REG_SET(alias).
 ?REG_GET(state).
+?REG_GET(error).
+?REG_SET(error).
 ?REG_SET(state).
 ?REG_GET(deleting).
 ?REG_SET(deleting).
@@ -780,7 +798,7 @@ json_to_filter(#{<<"code">> := Code, <<"type">> := Type})
     {icmp, Type, Code};
 %% code needs to be an integer!
 json_to_filter(#{<<"code">> := _, <<"type">> := _}) ->
-    error(badarg);
+    erlang:error(badarg);
 json_to_filter(#{<<"type">> := Type}) ->
     {icmp, Type}.
 
