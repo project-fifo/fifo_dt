@@ -55,13 +55,14 @@ vm(Size) ->
                                {call, ?V, alias, [id(Size), non_blank_string(), O]},
                                {call, ?V, state, [id(Size), non_blank_string(), O]},
                                {call, ?V, deleting, [id(Size), bool(), O]},
+                               {call, ?V, creating, [id(Size), bool(), O]},
                                {call, ?V, owner, [id(Size), non_blank_string(), O]},
                                {call, ?V, dataset, [id(Size), non_blank_string(), O]},
                                {call, ?V, package, [id(Size), non_blank_string(), O]},
                                {call, ?V, hypervisor, [id(Size), non_blank_string(), O]},
 
                                {call, ?V, created_at, [id(Size), pos_int(), O]},
-                               {call, ?V, manage_fw, [id(Size), oneof([true, false]), O]},
+                               {call, ?V, manage_fw, [id(Size), bool(), O]},
                                {call, ?V, created_by, [id(Size), non_blank_string(), O]},
 
                                {call, ?V, set_config, [id(Size), non_blank_string(), non_blank_string(), O]},
@@ -145,6 +146,9 @@ model_error(N, R) ->
 
 model_deleting(N, R) ->
     r(<<"deleting">>, N, R).
+
+model_creating(N, R) ->
+    r(<<"creating">>, N, R).
 
 model_owner(N, R) ->
     r(<<"owner">>, N, R).
@@ -283,7 +287,7 @@ prop_uuid() ->
 
 prop_manage_fw() ->
     ?FORALL({N, R},
-            {non_blank_string(), vm()},
+            {bool(), vm()},
             begin
                 Hv = eval(R),
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
@@ -329,6 +333,16 @@ prop_deleting() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
                           model(?V:deleting(id(?BIG_TIME), N, Hv)) ==
                               model_deleting(N, model(Hv)))
+            end).
+
+prop_creating() ->
+    ?FORALL({N, R},
+            {bool(), vm()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R,Hv]),
+                          model(?V:creating(id(?BIG_TIME), N, Hv)) ==
+                              model_creating(N, model(Hv)))
             end).
 
 prop_owner() ->

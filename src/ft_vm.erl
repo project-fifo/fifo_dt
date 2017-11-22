@@ -164,10 +164,10 @@ new(_) ->
 load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
     V;
 load(TID, #{version := 6, type := ?TYPE} = V) ->
-    {ok, False} = ?NEW_LWW(false, 1),
+    {ok, True} = ?NEW_LWW(true, 1),
     V1 = V#{
            version   := 7,
-           manage_fw => False
+           manage_fw => True
           },
     load(TID, V1);
 load(TID, #{version := 5, type := ?TYPE} = V) ->
@@ -631,9 +631,6 @@ merge(O = #{
 ?REG_GET(created_at).
 ?REG_SET_PI(created_at).
 
-?REG_GET(manage_fw).
-?REG_SET(manage_fw).
-
 ?REG_GET(created_by).
 ?REG_SET(created_by).
 
@@ -649,9 +646,11 @@ merge(O = #{
 ?REG_SET(error).
 ?REG_SET(state).
 ?REG_GET(deleting).
-?REG_SET(deleting).
+?REG_SET_BOOL(deleting).
 ?REG_GET(creating).
-?REG_SET(creating).
+?REG_SET_BOOL(creating).
+?REG_GET(manage_fw).
+?REG_SET_BOOL(manage_fw).
 ?REG_GET(owner).
 ?REG_SET(owner).
 ?REG_GET(dataset).

@@ -79,6 +79,11 @@
         when is_integer(V), V > 0 ->
                ?REG_SET_BODY(Field)).
 
+-define(REG_SET_BOOL(Field),
+        Field({T, _ID}, V, O = #{type := ?TYPE, Field := Reg0})
+        when V =:= true; V =:= false ->
+               ?REG_SET_BODY(Field)).
+
 %% ORSwot
 -define(SET_GET(Name, Field),
         Name(#{type := ?TYPE, Field := V}) -> riak_dt_orswot:value(V)).
