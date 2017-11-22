@@ -61,6 +61,7 @@ vm(Size) ->
                                {call, ?V, hypervisor, [id(Size), non_blank_string(), O]},
 
                                {call, ?V, created_at, [id(Size), pos_int(), O]},
+                               {call, ?V, manage_fw, [id(Size), oneof([true, false]), O]},
                                {call, ?V, created_by, [id(Size), non_blank_string(), O]},
 
                                {call, ?V, set_config, [id(Size), non_blank_string(), non_blank_string(), O]},
@@ -129,6 +130,9 @@ calc_fw_rules(_) ->
 
 model_uuid(N, R) ->
     r(<<"uuid">>, N, R).
+
+model_manage_fw(N, R) ->
+    r(<<"manage_fw">>, N, R).
 
 model_alias(N, R) ->
     r(<<"alias">>, N, R).
@@ -245,6 +249,9 @@ get_groupings(#{<<"groupings">> := M}) ->
 get_fw_rules(#{<<"fw_rules">> := M}) ->
     M.
 
+get_manage_fw(#{<<"manage_fw">> := M}) ->
+    M.
+
 prop_merge() ->
     ?FORALL(R,
             vm(),
@@ -272,6 +279,16 @@ prop_uuid() ->
                 ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
                           model(?V:uuid(id(?BIG_TIME), N, Hv)) ==
                               model_uuid(N, model(Hv)))
+            end).
+
+prop_manage_fw() ->
+    ?FORALL({N, R},
+            {non_blank_string(), vm()},
+            begin
+                Hv = eval(R),
+                ?WHENFAIL(io:format(user, "History: ~p~nHv: ~p~n", [R, Hv]),
+                          model(?V:manage_fw(id(?BIG_TIME), N, Hv)) ==
+                              model_manage_fw(N, model(Hv)))
             end).
 
 prop_alias() ->

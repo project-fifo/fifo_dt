@@ -29,6 +29,7 @@
          state/1, state/3,
          deleting/1, deleting/3,
          creating/1, creating/3,
+         manage_fw/1, manage_fw/3,
          alias/1, alias/3,
          error/1, error/3,
          owner/1, owner/3,
@@ -108,6 +109,7 @@
           state          => riak_dt_lwwreg:lwwreg(),
           deleting       => riak_dt_lwwreg:lwwreg(),
           creating       => riak_dt_lwwreg:lwwreg(),
+          manage_fw      => riak_dt_lwwreg:lwwreg(),
 
           fw_rules       => riak_dt_orswot:orswot(),
           metadata       => riak_dt_map:riak_dt_map()
@@ -151,6 +153,7 @@ new(_) ->
        state          => riak_dt_lwwreg:new(),
        deleting       => False,
        creating       => False,
+       manage_fw      => False,
 
        error          => riak_dt_lwwreg:new(),
 
@@ -160,6 +163,13 @@ new(_) ->
 
 load(_, #{version := ?VERSION, type := ?TYPE} = V) ->
     V;
+load(TID, #{version := 6, type := ?TYPE} = V) ->
+    {ok, False} = ?NEW_LWW(false, 1),
+    V1 = V#{
+           version   := 7,
+           manage_fw => False
+          },
+    load(TID, V1);
 load(TID, #{version := 5, type := ?TYPE} = V) ->
     V1 = V#{
            version := 6,
@@ -482,6 +492,7 @@ to_json(V) ->
        <<"deleting">> => deleting(V),
        <<"docker">> => docker(V),
        <<"fw_rules">> => fw_rules_to_json(fw_rules(V)),
+       <<"manage_fw">> => manage_fw(V),
        <<"groupings">> => groupings(V),
        <<"hypervisor">> => hypervisor(V),
        <<"info">> => info(V),
@@ -511,6 +522,7 @@ merge(O = #{
         state := State1,
         deleting := Deleting1,
         creating := Creating1,
+        manage_fw  := ManageFW1,
         created_at := CreatedAt1,
         created_by := CreatedBy1,
         vm_type := Type1,
@@ -546,6 +558,7 @@ merge(O = #{
          created_by := CreatedBy2,
          vm_type := Type2,
          error := Error2,
+         manage_fw  := ManageFW2,
 
          logs := Logs2,
          groupings := Groupings2,
@@ -563,38 +576,40 @@ merge(O = #{
          metadata := Metadata2
        }) ->
     O#{
-      uuid => riak_dt_lwwreg:merge(UUID1, UUID2),
-      alias => riak_dt_lwwreg:merge(Alias1, Alias2),
-      owner => riak_dt_lwwreg:merge(Owner1, Owner2),
-      dataset => riak_dt_lwwreg:merge(Dataset1, Dataset2),
-      package => riak_dt_lwwreg:merge(Package1, Package2),
-      hypervisor => riak_dt_lwwreg:merge(Hypervisor1, Hypervisor2),
-      created_at => riak_dt_lwwreg:merge(CreatedAt1, CreatedAt2),
-      created_by => riak_dt_lwwreg:merge(CreatedBy1, CreatedBy2),
-      vm_type => riak_dt_lwwreg:merge(Type1, Type2),
-      error => riak_dt_lwwreg:merge(Error1, Error2),
+      uuid         => riak_dt_lwwreg:merge(UUID1, UUID2),
+      alias        => riak_dt_lwwreg:merge(Alias1, Alias2),
+      owner        => riak_dt_lwwreg:merge(Owner1, Owner2),
+      dataset      => riak_dt_lwwreg:merge(Dataset1, Dataset2),
+      package      => riak_dt_lwwreg:merge(Package1, Package2),
+      hypervisor   => riak_dt_lwwreg:merge(Hypervisor1, Hypervisor2),
+      created_at   => riak_dt_lwwreg:merge(CreatedAt1, CreatedAt2),
+      created_by   => riak_dt_lwwreg:merge(CreatedBy1, CreatedBy2),
+      vm_type      => riak_dt_lwwreg:merge(Type1, Type2),
+      error        => riak_dt_lwwreg:merge(Error1, Error2),
+      manage_fw    => riak_dt_lwwreg:merge(ManageFW1, ManageFW2),
 
-      state => riak_dt_lwwreg:merge(State1, State2),
-      deleting => riak_dt_lwwreg:merge(Deleting1, Deleting2),
-      creating => riak_dt_lwwreg:merge(Creating1, Creating2),
+      state        => riak_dt_lwwreg:merge(State1, State2),
+      deleting     => riak_dt_lwwreg:merge(Deleting1, Deleting2),
+      creating     => riak_dt_lwwreg:merge(Creating1, Creating2),
 
-      logs => riak_dt_orswot:merge(Logs1, Logs2),
-      groupings => riak_dt_orswot:merge(Groupings1, Groupings2),
-      fw_rules => riak_dt_orswot:merge(FWRules1, FWRules2),
+      logs         => riak_dt_orswot:merge(Logs1, Logs2),
+      groupings    => riak_dt_orswot:merge(Groupings1, Groupings2),
+      fw_rules     => riak_dt_orswot:merge(FWRules1, FWRules2),
 
-      network_map => fifo_map:merge(NetworkMap1, NetworkMap2),
-      iprange_map => fifo_map:merge(IPRangeMap1, IPRangeMap2),
+      network_map  => fifo_map:merge(NetworkMap1, NetworkMap2),
+      iprange_map  => fifo_map:merge(IPRangeMap1, IPRangeMap2),
       hostname_map => fifo_map:merge(HostNameMap1, HostNameMap2),
-      config => fifo_map:merge(Config1, Config2),
-      info => fifo_map:merge(Info1, Info2),
-      backups => fifo_map:merge(Backups1, Backups2),
-      snapshots => fifo_map:merge(Snapshots1, Snapshots2),
+      config       => fifo_map:merge(Config1, Config2),
+      info         => fifo_map:merge(Info1, Info2),
+      backups      => fifo_map:merge(Backups1, Backups2),
+      snapshots    => fifo_map:merge(Snapshots1, Snapshots2),
       %%services => fifo_map:merge(Services1, Services2),
-      docker => fifo_map:merge(Docker1, Docker2),
-      metadata => fifo_map:merge(Metadata1, Metadata2)
+      docker       => fifo_map:merge(Docker1, Docker2),
+      metadata     => fifo_map:merge(Metadata1, Metadata2)
      }.
 
 
+?G(<<"manage_fw">>, uuid);
 ?G(<<"uuid">>, uuid);
 ?G(<<"alias">>, alias);
 ?G(<<"state">>, state);
@@ -615,6 +630,9 @@ merge(O = #{
 
 ?REG_GET(created_at).
 ?REG_SET_PI(created_at).
+
+?REG_GET(manage_fw).
+?REG_SET(manage_fw).
 
 ?REG_GET(created_by).
 ?REG_SET(created_by).
