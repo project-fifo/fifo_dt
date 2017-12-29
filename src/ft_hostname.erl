@@ -11,6 +11,7 @@
 
 -export([
          new/1,
+         uuid/3,
          load/2,
          merge/2, empty/1,
          a/1, add_a/3, remove_a/3,
@@ -62,6 +63,10 @@ merge(R = #{
 empty(H) ->
     L = a(H),
     L =:= [].
+
+%% This is a horrible hack, but we set uuid in a few places
+uuid(_, _, Obj) ->
+    Obj.
 
 ?SET_GET(a).
 ?SET_ADD(add_a, a).
