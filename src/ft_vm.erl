@@ -648,7 +648,7 @@ merge(O = #{
 ?REG_GET(deleting).
 ?REG_SET_BOOL(deleting).
 ?REG_GET(creating).
-?REG_SET_BOOL(creating).
+?REG_SET(creating).
 ?REG_GET(manage_fw).
 ?REG_SET_BOOL(manage_fw).
 ?REG_GET(owner).
