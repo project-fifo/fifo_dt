@@ -59,6 +59,7 @@ get_([K | Ks], M) ->
           Map::riak_dt_map:riak_dt_map()) ->
                  {ok, riak_dt_map:riak_dt_map()}.
 
+
 set(K, V, A, T, M) when not is_list(K) ->
     set([K], V, A, T, M);
 set(Ks, V, A, T, M) when is_map(V) ->
@@ -77,6 +78,9 @@ set(Ks, V, A, T, M) when not is_map(V) ->
             Ops = nested_update(Existing,
                                 nested_create(Missing, V, T)),
             riak_dt_map:update({update, Ops}, A, M);
+        {error, not_a_map, _Type, K} ->
+            {ok, M1} = remove(K, A, M),
+            set(Ks, V, A, T, M1);
         E ->
             E
     end.
@@ -375,5 +379,14 @@ delete_test() ->
     ?assertEqual(#{k => v, o => #{}},
                  fifo_map:value(M5)),
     ok.
+
+overwrite_test() ->
+    M = fifo_map:new(),
+    {ok, M1} = fifo_map:set([o, k], v, a, 0, M),
+    {ok, M2} = fifo_map:set([o, k, v], v1, a, 1, M1),
+    ?assertEqual(v, fifo_map:get([o, k], M1)),
+    ?assertEqual(v1, fifo_map:get([o, k, v], M2)),
+    ok.
+
 
 -endif.
