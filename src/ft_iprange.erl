@@ -20,6 +20,7 @@
          is_a/1, new/1,
          new/3, load/2, merge/2, to_json/1,
          release_ip/3, claim_ip/3,
+         add_ip/3, remove_ip/3,
          to_bin/1,
          parse_bin/1,
          cidr_to_mask/1,
@@ -165,6 +166,7 @@ load(TID, #iprange_0{
       metadata       => Metadata
      },
     load(TID, I);
+
 load(TID, #iprange_0_1_0{
              uuid           = UUID,
              name           = Name,
@@ -239,6 +241,29 @@ release_ip({_T, ID}, IP, I = #{type := ?TYPE, free := Free, used := Used}) when
             {ok, I#{free => Free1, used => Used1}}
     end.
 
+add_ip({_T, ID}, IP, I = #{type := ?TYPE, free := Free}) ->
+    case {ordsets:is_element(IP, free(I)), ordsets:is_element(IP, used(I))} of
+        {false, false} ->
+            {ok, Free1} = riak_dt_orswot:update({add, IP}, ID, Free),
+            I#{free => Free1};
+        _ ->
+            I
+    end.
+
+remove_ip({_T, ID}, IP, I = #{type := ?TYPE, free := Free, used := Used}) ->
+    Used1 = case riak_dt_orswot:update({remove, IP}, ID, Used) of
+                {error, {precondition, {not_present, _}}} ->
+                    Used;
+                {ok, UsedX} ->
+                    UsedX
+            end,
+    Free1 = case riak_dt_orswot:update({remove, IP}, ID, Free) of
+                {error, {precondition, {not_present, _}}} ->
+                    Free;
+                {ok, FreeX} ->
+                    FreeX
+            end,
+    I#{free => Free1, used => Used1}.
 
 ?META.
 ?SET_META_3.
@@ -382,3 +407,32 @@ cidr_to_mask( 3) -> <<"224.0.0.0">>;
 cidr_to_mask( 2) -> <<"192.0.0.0">>;
 cidr_to_mask( 1) -> <<"128.0.0.0">>;
 cidr_to_mask( 0) -> <<"0.0.0.0">>.
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+add_double_test() ->
+    I = ft_iprange:new({1, a}, 1, 100),
+    I1 = ft_iprange:add_ip({2, a}, 1, I), %% this is already added
+    ?assertEqual(free(I), free(I1)),
+    ?assertEqual(used(I), used(I1)).
+
+add_test() ->
+    I = ft_iprange:new({1, a}, 1, 100),
+    I1 = ft_iprange:add_ip({2, a}, 101, I), %% this is already added
+    ?assertNotEqual(free(I), free(I1)),
+    ?assertEqual(used(I), used(I1)).
+
+add_remove_test() ->
+    I = ft_iprange:new({1, a}, 1, 100),
+    I1 = ft_iprange:add_ip({2, a}, 101, I), %% this is already added
+    I2 = ft_iprange:remove_ip({2, a}, 101, I1), %% this is already added
+    ?assertEqual(free(I), free(I2)),
+    ?assertEqual(used(I), used(I2)).
+add_remove_claimed_test() ->
+    I = ft_iprange:new({1, a}, 1, 100),
+    I1 = ft_iprange:add_ip({2, a}, 101, I), %% this is already added
+    {ok, I2} = ft_iprange:claim_ip({2, a}, 101, I1), %% this is already added
+    I3 = ft_iprange:remove_ip({2, a}, 101, I2), %% this is already added
+    ?assertEqual(free(I), free(I3)),
+    ?assertEqual(used(I), used(I3)).
+-endif.
